@@ -3,3 +3,11 @@
 .dolt/
 *.db
 .beads-credential-key
+.gitnexus
+
+# Ignore IDE files
+.vscode/
+
+# Ignore CLAUDE files
+.claude/
+CLAUDE.md
