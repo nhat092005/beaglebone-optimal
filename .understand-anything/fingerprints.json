@@ -1,0 +1,237 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "c49b9d4216eb2d7f98774b9c3ba66abca90ab13e",
+  "generatedAt": "2026-05-29T05:58:52.368Z",
+  "files": {
+    ".agents/skills/gitnexus-cli/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-cli/SKILL.md",
+      "contentHash": "e28f79d4ea2473efa0f197611a75bc25428fb4296aeeb54d1e31de2e39ccd8ad",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 83,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/gitnexus-debugging/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-debugging/SKILL.md",
+      "contentHash": "4a1e82aa835c52e38227d853c20ef05ea33be1dfb6aa6511474d15357f1d3f2e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 90,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/gitnexus-exploring/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-exploring/SKILL.md",
+      "contentHash": "ffafeaa0ce52be079e4d4b3a48c0a166728c009380a243c394c4e08f728527bb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 79,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/gitnexus-guide/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-guide/SKILL.md",
+      "contentHash": "40b047beeb9a7c5d47f17426b4061d2c2562c85c11288fa7f8da376d910e4f91",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 65,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/gitnexus-impact-analysis/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-impact-analysis/SKILL.md",
+      "contentHash": "a4d6e8003c4a822c380b0e81b2fa0d642612236c734a9d51834e362c4be52f33",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 98,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/gitnexus-refactoring/SKILL.md": {
+      "filePath": ".agents/skills/gitnexus-refactoring/SKILL.md",
+      "contentHash": "6aab994ee0266063245245483ee3280645aca66c0c5e56730ffad3f32ecbbc5c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 122,
+      "hasStructuralAnalysis": true
+    },
+    ".beads/config.yaml": {
+      "filePath": ".beads/config.yaml",
+      "contentHash": "2290ceded0ecd68e9eee87eba07b30f8affcb817dcfacb70d7e3512f539d6887",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    ".beads/hooks/post-checkout": {
+      "filePath": ".beads/hooks/post-checkout",
+      "contentHash": "7fabd6176eaeebc39c9177eabd7522f4c14006cf9d43218248e5e6ebe6fcd7c9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/hooks/post-merge": {
+      "filePath": ".beads/hooks/post-merge",
+      "contentHash": "4db66efbe384a36886262b52501252e521a3286a4daa78eea9c3e01f266cd6cb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/hooks/pre-commit": {
+      "filePath": ".beads/hooks/pre-commit",
+      "contentHash": "c8999599eedea1400340e0f80cff0ac5750106d518ebefae4ff731c2d991dc82",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/hooks/pre-push": {
+      "filePath": ".beads/hooks/pre-push",
+      "contentHash": "57e535e2674dd45ff662214b0da52f24098bbec4918ebb2a231c49ad9b74a350",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/hooks/prepare-commit-msg": {
+      "filePath": ".beads/hooks/prepare-commit-msg",
+      "contentHash": "2748feaf25f9a3f6175b69d61c876baf03af923eb662da1fd0854e60d498cdc5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/interactions.jsonl": {
+      "filePath": ".beads/interactions.jsonl",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/issues.jsonl": {
+      "filePath": ".beads/issues.jsonl",
+      "contentHash": "8021d256c501d863d6d79b14ad52be0297090a1173666b988a5cc23c67367681",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": false
+    },
+    ".beads/metadata.json": {
+      "filePath": ".beads/metadata.json",
+      "contentHash": "9961e207326caf68b69ea469f498d7f9bab09aded364b935a09ad306c14b785b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    ".beads/README.md": {
+      "filePath": ".beads/README.md",
+      "contentHash": "4f3ffddade7bfce0eb5227154a62e9a10074a91a0f9dcc2511922cbd437e1fe9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": true
+    },
+    ".claude/settings.json": {
+      "filePath": ".claude/settings.json",
+      "contentHash": "8cb367fa59d21bc1fec4438d0da39a8b74569e3eb2cdda9ad828dd96d2ca102d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 26,
+      "hasStructuralAnalysis": true
+    },
+    ".codex/config.toml": {
+      "filePath": ".codex/config.toml",
+      "contentHash": "d07401ffc49c57142a1ffac2e24ed4cfb890971cd334af85fbaf86b3ac48847d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    ".codex/hooks.json": {
+      "filePath": ".codex/hooks.json",
+      "contentHash": "e3b5249562a9f8970c5f5b3b81348260a81b61bd3a50bebf67b220fca4ccacf6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    ".codex/rules/default.rules": {
+      "filePath": ".codex/rules/default.rules",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": false
+    },
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "c3899f8162427eb9828b17be59f3d39e26971353dcd0c12a9c8b3d55257561fc",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    },
+    "AGENTS.md": {
+      "filePath": "AGENTS.md",
+      "contentHash": "46f0f761a985011bb2b9f168561719459c57a837c6ede2386e828651613bf4a5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 94,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "a12e379a9ddab218c071256a6251d075c87b8345135da4f3fc4a2c005633af05",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    }
+  }
+}
