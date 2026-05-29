@@ -11,3 +11,6 @@
 # Ignore CLAUDE files
 .claude/
 CLAUDE.md
+
+# Ignore Understand Anything files
+.understand-anything
