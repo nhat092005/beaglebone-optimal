@@ -1,0 +1,2 @@
+PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
+WORKSPACE_NAME := default

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.dolt
+.beads-credential-key
+.gitnexus
+.claude/
+.understand-anything/
+.tmp/
+.work/
+local.mk
+tmp/
+out/
+dist/
+build/
+*.log

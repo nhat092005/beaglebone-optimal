@@ -14,3 +14,9 @@ CLAUDE.md
 
 # Ignore Understand Anything files
 .understand-anything
+
+# Ignore temporary files
+.tmp/
+
+# Ignore local Docker config
+local.mk

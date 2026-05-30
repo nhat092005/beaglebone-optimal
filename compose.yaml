@@ -1,0 +1,13 @@
+services:
+  builder:
+    image: ${DOCKER_IMAGE:-beaglebone-optimal-builder}:${DOCKER_TAG:-dev}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    environment:
+      PROJECT_STORAGE_ROOT: /storage
+      WORKSPACE_NAME: ${WORKSPACE_NAME:-default}
+    volumes:
+      - .:/workspace
+      - ${PROJECT_STORAGE_ROOT:-/tmp/beaglebone-optimal-storage}:/storage
