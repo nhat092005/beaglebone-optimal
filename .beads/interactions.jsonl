@@ -1,1 +1,3 @@
 {"id":"int-7a0abefe","kind":"field_change","created_at":"2026-05-29T05:59:59.955879612Z","actor":"nhat092005","issue_id":"beaglebone-optimal-2b9","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Completed"}}
+{"id":"int-f9abdc04","kind":"field_change","created_at":"2026-05-30T04:30:40.823241495Z","actor":"nhat092005","issue_id":"beaglebone-optimal-6c7","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Completed"}}
+{"id":"int-571a7886","kind":"field_change","created_at":"2026-05-30T09:11:24.765578601Z","actor":"nhat092005","issue_id":"beaglebone-optimal-xqp","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Completed"}}
