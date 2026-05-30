@@ -1,44 +1,15 @@
 # beaglebone-optimal
 
+> Self-learning BSP workspace for BeagleBone Black / TI AM335x.
+
+![BeagleBone Black BSP](assets/hero.png)
+
 ## Demo
 
-## Docker Builder
+### Docker Build
 
-This repo uses a Docker-only phase 1 builder workflow. Runtime config lives in
-[`compose.yaml`](compose.yaml). Image build config lives in
-[`docker/Dockerfile`](docker/Dockerfile).
+![Docker Build](assets/00-build-docker.gif)
 
-### Setup
+### Docker Shell
 
-1. Copy `local.mk.example` to `local.mk`.
-2. Set `PROJECT_STORAGE_ROOT` to an absolute path on your machine.
-
-Example:
-
-```make
-PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
-WORKSPACE_NAME := default
-
-# Optional override. By default Make auto-detects the current host uid:gid.
-# DOCKER_USER := 1000:1000
-```
-
-### Commands
-
-```bash
-make help
-make doctor
-make docker-build
-make docker-shell
-make docker-run CMD='uname -a'
-```
-
-### Storage
-
-`PROJECT_STORAGE_ROOT` is required for `make doctor`, `make docker-shell`, and
-`make docker-run`. The builder container mounts:
-
-- repo root at `/workspace`
-- storage root at `/storage`
-
-Generated data is created under `/storage`, not in the source tree.
+![BeagleBone Black BSP](assets/01-docker-shell.gif)
