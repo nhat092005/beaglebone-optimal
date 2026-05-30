@@ -25,6 +25,12 @@ require_storage_root() {
   [[ "$value" = /* ]] || die "PROJECT_STORAGE_ROOT must be an absolute path: $value"
 }
 
+validate_docker_user() {
+  local value="${DOCKER_USER:-}"
+  [ -n "$value" ] || die "DOCKER_USER must not be empty"
+  [[ "$value" =~ ^[0-9]+:[0-9]+$ ]] || die "DOCKER_USER must match uid:gid, got: $value"
+}
+
 workspace_root() {
   printf '%s/workspaces/%s' "$PROJECT_STORAGE_ROOT" "${WORKSPACE_NAME:-default}"
 }
@@ -52,6 +58,7 @@ ensure_image() {
 
 preflight_run_target() {
   require_command docker
+  validate_docker_user
   require_storage_root
   prepare_storage_root
   ensure_image

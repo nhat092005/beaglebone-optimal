@@ -1,5 +1,7 @@
 # beaglebone-optimal
 
+## Demo
+
 ## Docker Builder
 
 This repo uses a Docker-only phase 1 builder workflow. Runtime config lives in
@@ -16,6 +18,9 @@ Example:
 ```make
 PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
 WORKSPACE_NAME := default
+
+# Optional override. By default Make auto-detects the current host uid:gid.
+# DOCKER_USER := 1000:1000
 ```
 
 ### Commands

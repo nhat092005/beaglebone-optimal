@@ -12,6 +12,7 @@ if [ ! -f local.mk.example ]; then
   warn "local.mk.example is missing"
 fi
 
+validate_docker_user
 require_storage_root
 prepare_storage_root
 

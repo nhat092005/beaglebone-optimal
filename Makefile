@@ -5,14 +5,12 @@ SHELL := /bin/bash
 DOCKER_IMAGE ?= beaglebone-optimal-builder
 DOCKER_TAG ?= dev
 WORKSPACE_NAME ?= default
-HOST_UID := $(shell id -u)
-HOST_GID := $(shell id -g)
+DOCKER_USER ?= $(shell id -u):$(shell id -g)
 
 export DOCKER_IMAGE
 export DOCKER_TAG
 export WORKSPACE_NAME
-export HOST_UID
-export HOST_GID
+export DOCKER_USER
 export PROJECT_STORAGE_ROOT
 export CMD
 
