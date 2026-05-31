@@ -13,3 +13,9 @@
 ### Docker Shell
 
 ![BeagleBone Black BSP](assets/01-docker-shell.gif)
+
+## Project Conventions
+
+- [Run Book EN](docs/_RUNBOOK_EN.md)
+- [Run Book VN](docs/_RUNBOOK_VN.md)
+- [Coding style and quality contract](docs/coding-style.md)

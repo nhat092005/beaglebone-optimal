@@ -1,0 +1,16 @@
+CompileFlags:
+  Add:
+    - "-Wno-unknown-warning-option"
+    - "-Wno-unused-command-line-argument"
+  Remove:
+    - "-fno-ipa-sra"
+    - "-fno-allow-store-data-races"
+    - "-fconserve-stack"
+    - "-fstack-protector-strong"
+    - "-fno-var-tracking-assignments"
+    - "-mabi=aapcs-linux"
+    - "--param=*"
+    - "-Wno-maybe-uninitialized"
+
+Index:
+  Background: Build
