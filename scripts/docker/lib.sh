@@ -35,6 +35,22 @@ workspace_root() {
   printf '%s/workspaces/%s' "$PROJECT_STORAGE_ROOT" "${WORKSPACE_NAME:-default}"
 }
 
+require_yocto_image() {
+  [ -n "${YOCTO_IMAGE:-}" ] || die "YOCTO_IMAGE must not be empty"
+}
+
+require_yocto_poky_tree() {
+  local value="${YOCTO_POKY_DIR:-}"
+  [ -n "$value" ] || die "YOCTO_POKY_DIR must not be empty"
+  [ -f "$value/oe-init-build-env" ] || die "missing poky checkout: $value. Clone poky into YOCTO_POKY_DIR first."
+}
+
+require_yocto_build_conf() {
+  local value="${YOCTO_BUILD_DIR:-}"
+  [ -n "$value" ] || die "YOCTO_BUILD_DIR must not be empty"
+  [ -f "$value/conf/local.conf" ] || die "missing $value/conf/local.conf. Run make yocto-init first, then manually copy or append yocto/conf/local.conf.example."
+}
+
 prepare_storage_root() {
   local ws
   require_storage_root
@@ -45,6 +61,7 @@ prepare_storage_root() {
     "$ws/out" \
     "$ws/tmp" \
     "$ws/logs" \
+    "$ws/yocto/sources" \
     "$ws/yocto/build"
 }
 

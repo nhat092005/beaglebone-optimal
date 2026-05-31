@@ -1,5 +1,11 @@
 PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
 WORKSPACE_NAME := default
 
+# Yocto heavy data derives from PROJECT_STORAGE_ROOT:
+#   $(PROJECT_STORAGE_ROOT)/shared/downloads
+#   $(PROJECT_STORAGE_ROOT)/shared/sstate
+#   $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto/sources
+#   $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto/build
+
 # Optional override. By default Make auto-detects the current host uid:gid.
 # DOCKER_USER := 1000:1000
