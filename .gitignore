@@ -5,18 +5,21 @@
 .beads-credential-key
 .gitnexus
 
-# Ignore IDE files
+# IDE files
 .vscode/
 
-# Ignore CLAUDE files
+# Understand Anything files
+.understand-anything
+
+# temporary files
+.tmp/
+
+# Local Docker config
+local.mk
+
+# CLAUDE files
 .claude/
 CLAUDE.md
 
-# Ignore Understand Anything files
-.understand-anything
-
-# Ignore temporary files
-.tmp/
-
-# Ignore local Docker config
-local.mk
+# Open code
+.sisyphus
