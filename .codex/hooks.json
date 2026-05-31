@@ -1,9 +1,34 @@
 {
   "hooks": {
-    "SessionStart": [],
-    "UserPromptSubmit": [],
-    "PreToolUse": [],
+    "PermissionRequest": [],
     "PostToolUse": [],
+    "PostCompact": [],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [],
+    "SubagentStop": [],
+    "UserPromptSubmit": [],
     "Stop": []
   }
 }
