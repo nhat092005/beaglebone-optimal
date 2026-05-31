@@ -8,6 +8,13 @@ services:
     environment:
       PROJECT_STORAGE_ROOT: /storage
       WORKSPACE_NAME: ${WORKSPACE_NAME:-default}
+      YOCTO_ROOT: /storage/workspaces/${WORKSPACE_NAME:-default}/yocto
+      YOCTO_SOURCES_DIR: /storage/workspaces/${WORKSPACE_NAME:-default}/yocto/sources
+      YOCTO_POKY_DIR: /storage/workspaces/${WORKSPACE_NAME:-default}/yocto/sources/poky
+      YOCTO_BUILD_DIR: /storage/workspaces/${WORKSPACE_NAME:-default}/yocto/build
+      YOCTO_DOWNLOADS_DIR: /storage/shared/downloads
+      YOCTO_SSTATE_DIR: /storage/shared/sstate
+      YOCTO_IMAGE: ${YOCTO_IMAGE:-core-image-minimal}
     volumes:
       - .:/workspace
       - ${PROJECT_STORAGE_ROOT:-/tmp/beaglebone-optimal-storage}:/storage
