@@ -1,0 +1,6 @@
+# Append these lines into conf/local.conf after running:
+#   source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+MACHINE ??= "beaglebone-yocto"
+DL_DIR ??= "/storage/shared/downloads"
+SSTATE_DIR ??= "/storage/shared/sstate"

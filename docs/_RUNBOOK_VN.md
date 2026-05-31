@@ -89,6 +89,7 @@ ${PROJECT_STORAGE_ROOT}/
         ├── out/
         ├── tmp/
         └── yocto/
+            ├── sources/
             └── build/
 ```
 
@@ -96,6 +97,15 @@ ${PROJECT_STORAGE_ROOT}/
 
 - `shared/` giữ cache có thể tái sử dụng
 - `workspaces/<name>/` giữ output và state riêng của workspace hiện tại
+- `yocto/sources/` giữ source checkout và layer Yocto đã pin cho workspace
+- `yocto/build/` giữ Yocto Build Directory đang dùng
+
+Đường dẫn host dẫn xuất mà `Makefile` export:
+
+- `YOCTO_SOURCES_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/sources`
+- `YOCTO_BUILD_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/build`
+- `YOCTO_DOWNLOADS_DIR=${PROJECT_STORAGE_ROOT}/shared/downloads`
+- `YOCTO_SSTATE_DIR=${PROJECT_STORAGE_ROOT}/shared/sstate`
 
 ## Lệnh public chuẩn
 
@@ -127,6 +137,18 @@ Chạy một lệnh bất kỳ trong builder container:
 
 ```bash
 make docker-run CMD='uname -a'
+```
+
+Khởi tạo Yocto build directory:
+
+```bash
+make yocto-init
+```
+
+Build image Yocto mặc định:
+
+```bash
+make yocto-build
 ```
 
 ## Hành vi từng lệnh
@@ -197,6 +219,73 @@ make docker-run CMD='ls -la /storage'
 make docker-run CMD='env | sort'
 ```
 
+### `make yocto-init`
+
+Hành vi:
+
+- chạy cùng preflight như `docker-shell`
+- yêu cầu đã có checkout `poky` hợp lệ tại `YOCTO_POKY_DIR`
+- tạo Yocto Build Directory bằng cách source `oe-init-build-env`
+- không tự sửa file dưới `conf/`
+- in ra đường dẫn file mẫu `local.conf` và `bblayers.conf` của project cùng bước manual tiếp theo
+
+Dùng khi:
+
+- `poky` đã được clone dưới `YOCTO_SOURCES_DIR`
+- bạn muốn tạo `conf/` trong build dir nằm trên storage root
+
+### `make yocto-build`
+
+Hành vi:
+
+- chạy cùng preflight như `docker-shell`
+- yêu cầu có checkout `poky` và `YOCTO_BUILD_DIR/conf/local.conf`
+- source `oe-init-build-env` cho build dir nằm trên storage root
+- chạy `bitbake ${YOCTO_IMAGE}`
+
+Dùng khi:
+
+- `make yocto-init` đã tạo build dir
+- `conf/local.conf` đã có các setting project mà bạn muốn
+
+## Quy ước storage cho Yocto
+
+Repo giữ toàn bộ dữ liệu Yocto nặng dưới cùng host storage root với Docker:
+
+- `/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
+- `/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
+- `/storage/shared/downloads`
+- `/storage/shared/sstate`
+
+Workflow khuyến nghị bên trong builder container:
+
+```bash
+mkdir -p "$YOCTO_SOURCES_DIR"
+cd "$YOCTO_SOURCES_DIR"
+git clone -b scarthgap https://git.yoctoproject.org/poky
+cd poky
+
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cat /workspace/yocto/conf/local.conf.example
+cat /workspace/yocto/conf/bblayers.conf.example
+```
+
+Cách này giữ source checkout, build output, downloads, và sstate ra khỏi
+source tree và gom hết về cùng host-managed storage root.
+
+Luồng cập nhật `conf/local.conf` bằng tay:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
+```
+
 ## Runtime contract
 
 Compose service hiện tại tên là `builder`.
@@ -210,6 +299,13 @@ Runtime contract quan trọng:
 - env trong container:
   - `PROJECT_STORAGE_ROOT=/storage`
   - `WORKSPACE_NAME=${WORKSPACE_NAME}`
+  - `YOCTO_ROOT=/storage/workspaces/${WORKSPACE_NAME}/yocto`
+  - `YOCTO_SOURCES_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
+  - `YOCTO_POKY_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources/poky`
+  - `YOCTO_BUILD_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
+  - `YOCTO_DOWNLOADS_DIR=/storage/shared/downloads`
+  - `YOCTO_SSTATE_DIR=/storage/shared/sstate`
+  - `YOCTO_IMAGE=${YOCTO_IMAGE}`
 
 ## Image contract
 

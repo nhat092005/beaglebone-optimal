@@ -1,0 +1,11 @@
+# Copy this file to conf/bblayers.conf after running:
+#   source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+BBPATH = "${TOPDIR}"
+BBFILES ?= ""
+
+BBLAYERS ?= " \
+  ${TOPDIR}/../sources/poky/meta \
+  ${TOPDIR}/../sources/poky/meta-poky \
+  ${TOPDIR}/../sources/poky/meta-yocto-bsp \
+"

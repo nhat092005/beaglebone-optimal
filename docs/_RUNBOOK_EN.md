@@ -89,6 +89,7 @@ ${PROJECT_STORAGE_ROOT}/
         ├── out/
         ├── tmp/
         └── yocto/
+            ├── sources/
             └── build/
 ```
 
@@ -96,6 +97,15 @@ Meaning:
 
 - `shared/` stores reusable caches
 - `workspaces/<name>/` stores outputs and state for the current workspace
+- `yocto/sources/` stores pinned Yocto checkouts and layers for the workspace
+- `yocto/build/` stores the active Yocto Build Directory
+
+Derived host paths exported by `Makefile`:
+
+- `YOCTO_SOURCES_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/sources`
+- `YOCTO_BUILD_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/build`
+- `YOCTO_DOWNLOADS_DIR=${PROJECT_STORAGE_ROOT}/shared/downloads`
+- `YOCTO_SSTATE_DIR=${PROJECT_STORAGE_ROOT}/shared/sstate`
 
 ## Standard public commands
 
@@ -127,6 +137,18 @@ Run any command inside the builder container:
 
 ```bash
 make docker-run CMD='uname -a'
+```
+
+Initialize the Yocto build directory:
+
+```bash
+make yocto-init
+```
+
+Build the default Yocto image:
+
+```bash
+make yocto-build
 ```
 
 ## Behavior of each command
@@ -197,6 +219,73 @@ make docker-run CMD='ls -la /storage'
 make docker-run CMD='env | sort'
 ```
 
+### `make yocto-init`
+
+Behavior:
+
+- runs the same preflight as `docker-shell`
+- requires a valid `poky` checkout at `YOCTO_POKY_DIR`
+- creates the Yocto Build Directory by sourcing `oe-init-build-env`
+- does not edit files under `conf/`
+- prints the project `local.conf` and `bblayers.conf` example paths and the next manual step
+
+Use it when:
+
+- `poky` is already cloned under `YOCTO_SOURCES_DIR`
+- you want `conf/` generated under the storage-backed build dir
+
+### `make yocto-build`
+
+Behavior:
+
+- runs the same preflight as `docker-shell`
+- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
+- sources `oe-init-build-env` for the storage-backed build dir
+- runs `bitbake ${YOCTO_IMAGE}`
+
+Use it when:
+
+- `make yocto-init` already created the build dir
+- `conf/local.conf` already includes the project settings you want
+
+## Yocto storage convention
+
+The repo keeps Yocto's heavy data under the same host storage root as Docker:
+
+- `/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
+- `/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
+- `/storage/shared/downloads`
+- `/storage/shared/sstate`
+
+Recommended workflow inside the builder container:
+
+```bash
+mkdir -p "$YOCTO_SOURCES_DIR"
+cd "$YOCTO_SOURCES_DIR"
+git clone -b scarthgap https://git.yoctoproject.org/poky
+cd poky
+
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cat /workspace/yocto/conf/local.conf.example
+cat /workspace/yocto/conf/bblayers.conf.example
+```
+
+This keeps source checkouts, build output, downloads, and sstate off the source
+tree and under the same host-managed storage root.
+
+Manual update flow for `conf/local.conf`:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
+```
+
 ## Runtime contract
 
 The current Compose service name is `builder`.
@@ -210,6 +299,13 @@ Important runtime contract:
 - env inside the container:
   - `PROJECT_STORAGE_ROOT=/storage`
   - `WORKSPACE_NAME=${WORKSPACE_NAME}`
+  - `YOCTO_ROOT=/storage/workspaces/${WORKSPACE_NAME}/yocto`
+  - `YOCTO_SOURCES_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
+  - `YOCTO_POKY_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources/poky`
+  - `YOCTO_BUILD_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
+  - `YOCTO_DOWNLOADS_DIR=/storage/shared/downloads`
+  - `YOCTO_SSTATE_DIR=/storage/shared/sstate`
+  - `YOCTO_IMAGE=${YOCTO_IMAGE}`
 
 ## Image contract
 

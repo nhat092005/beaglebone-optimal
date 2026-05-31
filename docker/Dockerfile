@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     flex \
     gawk \
     gcc \
+    g++ \
     gcc-arm-linux-gnueabihf=4:11.2.0-1ubuntu1 \
     gcc-arm-none-eabi \
     git \
@@ -28,9 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libelf-dev \
     libssl-dev \
     libyaml-dev \
+    lz4 \
     locales \
     make \
     minicom \
+    patch \
     python3 \
     python3-dev \
     python3-pip \
@@ -45,6 +48,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     wget \
     xz-utils \
+    bzip2 \
+    zstd \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
