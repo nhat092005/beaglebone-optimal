@@ -151,6 +151,12 @@ Build image Yocto mặc định:
 make yocto-build
 ```
 
+Flash image Yocto mặc định vào thẻ SD trên máy host:
+
+```bash
+make sd-flash SDCARD=/dev/sdX
+```
+
 ## Hành vi từng lệnh
 
 ### `make docker-build`
@@ -247,6 +253,23 @@ Dùng khi:
 
 - `make yocto-init` đã tạo build dir
 - `conf/local.conf` đã có các setting project mà bạn muốn
+
+### `make sd-flash SDCARD='/dev/sdX'`
+
+Hành vi:
+
+- chạy trên máy host, không chạy trong builder container
+- bắt buộc truyền block device dạng whole-disk qua `SDCARD`
+- dùng `IMAGE` nếu có truyền vào, nếu không sẽ flash file `.wic` mặc định dưới `YOCTO_BUILD_DIR`
+- tự unmount các partition con đang mounted của thiết bị đã chọn trước khi ghi
+- ưu tiên `bmaptool` với `${IMAGE}.bmap` khi cả hai cùng tồn tại
+- fallback sang `dd` khi thiếu `bmaptool` hoặc thiếu file `.bmap`
+
+Dùng khi:
+
+- `make yocto-build` đã tạo xong artifact `.wic`
+- bạn đã xác định đúng device của thẻ SD trên host
+- bạn cần một lệnh flash chạy trên host có thể lặp lại cho bring-up Phase 2
 
 ## Quy ước storage cho Yocto
 

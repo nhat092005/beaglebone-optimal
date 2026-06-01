@@ -151,6 +151,12 @@ Build the default Yocto image:
 make yocto-build
 ```
 
+Flash the default Yocto image to an SD card on the host:
+
+```bash
+make sd-flash SDCARD=/dev/sdX
+```
+
 ## Behavior of each command
 
 ### `make docker-build`
@@ -247,6 +253,23 @@ Use it when:
 
 - `make yocto-init` already created the build dir
 - `conf/local.conf` already includes the project settings you want
+
+### `make sd-flash SDCARD='/dev/sdX'`
+
+Behavior:
+
+- runs on the host, not in the builder container
+- requires an explicit whole-disk block device through `SDCARD`
+- uses `IMAGE` if provided, otherwise flashes the default `.wic` under `YOCTO_BUILD_DIR`
+- unmounts mounted child partitions of the selected device before writing
+- prefers `bmaptool` with `${IMAGE}.bmap` when both exist
+- falls back to `dd` when `bmaptool` or the `.bmap` file is missing
+
+Use it when:
+
+- `make yocto-build` already produced the `.wic` artifact
+- you have identified the correct SD card device on the host
+- you want a repeatable host-side flash command for Phase 2 bring-up
 
 ## Yocto storage convention
 

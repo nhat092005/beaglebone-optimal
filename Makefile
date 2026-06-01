@@ -20,6 +20,8 @@ YOCTO_BUILD_DIR ?= $(YOCTO_ROOT)/build
 YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
 YOCTO_SSTATE_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
 YOCTO_IMAGE ?= core-image-minimal
+IMAGE ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
+SDCARD ?=
 
 export DOCKER_IMAGE
 export DOCKER_TAG
@@ -33,14 +35,16 @@ export YOCTO_BUILD_DIR
 export YOCTO_DOWNLOADS_DIR
 export YOCTO_SSTATE_DIR
 export YOCTO_IMAGE
+export IMAGE
+export SDCARD
 export CMD
 
 C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
-SHELL_FILES := $(shell $(GIT) ls-files -- '*.sh')
+SHELL_FILES := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash))
 YAML_LINT_FILES := $(shell $(GIT) ls-files -- 'compose.yaml' '.github/workflows/*.yml' '.github/workflows/*.yaml')
 DOCKERFILES := $(shell $(GIT) ls-files -- 'docker/Dockerfile')
 
-.PHONY: help docker-build docker-shell docker-run doctor yocto-init yocto-build format format-check lint check
+.PHONY: help docker-build docker-shell docker-run doctor yocto-init yocto-build sd-flash format format-check lint check
 
 help:
 	@printf '%s\n' \
@@ -57,6 +61,7 @@ help:
 		'Yocto workflow:' \
 		'  make yocto-init                   Create Yocto build dir and validate poky checkout.' \
 		'  make yocto-build                  Build YOCTO_IMAGE inside the builder container.' \
+		'  make sd-flash SDCARD='\''/dev/sdX'\''   Flash IMAGE to an SD card on the host.' \
 		'  make format                       Format tracked shell and C/C++ files.' \
 		'  make format-check                 Check tracked shell and C/C++ formatting.' \
 		'  make lint                         Lint tracked shell, YAML, and Docker files.' \
@@ -93,6 +98,9 @@ yocto-init:
 
 yocto-build:
 	@bash -lc 'source scripts/docker/lib.sh && require_yocto_image && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$$YOCTO_IMAGE"'\'''
+
+sd-flash:
+	@bash scripts/sd-flash
 
 format:
 	@if [ -n "$(C_FORMAT_FILES)" ]; then \
