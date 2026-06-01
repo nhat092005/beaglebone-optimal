@@ -10,9 +10,10 @@
 
 # Understand Anything files
 .understand-anything
+.understand
 
 # temporary files
-.tmp/
+tmp/
 
 # Local Docker config
 local.mk

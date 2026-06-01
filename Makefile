@@ -13,6 +13,7 @@ DOCKER_IMAGE ?= beaglebone-optimal-builder
 DOCKER_TAG ?= dev
 WORKSPACE_NAME ?= default
 DOCKER_USER ?= $(shell id -u):$(shell id -g)
+
 YOCTO_ROOT ?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
 YOCTO_SOURCES_DIR ?= $(YOCTO_ROOT)/sources
 YOCTO_POKY_DIR ?= $(YOCTO_SOURCES_DIR)/poky
@@ -53,7 +54,7 @@ help:
 		'Docker builder:' \
 		'  make docker-build                 Build builder image with Docker Compose.' \
 		'  make docker-shell                 Start interactive shell inside builder container.' \
-		'  make docker-run CMD='\''uname -a'\''   Run command inside builder container.' \
+		'  make docker-run CMD='\''uname -a'\''    Run command inside builder container.' \
 		'' \
 		'Environment check:' \
 		'  make doctor                       Validate Docker phase 1 setup.' \
