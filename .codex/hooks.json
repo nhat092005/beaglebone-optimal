@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bd prime"
+            "command": "rtk node /home/nhat/Working_Space/my-project/beaglebone-optimal/.codex/hooks/session_start_bd_prime.mjs"
           }
         ]
       }
