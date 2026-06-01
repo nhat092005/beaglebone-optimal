@@ -8,8 +8,8 @@ source scripts/docker/lib.sh
 require_command docker
 docker compose version > /dev/null
 
-if [ ! -f local.mk.example ]; then
-    warn "local.mk.example is missing"
+if [ ! -f local.mk ]; then
+    warn "local.mk is missing. Use local.mk.example as a template to create it."
 fi
 
 validate_docker_user
