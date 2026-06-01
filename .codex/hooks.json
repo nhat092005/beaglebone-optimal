@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bd prime"
+            "command": "rtk node /home/nhat/Working_Space/my-project/beaglebone-optimal/.codex/hooks/precompact_bd_prime.mjs"
           }
         ]
       }
