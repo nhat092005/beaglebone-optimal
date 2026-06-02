@@ -156,3 +156,28 @@
   - `zImage`
   - `zImage-initramfs-beaglebone-optimal-tiny.bin`
   - `core-image-bbb-tiny-initramfs-beaglebone-optimal-tiny.cpio.gz`
+
+## 2026-06-03 Runtime Ownership Canonicalization
+
+- Moved tracked tiny `/init` ownership into the image layer:
+  - removed the standalone `recipes-core/beaglebone-optimal-tiny-init/`
+    package recipe
+  - added `meta-beaglebone-optimal/recipes-core/images/files/init`
+  - made `core-image-bbb-tiny-initramfs.bb` install `/init` directly during
+    image rootfs assembly
+- Moved boot-architecture truth out of
+  `yocto/conf/local.conf.tiny.example`:
+  - removed `SERIAL_CONSOLES`
+  - removed `INITRAMFS_IMAGE`
+  - removed `INITRAMFS_IMAGE_BUNDLE`
+- Made machine metadata the owner of those values in
+  `conf/machine/beaglebone-optimal-tiny.conf`:
+  - `SERIAL_CONSOLES`
+  - `INITRAMFS_IMAGE`
+  - `INITRAMFS_IMAGE_BUNDLE`
+- Rebuilt the tiny image successfully:
+  - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+- Verified contract and artifact truth:
+  - `make yocto-list` still reports the expected tiny public surface
+  - the built initramfs contains executable `/init`
+  - the built initramfs contains `/dev/console`
