@@ -159,10 +159,10 @@ yocto-build:
 endif
 
 sd-flash:
-	@bash scripts/sd-flash
+	@bash scripts/sd-flash.sh
 
 sd-flash-tiny:
-	@bash scripts/sd-flash-tiny
+	@bash scripts/sd-flash-tiny.sh
 
 format:
 	@if [ -n "$(C_FORMAT_FILES)" ]; then \
