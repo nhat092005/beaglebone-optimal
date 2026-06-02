@@ -86,3 +86,28 @@
   - flash SD using `make sd-flash-tiny SDCARD=/dev/sdX`
   - boot BeagleBone Black from SD
   - capture UART proof showing automatic BusyBox shell and working `dmesg`
+
+## 2026-06-02 Hardware Availability Check
+
+- Checked current host block devices with:
+  - `lsblk -o NAME,PATH,TYPE,SIZE,MODEL,RM,MOUNTPOINTS`
+- Result:
+  - no removable SD-card-sized disk is currently visible
+  - only internal NVMe disks and loop devices are present
+- Checked UART candidates with:
+  - `find /dev -maxdepth 1 -type c \( -name 'ttyUSB*' -o -name 'ttyACM*' -o -name 'ttyS*' \)`
+- Result:
+  - no `/dev/ttyUSB*` or `/dev/ttyACM*` device is currently visible
+- Checked USB devices with:
+  - `lsusb`
+- Result:
+  - no obvious BeagleBone Black or USB UART adapter is currently attached
+- No destructive flash command was run because there is no confirmed target
+  `SDCARD` device.
+- Remaining Phase 1 blocker is physical access:
+  - attach the SD card to the host
+  - identify the whole-disk device, for example `/dev/sdX`
+  - run `make sd-flash-tiny SDCARD=/dev/sdX`
+  - connect UART
+  - boot BBB from SD
+  - capture the UART log showing automatic BusyBox shell and working `dmesg`
