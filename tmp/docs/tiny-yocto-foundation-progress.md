@@ -53,3 +53,36 @@
   - run `make sd-flash-tiny SDCARD=/dev/sdX`
   - boot BBB from SD
   - capture UART log showing automatic BusyBox shell and working `dmesg`
+
+## 2026-06-02 Continuation Verification
+
+- Re-ran the public tiny contract listing:
+  - `make yocto-list`
+- Confirmed the tiny deploy directory still contains the expected boot artifacts:
+  - `MLO`
+  - `u-boot.img`
+  - `am335x-boneblack-optimal-tiny.dtb`
+  - `core-image-bbb-tiny-initramfs-beaglebone-optimal-tiny.cpio.gz`
+  - `zImage-initramfs-beaglebone-optimal-tiny.bin`
+- Re-ran the full tiny build successfully:
+  - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+- Build configuration confirmed:
+  - `MACHINE = "beaglebone-optimal-tiny"`
+  - `DISTRO = "beaglebone-optimal-tiny"`
+  - `meta-beaglebone-optimal = "feat/tiny-yocto-foundation:98a8ab6b0038a3e83dc5e94de7e7e7d0e4b4bb93"`
+- Current tiny manifest still contains only:
+  - `base-files`
+  - `base-passwd`
+  - `beaglebone-optimal-tiny-init`
+  - `busybox`
+  - `busybox-inittab`
+  - `busybox-mdev`
+  - `musl`
+  - `ttyrun`
+- Ran repo quality gate:
+  - `make check`
+  - result: passed; host emitted only the existing non-fatal `hadolint` warning.
+- Remaining Phase 1 blocker is unchanged and requires physical hardware access:
+  - flash SD using `make sd-flash-tiny SDCARD=/dev/sdX`
+  - boot BeagleBone Black from SD
+  - capture UART proof showing automatic BusyBox shell and working `dmesg`
