@@ -1,4 +1,4 @@
-# Baseline path example.
+# Tiny path example.
 # Copy this file to conf/bblayers.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
@@ -9,4 +9,5 @@ BBLAYERS ?= " \
   ${TOPDIR}/../sources/poky/meta \
   ${TOPDIR}/../sources/poky/meta-poky \
   ${TOPDIR}/../sources/poky/meta-yocto-bsp \
+  /workspace/meta-beaglebone-optimal \
 "

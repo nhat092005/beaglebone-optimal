@@ -1,9 +1,13 @@
-# Baseline path example.
+# Tiny path example.
 # Append these lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
-MACHINE ??= "beaglebone-yocto"
+MACHINE = "beaglebone-optimal-tiny"
+DISTRO = "beaglebone-optimal-tiny"
+
 DL_DIR ??= "/storage/shared/downloads"
 SSTATE_DIR ??= "/storage/shared/sstate"
 SERIAL_CONSOLES = "115200;ttyS0"
-IMAGE_INSTALL:append = " util-linux util-linux-lsblk iproute2 ethtool i2c-tools e2fsprogs dosfstools"
+
+INITRAMFS_IMAGE = "core-image-bbb-tiny-initramfs"
+INITRAMFS_IMAGE_BUNDLE = "1"

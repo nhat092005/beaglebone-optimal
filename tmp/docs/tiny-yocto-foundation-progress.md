@@ -1,0 +1,55 @@
+# Tiny Yocto Foundation Progress
+
+## 2026-06-02
+
+- Claimed beads issue `beaglebone-optimal-09q` for Phase 1 tiny foundation implementation.
+- Re-read the locked Phase 1 and Phase 2 documents in `tmp/docs/`.
+- Inspected current repo public surface:
+  - `Makefile`
+  - `scripts/sd-flash`
+  - `docs/_RUNBOOK_EN.md`
+  - `yocto/conf/*.example`
+- Inspected Poky kernel/image/U-Boot plumbing for:
+  - `poky-tiny`
+  - `core-image-tiny-initramfs`
+  - `linux-yocto-tiny`
+  - `uboot-extlinux-config`
+  - bundled initramfs artifact naming
+- Confirmed `linux-yocto-tiny` needs BBB-specific compatibility and mapping in the custom layer.
+- Added a BBB tiny kernel metadata path in `meta-beaglebone-optimal`:
+  - custom external BSP file `beaglebone-tiny.scc`
+  - custom BBB tiny DT `am335x-boneblack-optimal-tiny.dts`
+  - custom kernel delta `tiny.cfg`
+- Fixed the first tiny-kernel blockers in sequence:
+  - missing BBB tiny BSP definition for `do_kernel_metadata`
+  - bad relative `beaglebone.cfg` lookup from the custom `.scc`
+  - incompatible upstream ARM patch stack by switching the custom BSP to a config-only external BSP
+  - DT compile failure from the unlabeled `leds` node on kernel `6.6.127`
+- Proved the custom `linux-yocto-tiny` path now builds successfully through:
+  - `do_kernel_metadata`
+  - `do_patch`
+  - `do_compile`
+- Proved the full tiny Yocto build now succeeds with:
+  - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+- Confirmed deploy artifacts now exist under the tiny deploy directory, including:
+  - `MLO`
+  - `u-boot.img`
+  - `am335x-boneblack-optimal-tiny.dtb`
+  - `core-image-bbb-tiny-initramfs-*.cpio.gz`
+  - `zImage-initramfs-beaglebone-optimal-tiny.bin`
+- Tightened tiny target package drift after the first successful build:
+  - removed `busybox-udhcpc`
+  - removed `update-alternatives-opkg`
+- Current tiny manifest now contains only:
+  - `base-files`
+  - `base-passwd`
+  - `beaglebone-optimal-tiny-init`
+  - `busybox`
+  - `busybox-inittab`
+  - `busybox-mdev`
+  - `musl`
+  - `ttyrun`
+- Remaining Phase 1 blocker is now physical proof, not Yocto build plumbing:
+  - run `make sd-flash-tiny SDCARD=/dev/sdX`
+  - boot BBB from SD
+  - capture UART log showing automatic BusyBox shell and working `dmesg`

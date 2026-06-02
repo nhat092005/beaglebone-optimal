@@ -309,6 +309,53 @@ cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
 cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
 ```
 
+## Tiny path workflow
+
+The tiny path is Phase 1 initramfs-only bring-up for BeagleBone Black.
+
+Public contract files:
+
+- `docs/boot-contract.md`
+- `yocto/conf/local.conf.tiny.example`
+- `yocto/conf/bblayers.conf.tiny.example`
+
+Manual tiny config apply flow:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.tiny.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
+```
+
+Build the tiny image:
+
+```bash
+make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs
+```
+
+Create tiny SD boot media on the host:
+
+```bash
+make sd-flash-tiny SDCARD=/dev/sdX
+```
+
+Tiny path operator notes:
+
+- `sd-flash-tiny` creates a single FAT boot partition
+- tiny boot media carries stable names:
+  - `MLO`
+  - `u-boot.img`
+  - `zImage`
+  - `am335x-boneblack.dtb`
+  - `extlinux/extlinux.conf`
+  - optional `uEnv.txt`
+- tiny path does not use `.wic` or a separate ext4 rootfs partition
+- tiny path still expects proof on hardware through UART boot logs
+
 ## Runtime contract
 
 The current Compose service name is `builder`.
