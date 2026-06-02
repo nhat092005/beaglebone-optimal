@@ -6,6 +6,14 @@ This document locks the exact Phase 1 scope for the `feat/tiny-yocto-foundation`
 workstream. It exists to prevent design drift while implementing the first
 bootable tiny path for BeagleBone Black.
 
+The canonical directory and layer layout for this workstream is defined in:
+
+- `tmp/docs/tiny-yocto-structure-rules.md`
+
+The strict file-by-file ownership map is also defined there. This document
+does not replace that ownership map. It only locks the active Phase 1 outcome,
+scope, gates, and acceptance criteria.
+
 Phase 1 is done only when the custom tiny path boots a BeagleBone Black from
 SD into an automatic BusyBox shell on UART.
 
@@ -46,6 +54,33 @@ proven on hardware.
 - Tiny Phase 1 must use `linux-yocto-tiny`.
 - No fallback to `linux-yocto` is allowed.
 - If the tiny provider fails for BBB, the tiny path must be fixed directly.
+
+### Kernel Metadata Structure
+
+- During Phase 1, the active local kernel metadata tree lives under:
+  - `meta-beaglebone-optimal/recipes-kernel/linux/linux-yocto-tiny/phase1/`
+- `phase1/` contains exactly:
+  - `dts/`
+  - `scc/`
+  - `cfg/`
+- `phase1/scc/beaglebone-tiny.scc` is a thin entrypoint only.
+- `phase1/scc/kernel-policy.scc` is the real local Phase 1 kernel policy
+  graph.
+- `phase1/cfg/core.cfg`, `phase1/cfg/disable.cfg`, and `phase1/cfg/hw.cfg`
+  are the config truth for Phase 1 behavior.
+
+### Phase 1 Ownership Boundary
+
+Phase 1 owns:
+
+- the active tiny architecture contract
+- the active kernel phase tree under `phase1/`
+- the build, flash, and proof gates required for first hardware success
+
+Phase 1 does not redefine:
+
+- the global structure rules in `tiny-yocto-structure-rules.md`
+- the deferred optimization backlog reserved for Phase 2
 
 ### Root Model
 
@@ -172,6 +207,20 @@ Safe-to-cut direction for Phase 1:
 - SPI buses
 - board-other baggage
 
+### Kernel Config Direction
+
+Phase 1 kernel config truth is split into:
+
+- `core.cfg`
+  - positive must-have options
+- `disable.cfg`
+  - explicit must-not-have options
+- `hw.cfg`
+  - BBB hardware essentials only
+
+Phase 1 must not rely on broad inherited standard or base policy to define
+final tiny behavior.
+
 ## Runtime Lock
 
 Tiny Phase 1 runtime is:
@@ -254,10 +303,26 @@ The repo must expose both paths clearly.
 - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
 - `make sd-flash-tiny SDCARD=/dev/sdX`
 
+Rules:
+
+- the tiny `local.conf` example is a public-input example, not the home for
+  long-term kernel policy
+- the tiny `bblayers.conf` example is a layer-membership example only
+- boot templates under `yocto/boot/` are public-facing boot templates, not
+  implementation truth for kernel metadata
+
 ### Presentation Rule
 
 - `make help` must show baseline and tiny at a glance
 - `make yocto-list` must list supported baseline and tiny surfaces
+
+## Flash Gate
+
+Do not flash new tiny artifacts until all of the following are true:
+
+- `do_patch` is clean
+- the final kernel `.config` matches Phase 1 truth
+- deploy artifacts match the tiny boot contract
 - `make yocto-list` must not carry acceptance logic
 
 ## Safety and Mutability Rules

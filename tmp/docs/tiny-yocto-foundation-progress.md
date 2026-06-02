@@ -111,3 +111,48 @@
   - connect UART
   - boot BBB from SD
   - capture the UART log showing automatic BusyBox shell and working `dmesg`
+
+## 2026-06-02 Kernel Phase-Tree Refactor
+
+- Replaced the ad-hoc root-level tiny kernel metadata files with the locked
+  active tree:
+  - `phase1/dts/`
+  - `phase1/scc/`
+  - `phase1/cfg/`
+- Updated `linux-yocto-tiny_6.6.bbappend` to wire only:
+  - `am335x-boneblack-optimal-tiny.dts`
+  - `beaglebone-tiny.scc`
+  - `kernel-policy.scc`
+  - `core.cfg`
+  - `disable.cfg`
+  - `hw.cfg`
+- Removed the incorrect legacy active-path files:
+  - root-level `am335x-boneblack-optimal-tiny.dts`
+  - root-level `beaglebone-tiny.scc`
+  - root-level `tiny.cfg`
+  - the transitional `standard-arm-nopatch.scc`
+  - the transitional `tiny-arm-nopatch.scc`
+- Rebuilt from clean kernel state:
+  - `make docker-run CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake -c cleansstate linux-yocto-tiny'`
+  - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+- New evidence:
+  - `do_kernel_metadata` succeeded using only `phase1/` files
+  - `do_patch` succeeded after dropping the broad inherited standard feature
+    buckets from the active path
+  - full tiny build completed successfully again
+- Final tiny kernel config evidence:
+  - `CONFIG_MMU=y`
+  - `CONFIG_ARCH_MULTI_V7=y`
+  - `CONFIG_SOC_AM33XX=y`
+  - `CONFIG_ARCH_OMAP2PLUS=y`
+  - `# CONFIG_MODULES is not set`
+  - `# CONFIG_NET is not set`
+  - `# CONFIG_THUMB2_KERNEL is not set`
+- Deploy artifact evidence now includes stable symlink names consumed by
+  `sd-flash-tiny`:
+  - `MLO`
+  - `u-boot.img`
+  - `am335x-boneblack-optimal-tiny.dtb`
+  - `zImage`
+  - `zImage-initramfs-beaglebone-optimal-tiny.bin`
+  - `core-image-bbb-tiny-initramfs-beaglebone-optimal-tiny.cpio.gz`

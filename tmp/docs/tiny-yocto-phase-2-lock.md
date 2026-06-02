@@ -5,6 +5,14 @@
 This document locks the work that is intentionally deferred until after Phase 1
 has already proven a bootable tiny path on BeagleBone Black.
 
+The canonical directory and layer layout for both phases is defined in:
+
+- `tmp/docs/tiny-yocto-structure-rules.md`
+
+The strict file-by-file ownership map also lives there. This document only
+locks what is deferred until after Phase 1 proof and how the project may
+legally diverge into a future `phase2/` tree.
+
 Phase 2 starts only after Phase 1 can:
 
 - build successfully
@@ -19,6 +27,20 @@ project hardening without reopening Phase 1 architecture decisions.
 
 Phase 2 is about trimming and tightening, not redefining the tiny foundation.
 
+## Phase 2 Ownership Boundary
+
+Phase 2 owns only:
+
+- work intentionally deferred until after Phase 1 hardware proof
+- deeper pruning, hardening, and measurement that do not belong in first-boot
+  bring-up
+
+Phase 2 does not own:
+
+- the initial Phase 1 hardware proof contract
+- the current active phase path while Phase 1 is still unproven
+- the structure rules already locked in `tiny-yocto-structure-rules.md`
+
 ## Inputs Required Before Phase 2
 
 Phase 2 assumes the following already exist and are trusted:
@@ -32,6 +54,18 @@ Phase 2 assumes the following already exist and are trusted:
 - stable `beaglebone-optimal-tiny` distro
 - stable `core-image-bbb-tiny-initramfs`
 - a UART boot log proving Phase 1 acceptance
+
+## Phase Tree Rule
+
+- `phase2/` must not exist before Phase 1 is proven.
+- If Phase 2 starts, its local kernel metadata must live under:
+  - `meta-beaglebone-optimal/recipes-kernel/linux/linux-yocto-tiny/phase2/`
+- `phase2/` must follow the same layer split as `phase1/`:
+  - `dts/`
+  - `scc/`
+  - `cfg/`
+- The bbappend must point at exactly one active phase path at a time.
+- Do not mix `phase1` files with `phase2` files in the active kernel path.
 
 ## In Scope for Phase 2
 
@@ -136,11 +170,12 @@ Still out of scope until separately approved:
 Recommended order once Phase 1 is proven:
 
 1. measure actual Phase 1 artifacts and boot behavior
-2. convert safe disabled DT leftovers into real removals
-3. tighten kernel config further against the final DT graph
-4. review BusyBox applet surface again
-5. decide whether appliance mode should remove or restrict shell behavior more
-6. add stronger regression checks to stop future drift
+2. create the `phase2/` tree only when a real Phase 2 truth needs to diverge
+3. convert safe disabled DT leftovers into real removals
+4. tighten kernel config further against the final DT graph
+5. review BusyBox applet surface again
+6. decide whether appliance mode should remove or restrict shell behavior more
+7. add stronger regression checks to stop future drift
 
 ## Phase 2 Validation Direction
 
