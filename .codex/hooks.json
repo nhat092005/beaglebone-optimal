@@ -3,17 +3,7 @@
     "PermissionRequest": [],
     "PostToolUse": [],
     "PostCompact": [],
-    "PreCompact": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "rtk node /home/nhat/Working_Space/my-project/beaglebone-optimal/.codex/hooks/precompact_bd_prime.mjs"
-          }
-        ]
-      }
-    ],
+    "PreCompact": [],
     "PreToolUse": [],
     "SessionStart": [
       {

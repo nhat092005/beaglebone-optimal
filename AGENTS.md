@@ -1,45 +1,75 @@
 # Agent Instructions
 
-## Make Commands
+## Repo Purpose
 
-```bash
-make help
-make doctor
-make docker-build
-make docker-shell
-make docker-run CMD='uname -a'
-```
+`beaglebone-optimal` is a self-learning BSP workspace for BeagleBone Black /
+TI AM335x. The repo is currently centered on:
 
-## Storage
+- Docker-based builder workflow
+- storage-backed Yocto builds
+- baseline image generation
+- early board bring-up and SD flashing
 
-`PROJECT_STORAGE_ROOT` is required for `make doctor`, `make docker-shell`, and
-`make docker-run`. The builder container mounts:
+Do not assume this repo already contains a full BSP customization stack. Start
+from the current workflow and extend only what the task requires.
 
-- repo root at `/workspace`
-- storage root at `/storage`
+## Orient Quickly
 
-Generated data is created under `/storage`, not in the source tree.
+Read in this order:
 
-## Docker Builder
+1. [`README.md`](README.md) for repo purpose and major docs
+2. [`Makefile`](Makefile) for the public command surface
+3. `local.mk` if it exists, otherwise [`local.mk.example`](local.mk.example),
+   for local machine inputs
+4. [`compose.yaml`](compose.yaml) and [`docker/Dockerfile`](docker/Dockerfile)
+   for builder runtime and image contract
+5. [`docs/_RUNBOOK_EN.md`](docs/_RUNBOOK_EN.md) or
+   [`docs/_RUNBOOK_VN.md`](docs/_RUNBOOK_VN.md) for operational workflow
 
-This repo uses a Docker-only phase 1 builder workflow. Runtime config lives in
-[`compose.yaml`](compose.yaml). Image build config lives in
-[`docker/Dockerfile`](docker/Dockerfile).
+If the task touches a specific command, read the script that implements it
+before making assumptions.
 
-### Setup
+## Source Of Truth
 
-1. Copy `local.mk.example` to `local.mk`.
-2. Set `PROJECT_STORAGE_ROOT` to an absolute path on your machine.
+Prefer repo truth in this order:
 
-Example:
+1. code and config actually executed
+2. `Makefile` as the public CLI contract
+3. implementation scripts under `scripts/`
+4. builder runtime files: `compose.yaml`, `docker/Dockerfile`
+5. docs and examples
 
-```make
-PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
-WORKSPACE_NAME := default
+If docs disagree with code, trust code first, then update docs to match.
 
-# Optional override. By default Make auto-detects the current host uid:gid.
-# DOCKER_USER := 1000:1000
-```
+## Repo Map
+
+- `Makefile`: public entrypoints for builders, Yocto workflow, and host-side
+  utilities
+- `scripts/`: implementation helpers behind `Makefile` targets
+- `docker/`: builder image definition
+- `docs/`: runbooks and quality guidance, not the primary behavior source
+- `yocto/conf/`: example config inputs copied into the external Yocto build dir
+- `assets/`: demo media only
+- `tmp/`: task-specific notes, roadmaps, or evidence; useful context, but not a
+  stable contract unless the task explicitly says so
+
+## Working Model
+
+- Generated data belongs under `PROJECT_STORAGE_ROOT`, not in the source tree.
+- Some commands run in the builder container, others run on the host. Check
+  `Makefile` and the runbook before assuming where a command executes.
+- Treat `local.mk` as machine-local input. Do not commit it.
+- Keep `AGENTS.md` high-level. Put procedural detail in the runbook or
+  task-specific docs, not here.
+
+## Task Guidance
+
+- For workflow questions, start from `Makefile` and the runbook.
+- For environment questions, inspect `local.mk` or `local.mk.example`.
+- For behavior changes, read the touched script or config directly instead of
+  inferring behavior from docs.
+- When a task references board bring-up or flashing, verify whether the step is
+  host-side or builder-side before acting.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:7510c1e2 -->
 ## Beads Issue Tracker
@@ -92,7 +122,7 @@ bd close <id>         # Complete work
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **beaglebone-optimal** (112 symbols, 109 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **beaglebone-optimal** (168 symbols, 170 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
