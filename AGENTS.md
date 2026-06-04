@@ -17,13 +17,14 @@ from the current workflow and extend only what the task requires.
 
 Read in this order:
 
-1. [`README.md`](README.md) for repo purpose and major docs
-2. [`Makefile`](Makefile) for the public command surface
-3. `local.mk` if it exists, otherwise [`local.mk.example`](local.mk.example),
+1. `~/.codex/AGENTS.md` and `AGENTS.md` for agent workflow.
+2. [`README.md`](README.md) for repo purpose and major docs
+3. [`Makefile`](Makefile) for the public command surface
+4. `local.mk` if it exists, otherwise [`local.mk.example`](local.mk.example),
    for local machine inputs
-4. [`compose.yaml`](compose.yaml) and [`docker/Dockerfile`](docker/Dockerfile)
+5. [`compose.yaml`](compose.yaml) and [`docker/Dockerfile`](docker/Dockerfile)
    for builder runtime and image contract
-5. [`docs/_RUNBOOK_EN.md`](docs/_RUNBOOK_EN.md) or
+6. [`docs/_RUNBOOK_EN.md`](docs/_RUNBOOK_EN.md) or
    [`docs/_RUNBOOK_VN.md`](docs/_RUNBOOK_VN.md) for operational workflow
 
 If the task touches a specific command, read the script that implements it
@@ -68,6 +69,10 @@ If docs disagree with code, trust code first, then update docs to match.
 - For environment questions, inspect `local.mk` or `local.mk.example`.
 - For behavior changes, read the touched script or config directly instead of
   inferring behavior from docs.
+- For Yocto/OpenEmbedded recipe patches, prefer generating `.patch` files from
+  committed source changes with `devtool finish` or `git format-patch` rather
+  than hand-writing patch hunks. Only hand-write a patch when the change is
+  intentionally tiny and there is no practical source tree to export from.
 - When a task references board bring-up or flashing, verify whether the step is
   host-side or builder-side before acting.
 
@@ -122,7 +127,7 @@ bd close <id>         # Complete work
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **beaglebone-optimal** (168 symbols, 170 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **beaglebone-optimal** (174 symbols, 176 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
