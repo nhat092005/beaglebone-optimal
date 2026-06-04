@@ -334,7 +334,7 @@ cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
 Build the tiny image:
 
 ```bash
-make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs
+make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 ```
 
 Create tiny SD boot media on the host:
@@ -350,7 +350,7 @@ Tiny path operator notes:
   - `MLO`
   - `u-boot.img`
   - `zImage`
-  - `am335x-boneblack.dtb`
+  - `am335x-boneblack-optimal-tiny.dtb`
   - `extlinux/extlinux.conf`
   - optional `uEnv.txt`
 - tiny path does not use `.wic` or a separate ext4 rootfs partition

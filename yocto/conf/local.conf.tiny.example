@@ -2,8 +2,8 @@
 # Append these lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
-MACHINE = "beaglebone-optimal-tiny"
-DISTRO = "beaglebone-optimal-tiny"
+MACHINE = "beaglebone-black-optimal-tiny"
+DISTRO = "optimal-tiny"
 
 DL_DIR ??= "/storage/shared/downloads"
 SSTATE_DIR ??= "/storage/shared/sstate"

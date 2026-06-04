@@ -19,7 +19,7 @@ The repo currently exposes two boot paths:
   - BeagleBone Black only
   - initramfs-first
   - single FAT boot partition
-  - `core-image-bbb-tiny-initramfs`
+  - `core-image-optimal-tiny-initramfs`
   - boot media creation through `make sd-flash-tiny`
 
 The baseline path remains valid while the tiny path is being proven.
@@ -50,7 +50,7 @@ The public tiny boot payload is:
 - `MLO`
 - `u-boot.img`
 - `zImage`
-- `am335x-boneblack.dtb`
+- `am335x-boneblack-optimal-tiny.dtb`
 - `extlinux/extlinux.conf`
 - optional `uEnv.txt`
 
@@ -104,6 +104,7 @@ Forbidden:
 - `uEnv.txt` must not own Linux payload selection.
 - The project must not introduce a second source of truth for kernel, DTB,
   initramfs, or kernel command line.
+- The tiny path must not depend on `uboot.env` as a project input.
 
 ## Source of Truth Policy
 
@@ -142,9 +143,10 @@ The Phase 1 `/init` path must:
 - mount `/proc`
 - mount `/sys`
 - mount `/dev`
+- mount `/dev/pts`
 - then exec the BusyBox shell
 
-`mdev` is the device manager for the tiny path.
+The tiny Phase 1 path uses kernel `devtmpfs` only.
 
 ## Phase 1 Removed Surface
 
@@ -185,7 +187,7 @@ path on `i2c0`.
   - `yocto/conf/local.conf.tiny.example`
   - `yocto/conf/bblayers.conf.tiny.example`
 - build:
-  - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+  - `make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs`
 - flash:
   - `make sd-flash-tiny SDCARD=/dev/sdX`
 

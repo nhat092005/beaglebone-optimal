@@ -116,7 +116,7 @@ populate_partition() {
     run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/MLO" "$mount_dir/MLO"
     run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/u-boot.img" "$mount_dir/u-boot.img"
     run_privileged install -m 0644 "$kernel_source" "$mount_dir/zImage"
-    run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" "$mount_dir/am335x-boneblack.dtb"
+    run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" "$mount_dir/${YOCTO_TINY_DTB}"
 
     run_privileged mkdir -p "$mount_dir/extlinux"
     run_privileged install -m 0644 "${TINY_EXTLINUX_TEMPLATE}" "$mount_dir/extlinux/extlinux.conf"

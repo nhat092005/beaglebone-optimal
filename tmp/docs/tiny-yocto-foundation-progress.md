@@ -179,5 +179,16 @@
   - `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
 - Verified contract and artifact truth:
   - `make yocto-list` still reports the expected tiny public surface
-  - the built initramfs contains executable `/init`
-  - the built initramfs contains `/dev/console`
+- the built initramfs contains executable `/init`
+- the built initramfs contains `/dev/console`
+
+## 2026-06-04 Deterministic Contract Cleanup
+
+- Started the deterministic cleanup slice locked by the active goal.
+- The target canonical naming map for implementation is:
+  - `MACHINE = "beaglebone-black-optimal-tiny"`
+  - `DISTRO = "optimal-tiny"`
+  - `YOCTO_IMAGE = "core-image-optimal-tiny-initramfs"`
+  - `DTB = "am335x-boneblack-optimal-tiny.dtb"`
+- Removed the stale `mdev` hotplug logic from the tracked tiny `/init`
+  implementation.
