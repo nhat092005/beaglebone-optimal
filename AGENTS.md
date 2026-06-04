@@ -73,6 +73,8 @@ If docs disagree with code, trust code first, then update docs to match.
   committed source changes with `devtool finish` or `git format-patch` rather
   than hand-writing patch hunks. Only hand-write a patch when the change is
   intentionally tiny and there is no practical source tree to export from.
+- Never hand-write a Yocto/OpenEmbedded patch file when the underlying source
+  can be modified and exported with `devtool finish` or `git format-patch`.
 - When a task references board bring-up or flashing, verify whether the step is
   host-side or builder-side before acting.
 
