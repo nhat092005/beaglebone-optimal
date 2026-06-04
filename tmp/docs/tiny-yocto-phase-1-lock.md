@@ -269,12 +269,19 @@ Tiny Phase 1 must provide a minimal `/init` that:
 - mounts `/proc`
 - mounts `/sys`
 - mounts `/dev`
+- mounts `/dev/pts`
 - then `exec`s `/bin/sh`
 
 ### Device Management
 
-- `/dev` uses BusyBox `mdev`
+- `/dev` uses kernel `devtmpfs` only
+- no BusyBox `mdev`
 - no `udev` or `eudev`
+
+The tiny Phase 1 `/init` script must not:
+
+- write to `/proc/sys/kernel/hotplug`
+- run `mdev -s`
 
 ### Monolithic Kernel
 
@@ -302,6 +309,15 @@ Tiny Phase 1 must not keep these active:
 Watchdog:
 
 - do not intentionally enable it in Phase 1 unless required for boot
+
+## Open Runtime Investigation Boundary
+
+The unresolved Linux runtime SD/MMC failure is tracked separately in:
+
+- `tmp/docs/tiny-yocto-mmc-runtime-open-questions.md`
+
+That investigation is not allowed to add DT supply bindings, PMIC child nodes,
+or kernel config flags by warning-text intuition alone.
 
 ## Public Contract Surface
 
