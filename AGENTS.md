@@ -18,13 +18,16 @@ from the current workflow and extend only what the task requires.
 Read in this order:
 
 1. `~/.codex/AGENTS.md` and `AGENTS.md` for agent workflow.
-2. [`README.md`](README.md) for repo purpose and major docs
-3. [`Makefile`](Makefile) for the public command surface
-4. `local.mk` if it exists, otherwise [`local.mk.example`](local.mk.example),
+2. `~/.codex/RTK.md` for shell command policy. Use `rtk <cmd>` whenever it
+   can run the command correctly, and fall back to the raw command only when
+   `rtk` is unavailable or would break the required behavior.
+3. [`README.md`](README.md) for repo purpose and major docs
+4. [`Makefile`](Makefile) for the public command surface
+5. `local.mk` if it exists, otherwise [`local.mk.example`](local.mk.example),
    for local machine inputs
-5. [`compose.yaml`](compose.yaml) and [`docker/Dockerfile`](docker/Dockerfile)
+6. [`compose.yaml`](compose.yaml) and [`docker/Dockerfile`](docker/Dockerfile)
    for builder runtime and image contract
-6. [`docs/_RUNBOOK_EN.md`](docs/_RUNBOOK_EN.md) or
+7. [`docs/_RUNBOOK_EN.md`](docs/_RUNBOOK_EN.md) or
    [`docs/_RUNBOOK_VN.md`](docs/_RUNBOOK_VN.md) for operational workflow
 
 If the task touches a specific command, read the script that implements it
