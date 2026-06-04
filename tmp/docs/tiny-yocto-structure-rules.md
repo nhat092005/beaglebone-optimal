@@ -15,6 +15,27 @@ The scope and lifecycle rules for those phases are defined in:
 - `tmp/docs/tiny-yocto-phase-1-lock.md`
 - `tmp/docs/tiny-yocto-phase-2-lock.md`
 
+## Canonical Naming Map
+
+The tiny path uses one locked naming map across all layers:
+
+- layer:
+  - `meta-beaglebone-optimal`
+- machine:
+  - `beaglebone-black-optimal-tiny`
+- distro:
+  - `optimal-tiny`
+- image:
+  - `core-image-optimal-tiny-initramfs`
+- DTS root:
+  - `am335x-boneblack-optimal-tiny`
+- DTS:
+  - `am335x-boneblack-optimal-tiny.dts`
+- DTB:
+  - `am335x-boneblack-optimal-tiny.dtb`
+
+Old tiny names must be removed completely. No compatibility alias is allowed.
+
 ## Core Rule
 
 The tiny path must separate:
@@ -77,12 +98,12 @@ beaglebone-optimal/
     ├── conf/
     │   ├── layer.conf
     │   ├── distro/
-    │   │   └── beaglebone-optimal-tiny.conf
+    │   │   └── optimal-tiny.conf
     │   └── machine/
-    │       └── beaglebone-optimal-tiny.conf
+    │       └── beaglebone-black-optimal-tiny.conf
     ├── recipes-core/
     │   └── images/
-    │       ├── core-image-bbb-tiny-initramfs.bb
+    │       ├── core-image-optimal-tiny-initramfs.bb
     │       └── files/
     │           └── init
     └── recipes-kernel/
@@ -234,7 +255,7 @@ This section answers a stricter question than directory layout:
 
 ### Yocto Layer Truth
 
-`meta-beaglebone-optimal/conf/distro/beaglebone-optimal-tiny.conf`
+`meta-beaglebone-optimal/conf/distro/optimal-tiny.conf`
 
 - configures distro-wide behavior
 - should answer:
@@ -244,7 +265,7 @@ This section answers a stricter question than directory layout:
   - package-management policy
   - broad userspace defaults
 
-`meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+`meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 
 - configures board and machine truth
 - should answer:
@@ -259,7 +280,7 @@ This section answers a stricter question than directory layout:
   - initramfs bundle direction
   - machine-owned serial defaults
 
-`meta-beaglebone-optimal/recipes-core/images/core-image-bbb-tiny-initramfs.bb`
+`meta-beaglebone-optimal/recipes-core/images/core-image-optimal-tiny-initramfs.bb`
 
 - configures image composition
 - should answer:
@@ -355,33 +376,33 @@ This is the strictest ownership map. A behavior should have one primary owner.
 ### Distro Behavior
 
 - libc direction
-  - owner: `meta-beaglebone-optimal/conf/distro/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/distro/optimal-tiny.conf`
 - locale/NLS policy
-  - owner: `meta-beaglebone-optimal/conf/distro/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/distro/optimal-tiny.conf`
 - package-management policy
-  - owner: `meta-beaglebone-optimal/conf/distro/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/distro/optimal-tiny.conf`
 
 ### Machine Behavior
 
 - `KERNEL_IMAGETYPE`
-  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 - `UBOOT_MACHINE`
-  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 - `SPL_BINARY`
-  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 - `SERIAL_CONSOLES`
-  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 - DTB deploy name
-  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 - initramfs bundle direction
-  - preferred owner: `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+  - preferred owner: `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 
 ### Image Composition
 
 - BusyBox presence
-  - owner: `meta-beaglebone-optimal/recipes-core/images/core-image-bbb-tiny-initramfs.bb`
+  - owner: `meta-beaglebone-optimal/recipes-core/images/core-image-optimal-tiny-initramfs.bb`
 - tiny package list
-  - owner: `meta-beaglebone-optimal/recipes-core/images/core-image-bbb-tiny-initramfs.bb`
+  - owner: `meta-beaglebone-optimal/recipes-core/images/core-image-optimal-tiny-initramfs.bb`
 - tracked `/init` content
   - owner: `meta-beaglebone-optimal/recipes-core/images/files/init`
 
@@ -519,7 +540,7 @@ Must not own:
 - script logic
 - Linux payload selection
 
-### `meta-beaglebone-optimal/conf/distro/beaglebone-optimal-tiny.conf`
+### `meta-beaglebone-optimal/conf/distro/optimal-tiny.conf`
 
 Owns distro-wide system policy, such as:
 
@@ -535,7 +556,7 @@ Must not own:
 - DTB file naming
 - board-specific serial path declarations
 
-### `meta-beaglebone-optimal/conf/machine/beaglebone-optimal-tiny.conf`
+### `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-tiny.conf`
 
 Owns board/machine truth, such as:
 
@@ -558,7 +579,7 @@ Must not own:
 - userspace package composition
 - public example-layer values
 
-### `meta-beaglebone-optimal/recipes-core/images/core-image-bbb-tiny-initramfs.bb`
+### `meta-beaglebone-optimal/recipes-core/images/core-image-optimal-tiny-initramfs.bb`
 
 Owns image content, such as:
 
@@ -770,6 +791,57 @@ File roles:
   - `tiny-arm-nopatch.scc`
   - `tiny.cfg` as the primary policy file
 
+### Naming by Responsibility
+
+- DT and DTB names carry hardware lineage.
+- machine names carry board target identity.
+- distro names carry policy and flavor only.
+- image names carry image family, product flavor, and boot model only.
+
+Board identity must not appear in distro names.
+Board shorthand must not appear in image names.
+
+### DT and DTB Continuity
+
+- DTS basename is the canonical root.
+- DTB is the compiled form of the same basename.
+- source name = deploy artifact name = boot media name = extlinux reference
+- no alias
+- no rename during SD population
+- no stable public name different from internal deploy name
+
+For the tiny path this means:
+
+- DTS:
+  - `am335x-boneblack-optimal-tiny.dts`
+- DTB deploy artifact:
+  - `am335x-boneblack-optimal-tiny.dtb`
+- DTB on FAT boot media:
+  - `am335x-boneblack-optimal-tiny.dtb`
+- `extlinux.conf` FDT path:
+  - `/am335x-boneblack-optimal-tiny.dtb`
+
+### Machine, Distro, and Image Continuity
+
+- machine:
+  - `beaglebone-black-optimal-tiny`
+- distro:
+  - `optimal-tiny`
+- image:
+  - `core-image-optimal-tiny-initramfs`
+
+### Variable Contract
+
+Makefile variables may keep the `YOCTO_TINY_*` prefix, but their values must
+use the canonical naming map.
+
+Examples:
+
+- `YOCTO_TINY_MACHINE=beaglebone-black-optimal-tiny`
+- `YOCTO_TINY_DISTRO=optimal-tiny`
+- `YOCTO_TINY_IMAGE=core-image-optimal-tiny-initramfs`
+- `YOCTO_TINY_DTB=am335x-boneblack-optimal-tiny.dtb`
+
 ## Policy Rules
 
 ### Public vs Implementation Truth
@@ -778,6 +850,9 @@ File roles:
 - `meta-beaglebone-optimal/` is implementation truth.
 - Public examples must not absorb implementation internals.
 - Implementation truth must not depend on hidden logic in `yocto/`.
+- Naming cleanup is all-or-nothing across code, scripts, examples, public
+  output, deploy artifacts, and docs.
+- The tiny path must not keep old names as compatibility aliases.
 
 ### Kernel Policy Scope
 

@@ -50,9 +50,10 @@ Phase 2 assumes the following already exist and are trusted:
 - stable `make yocto-list`
 - stable `make sd-flash-tiny`
 - stable `meta-beaglebone-optimal`
-- stable `beaglebone-optimal-tiny` machine
-- stable `beaglebone-optimal-tiny` distro
-- stable `core-image-bbb-tiny-initramfs`
+- stable `beaglebone-black-optimal-tiny` machine
+- stable `optimal-tiny` distro
+- stable `core-image-optimal-tiny-initramfs`
+- stable `am335x-boneblack-optimal-tiny.dtb` naming contract
 - a UART boot log proving Phase 1 acceptance
 
 ## Phase Tree Rule
@@ -213,3 +214,19 @@ from Phase 1 still applies:
 - update `make help` or `make yocto-list` if public surface changes
 
 Phase 2 must not silently redefine Phase 1 contract behavior.
+
+## Naming Continuity Rule
+
+Phase 2 inherits the full canonical naming map from Phase 1:
+
+- machine:
+  - `beaglebone-black-optimal-tiny`
+- distro:
+  - `optimal-tiny`
+- image:
+  - `core-image-optimal-tiny-initramfs`
+- DTS/DTB root:
+  - `am335x-boneblack-optimal-tiny`
+
+Phase 2 may not reintroduce old names as aliases, fallback labels, helper
+symlinks, or public compatibility names.

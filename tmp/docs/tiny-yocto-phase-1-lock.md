@@ -34,12 +34,28 @@ proven on hardware.
 
 - Branch: `feat/tiny-yocto-foundation`
 - Custom layer: `meta-beaglebone-optimal`
-- Custom machine: `beaglebone-optimal-tiny`
-- Custom distro: `beaglebone-optimal-tiny`
-- Custom image: `core-image-bbb-tiny-initramfs`
+- Custom machine: `beaglebone-black-optimal-tiny`
+- Custom distro: `optimal-tiny`
+- Custom image: `core-image-optimal-tiny-initramfs`
+- Canonical DTS root: `am335x-boneblack-optimal-tiny`
+- Canonical DTS: `am335x-boneblack-optimal-tiny.dts`
+- Canonical DTB: `am335x-boneblack-optimal-tiny.dtb`
 - Build list target: `make yocto-list`
 - Flash target: `make sd-flash-tiny`
 - Contract doc: `docs/boot-contract.md`
+
+Naming rules:
+
+- DT and DTB names carry hardware lineage.
+- machine names carry board target identity.
+- distro names carry policy and flavor only.
+- image names carry image family, product flavor, and boot model only.
+- DTS basename is the canonical root for the DT naming contract.
+- deploy DTB name, FAT media DTB name, and `extlinux.conf` DTB path must all
+  use the same canonical basename.
+- old tiny names must be removed completely.
+- naming cleanup is all-or-nothing across code, scripts, examples, help text,
+  public output, and docs.
 
 ## Architecture Lock
 
@@ -105,7 +121,7 @@ Phase 1:
 - `MLO`
 - `u-boot.img`
 - bundled kernel + initramfs artifact
-- `am335x-boneblack.dtb`
+- `am335x-boneblack-optimal-tiny.dtb`
 - `/extlinux/extlinux.conf`
 - optional `uEnv.txt`
 
@@ -128,6 +144,7 @@ Rules:
 - no multi-entry menu
 - tiny command line is minimal
 - keep `console=ttyS0,115200`
+- DT path must be `/am335x-boneblack-optimal-tiny.dtb`
 - do not use `root=PARTUUID=...`
 - do not use `rootwait`
 
@@ -192,7 +209,7 @@ Tiny Phase 1 must fork a BBB Black-specific DT path.
 
 Rules:
 
-- use only `am335x-boneblack.dtb`
+- use only `am335x-boneblack-optimal-tiny.dtb`
 - Phase 1 may disable uncertain nodes first
 - Phase 1 may fully remove nodes only when they are clearly not boot-critical
 
@@ -300,7 +317,7 @@ The repo must expose both paths clearly.
 
 - `yocto/conf/local.conf.tiny.example`
 - `yocto/conf/bblayers.conf.tiny.example`
-- `make yocto-build YOCTO_IMAGE=core-image-bbb-tiny-initramfs`
+- `make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs`
 - `make sd-flash-tiny SDCARD=/dev/sdX`
 
 Rules:
@@ -350,6 +367,8 @@ Phase 1 is accepted only when all of the following are true:
 - tiny boot path does not depend on separate ext4 rootfs media
 - only BBB Black DT path is used
 - removed peripherals are not active in Phase 1
+- the canonical tiny naming map is used consistently across build, deploy,
+  boot media, and docs
 
 ## Required Proof
 
