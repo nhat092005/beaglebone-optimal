@@ -402,6 +402,188 @@ Current interpretation:
 - this is expected after the deterministic U-Boot cleanup
 - not an error
 
+## Additional Informational Lines Still Worth Recording
+
+The current document already captures the main failures, warnings, and suspects.
+The following items are not primary debug targets right now, but they are still
+meaningful log lines and should be preserved as part of a complete inventory.
+
+### U-Boot Stage Informational Lines
+
+- `U-Boot SPL 2024.01 (Jan 08 2024 - 15:37:48 +0000)`
+- `Trying to boot from MMC1`
+- `U-Boot 2024.01 (Jan 08 2024 - 15:37:48 +0000)`
+- `CPU  : AM335X-GP rev 2.1`
+- `Model: TI AM335x BeagleBone Black`
+- `DRAM:  512 MiB`
+- `Core:  160 devices, 18 uclasses, devicetree: separate`
+- `WDT:   Started wdt@44e35000 with servicing every 1000ms (60s timeout)`
+- `NAND:  0 MiB`
+- `MMC:   OMAP SD/MMC: 0, OMAP SD/MMC: 1`
+- `switch to partitions #0, OK`
+- `mmc0 is current device`
+- `Found /extlinux/extlinux.conf`
+- `Retrieving file: /extlinux/extlinux.conf`
+- `1:      tiny`
+- `Retrieving file: /zImage`
+- `append: console=ttyS0,115200`
+- `Retrieving file: /am335x-boneblack-optimal-tiny.dtb`
+- `Hit any key to stop autoboot:  0`
+- `Kernel image @ 0x82000000 [ 0x000000 - 0x27cda0 ]`
+- `## Flattened Device Tree blob at 88000000`
+- `Booting using the fdt blob at 0x88000000`
+- `Working FDT set to 88000000`
+- `Loading Device Tree to 8ffec000, end 8ffff551 ... OK`
+- `Working FDT set to 8ffec000`
+
+### Exact USB Network Chatter Lines
+
+- `<ethaddr> not set. Validating first E-fuse MAC`
+- `Net:   eth2: ethernet@4a100000using musb-hdrc, OUT ep1out IN ep1in STATUS ep2in`
+- `MAC de:ad:be:ef:00:01`
+- `HOST MAC de:ad:be:ef:00:00`
+- `RNDIS ready`
+- `, eth3: usb_ether`
+
+Current interpretation:
+
+- these lines should be treated as bootloader USB/network chatter unless a
+  later goal explicitly targets U-Boot network cleanup
+- the exact MAC values are now preserved in the debug inventory
+
+Current interpretation:
+
+- these lines confirm the tiny boot contract is being exercised as intended
+- they are not error lines by themselves
+- together they prove the boot path reaches the expected kernel, DTB, and
+  command line inputs
+
+### Early Kernel Informational Lines
+
+- `Booting Linux on physical CPU 0x0`
+- `Linux version 6.6.127-yocto-tiny ...`
+- `CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c5387d`
+- `OF: fdt: Machine model: TI AM335x BeagleBone Black Optimal Tiny`
+- `Kernel command line: console=ttyS0,115200`
+- `devtmpfs: initialized`
+- `printk: console [ttyS0] disabled`
+- `44e09000.serial: ttyS0 at MMIO 0x44e09000 (irq = 18, base_baud = 3000000) is a 8250`
+- `printk: console [ttyS0] enabled`
+- `pinctrl-single 44e10800.pinmux: 142 pins, size 568`
+- `OMAP GPIO hardware version 0.1`
+- `mmc0 bounce up to 128 segments into one, max segment size 65536 bytes`
+- `mmc0: SDHCI controller on 48060000.mmc [48060000.mmc] using DMA`
+- `Freeing unused kernel image (initmem) memory: 1540K`
+
+Current interpretation:
+
+- these lines show the kernel bring-up path is substantially healthy
+- they are useful context for proving that the failure happens late enough to
+  be a runtime MMC issue, not an early boot crash
+
+### Informational Lines Near The Warning Cluster
+
+- `omap_voltage_late_init: Voltage driver support not added`
+- `/ocp/interconnect@44c00000/segment@200000/target-module@10000/scm@0/pinmux@800: Fixed dependency cycle(s) ...`
+- `tps65217 0-0024: TPS65217 ID 0xe version 1.2`
+- `omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz`
+- `clk: Disabling unused clocks`
+- `sdhci-omap 48060000.mmc: Got CD GPIO`
+
+Current interpretation:
+
+- some of these are clearly informational
+- some are context lines adjacent to the warnings
+- none of them, by themselves, are yet the proven fix target
+
+### SDHCI Register Dump Evidence
+
+The runtime failure includes a full SDHCI register dump:
+
+- `Sys addr`
+- `Version`
+- `Blk size`
+- `Blk cnt`
+- `Argument`
+- `Trn mode`
+- `Present`
+- `Host ctl`
+- `Power`
+- `Blk gap`
+- `Wake-up`
+- `Clock`
+- `Timeout`
+- `Int stat`
+- `Int enab`
+- `Sig enab`
+- `ACmd stat`
+- `Slot int`
+- `Caps`
+- `Caps_1`
+- `Cmd`
+- `Max curr`
+- `Resp[0]`
+- `Resp[1]`
+- `Resp[2]`
+- `Resp[3]`
+- `Host ctl2`
+
+Current interpretation:
+
+- the dump is important evidence that the MMC driver reached a hard runtime
+  failure state
+- the current document does not yet interpret these registers individually
+- if the MMC investigation deepens, this dump should be decoded separately
+
+### Exact SDHCI Register Dump Values From The Current Log
+
+- `Sys addr:  0x00000000`
+- `Version:  0x00003101`
+- `Blk size:  0x00000008`
+- `Blk cnt:  0x00000001`
+- `Argument:  0x00000000`
+- `Trn mode: 0x00000013`
+- `Present:   0x01f70a06`
+- `Host ctl: 0x00000000`
+- `Power:     0x0000000f`
+- `Blk gap:  0x00000000`
+- `Wake-up:   0x00000000`
+- `Clock:    0x00003c07`
+- `Timeout:   0x00000003`
+- `Int stat: 0x00000000`
+- `Int enab:  0x027f000b`
+- `Sig enab: 0x027f000b`
+- `ACmd stat: 0x00000000`
+- `Slot int: 0x00000000`
+- `Caps:      0x07e10080`
+- `Caps_1:   0x00000000`
+- `Cmd:       0x0000333a`
+- `Max curr: 0x00000000`
+- `Resp[0]:   0x00000920`
+- `Resp[1]:  0xe8f37f80`
+- `Resp[2]:   0x5b590000`
+- `Resp[3]:  0x400e0032`
+- `Host ctl2: 0x00000000`
+
+Current interpretation:
+
+- these values are now preserved exactly for later low-level MMC analysis
+- they are not yet decoded in this document
+
+### Truncated Or Imperfectly Rendered Lines
+
+Some log lines appear truncated or shortened in the capture:
+
+- `Linux version ... #1 P6`
+- `/ocp/... Fixed dependency cycle(s) with /ocp/interconnect@44c00000s`
+
+Current interpretation:
+
+- these lines should be treated carefully if later analysis depends on exact
+  wording
+- if needed, a cleaner UART capture should be taken before drawing precise
+  conclusions from them
+
 ## Locked Facts Already Proven
 
 These points should now be treated as established:
