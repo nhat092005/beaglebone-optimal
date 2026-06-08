@@ -172,7 +172,8 @@ path on `i2c0`.
 
 The tiny U-Boot path follows the same removed-surface rule: it boots from
 `mmc 0:1` through `/extlinux/extlinux.conf` and must not initialize Ethernet,
-USB gadget, RNDIS, DFU, fastboot, PXE, DHCP, or EFI boot paths.
+USB gadget, RNDIS, DFU, fastboot, PXE, DHCP, EFI boot paths, or U-Boot
+watchdog servicing.
 
 ## Build and Flash Surface
 
