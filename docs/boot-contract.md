@@ -31,6 +31,7 @@ Phase 1 tiny path is:
 - BeagleBone Black only
 - `linux-yocto-tiny` only
 - initramfs bundled into the kernel artifact
+- U-Boot MMC-only boot through `extlinux.conf`
 - UART BusyBox shell only
 - single FAT boot partition
 - repo-generated and reproducible
@@ -168,6 +169,10 @@ Phase 1 tiny path must not keep these active:
 Boot-essential board wiring may remain when required to reach the tiny shell.
 For BeagleBone Black this includes the UART path, SD boot path, and the PMIC
 path on `i2c0`.
+
+The tiny U-Boot path follows the same removed-surface rule: it boots from
+`mmc 0:1` through `/extlinux/extlinux.conf` and must not initialize Ethernet,
+USB gadget, RNDIS, DFU, fastboot, PXE, DHCP, or EFI boot paths.
 
 ## Build and Flash Surface
 
