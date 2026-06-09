@@ -32,6 +32,13 @@
 	status = "disabled";
 };
 
+&tps {
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+};
+
 &cpsw_port1 {
 	status = "disabled";
 	/delete-property/ phy-handle;
