@@ -6,6 +6,7 @@ KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
 SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://am335x-boneblack-optimal-tiny.dts \
 	file://0001-mmc-sdhci-omap-use-optional-regulators-for-capabilit.patch \
+	file://0002-arm-omap2-skip-voltage-init-on-am33xx.patch \
 	file://beaglebone-tiny.scc \
 	file://kernel-policy.scc \
 	file://core.cfg \
