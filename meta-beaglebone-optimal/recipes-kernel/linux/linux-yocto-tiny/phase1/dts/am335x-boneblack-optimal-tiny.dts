@@ -52,6 +52,8 @@
 
 &mmc1 {
 	cd-debounce-delay-ms = <0>;
+	vqmmc-supply = <&vmmcsd_fixed>;
+	no-1-8-v;
 };
 
 &mac_sw {
