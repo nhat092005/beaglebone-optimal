@@ -43,6 +43,10 @@
 	status = "disabled";
 };
 
+&mmc1 {
+	cd-debounce-delay-ms = <0>;
+};
+
 &mac_sw {
 	status = "disabled";
 };
