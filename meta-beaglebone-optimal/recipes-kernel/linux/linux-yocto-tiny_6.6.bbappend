@@ -8,6 +8,7 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://0001-mmc-sdhci-omap-use-optional-regulators-for-capabilit.patch \
 	file://0002-arm-omap2-skip-voltage-init-on-am33xx.patch \
 	file://0003-driver-core-demote-fw-devlink-sync-state-link-failur.patch \
+	file://0004-mfd-tps65217-do-not-require-pmic-of-node.patch \
 	file://beaglebone-tiny.scc \
 	file://kernel-policy.scc \
 	file://core.cfg \
