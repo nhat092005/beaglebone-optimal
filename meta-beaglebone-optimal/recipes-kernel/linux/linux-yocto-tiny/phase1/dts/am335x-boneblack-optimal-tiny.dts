@@ -39,6 +39,16 @@
 	};
 };
 
+&am33xx_pinmux {
+	/*
+	 * The common BBB DTS makes clkout2 the default state of the pinmux
+	 * provider itself. Tiny does not use clkout2, and that self-reference
+	 * creates an fw_devlink dependency cycle at boot.
+	 */
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+};
+
 &cpsw_port1 {
 	status = "disabled";
 	/delete-property/ phy-handle;
