@@ -356,6 +356,24 @@ Tiny path operator notes:
 - tiny path does not use `.wic` or a separate ext4 rootfs partition
 - tiny path still expects proof on hardware through UART boot logs
 
+### Known boot messages
+
+**"Kernel memory protection not selected by kernel config."**
+
+Source: `init/main.c::mark_readonly()`
+
+Meaning:
+- ARM architecture supports kernel memory protection (`CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y`)
+- Tiny kernel intentionally disables it (`CONFIG_STRICT_KERNEL_RWX=n`)
+- Trade-off: ~200-300 KB size savings vs. W^X kernel hardening
+
+Safety:
+- Acceptable for isolated learning board (no network, no USB in Phase 1)
+- Protection prevents code injection attacks and detects memory corruption bugs early
+- If adding network stack in future phases, consider enabling via `hardening.cfg` fragment
+
+This is an intentional configuration choice for the tiny profile, not a defect.
+
 ## Runtime contract
 
 The current Compose service name is `builder`.
