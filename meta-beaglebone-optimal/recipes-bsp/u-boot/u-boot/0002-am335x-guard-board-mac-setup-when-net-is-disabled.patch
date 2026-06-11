@@ -1,0 +1,26 @@
+Upstream-Status: Inappropriate [project-specific BeagleBone Optimal Tiny boot contract]
+
+The tiny BeagleBone Optimal boot contract disables U-Boot networking. Keep the
+AM335x board late init path available, but skip the Ethernet MAC environment
+setup when the network stack is not built.
+
+--- a/board/ti/am335x/board.c
++++ b/board/ti/am335x/board.c
+@@ -799,7 +799,7 @@
+ int board_late_init(void)
+ {
+ 	struct udevice *dev;
+-#if !defined(CONFIG_SPL_BUILD)
++#if !defined(CONFIG_SPL_BUILD) && CONFIG_IS_ENABLED(NET)
+ 	uint8_t mac_addr[6];
+ 	uint32_t mac_hi, mac_lo;
+ #endif
+@@ -848,7 +848,7 @@
+ 		env_set("boot_fit", "1");
+ #endif
+ 
+-#if !defined(CONFIG_SPL_BUILD)
++#if !defined(CONFIG_SPL_BUILD) && CONFIG_IS_ENABLED(NET)
+ 	/* try reading mac address from efuse */
+ 	mac_lo = readl(&cdev->macid0l);
+ 	mac_hi = readl(&cdev->macid0h);

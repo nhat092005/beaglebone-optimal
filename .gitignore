@@ -24,3 +24,6 @@ CLAUDE.md
 
 # Open code
 .sisyphus
+
+# User-specific files
+.mnhat

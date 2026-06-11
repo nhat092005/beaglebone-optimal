@@ -1,3 +1,4 @@
+# Baseline path example.
 # Copy this file to conf/bblayers.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 

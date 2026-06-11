@@ -309,6 +309,71 @@ cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
 cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
 ```
 
+## Tiny path workflow
+
+Tiny path là Phase 1 initramfs-only bring-up cho BeagleBone Black.
+
+File contract public:
+
+- `docs/boot-contract.md`
+- `yocto/conf/local.conf.tiny.example`
+- `yocto/conf/bblayers.conf.tiny.example`
+
+Luồng áp dụng config tiny thủ công:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.tiny.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
+```
+
+Build tiny image:
+
+```bash
+make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
+```
+
+Tạo SD boot media tiny trên host:
+
+```bash
+make sd-flash-tiny SDCARD=/dev/sdX
+```
+
+Lưu ý operator cho tiny path:
+
+- `sd-flash-tiny` tạo một FAT boot partition duy nhất
+- Tiny boot media chứa tên file ổn định:
+  - `MLO`
+  - `u-boot.img`
+  - `zImage`
+  - `am335x-boneblack-optimal-tiny.dtb`
+  - `extlinux/extlinux.conf`
+  - `uEnv.txt` (optional)
+- Tiny path không dùng `.wic` hay ext4 rootfs partition riêng
+- Tiny path vẫn cần chứng minh trên hardware qua UART boot logs
+
+### Thông điệp boot đã biết
+
+**"Kernel memory protection not selected by kernel config."**
+
+Nguồn: `init/main.c::mark_readonly()`
+
+Ý nghĩa:
+- Kiến trúc ARM hỗ trợ bảo vệ memory kernel (`CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y`)
+- Tiny kernel cố ý tắt nó (`CONFIG_STRICT_KERNEL_RWX=n`)
+- Trade-off: tiết kiệm ~200-300 KB vs. W^X kernel hardening
+
+An toàn:
+- Chấp nhận được cho learning board cô lập (không có network, không USB trong Phase 1)
+- Protection ngăn code injection attacks và phát hiện memory corruption bugs sớm
+- Nếu thêm network stack ở các phase sau, cân nhắc bật qua `hardening.cfg` fragment
+
+Đây là lựa chọn cấu hình cố ý cho tiny profile, không phải lỗi.
+
 ## Runtime contract
 
 Compose service hiện tại tên là `builder`.

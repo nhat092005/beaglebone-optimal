@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Minimal BeagleBone Black DT for beaglebone-optimal tiny Phase 1.
+ */
+/dts-v1/;
+
+#include "am33xx.dtsi"
+#include "am335x-bone-common.dtsi"
+#include "am335x-boneblack-common.dtsi"
+
+/ {
+	model = "TI AM335x BeagleBone Black Optimal Tiny";
+	compatible = "beaglebone-optimal,am335x-bone-black-tiny",
+		     "ti,am335x-bone-black",
+		     "ti,am335x-bone",
+		     "ti,am33xx";
+
+	leds {
+		status = "disabled";
+	};
+};
+
+&usb0 {
+	status = "disabled";
+};
+
+&usb1 {
+	status = "disabled";
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
+&tps {
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+};
+
+&am33xx_pinmux {
+	/*
+	 * The common BBB DTS makes clkout2 the default state of the pinmux
+	 * provider itself. Tiny does not use clkout2, and that self-reference
+	 * creates an fw_devlink dependency cycle at boot.
+	 */
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+};
+
+&cpsw_port1 {
+	status = "disabled";
+	/delete-property/ phy-handle;
+	/delete-property/ phy-mode;
+	/delete-property/ ti,dual-emac-pvid;
+};
+
+&cpsw_port2 {
+	status = "disabled";
+};
+
+&mmc1 {
+	cd-debounce-delay-ms = <0>;
+	vqmmc-supply = <&vmmcsd_fixed>;
+	no-1-8-v;
+};
+
+&mac_sw {
+	status = "disabled";
+};
+
+&davinci_mdio_sw {
+	status = "disabled";
+};
+
+&mmc2 {
+	status = "disabled";
+};
+
+&aes {
+	status = "disabled";
+};
+
+&sham {
+	status = "disabled";
+};
+
+&pruss_tm {
+	status = "disabled";
+};
+
+&wkup_m3_ipc {
+	status = "disabled";
+};

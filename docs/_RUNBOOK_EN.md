@@ -309,6 +309,71 @@ cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
 cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
 ```
 
+## Tiny path workflow
+
+The tiny path is Phase 1 initramfs-only bring-up for BeagleBone Black.
+
+Public contract files:
+
+- `docs/boot-contract.md`
+- `yocto/conf/local.conf.tiny.example`
+- `yocto/conf/bblayers.conf.tiny.example`
+
+Manual tiny config apply flow:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.tiny.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
+```
+
+Build the tiny image:
+
+```bash
+make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
+```
+
+Create tiny SD boot media on the host:
+
+```bash
+make sd-flash-tiny SDCARD=/dev/sdX
+```
+
+Tiny path operator notes:
+
+- `sd-flash-tiny` creates a single FAT boot partition
+- tiny boot media carries stable names:
+  - `MLO`
+  - `u-boot.img`
+  - `zImage`
+  - `am335x-boneblack-optimal-tiny.dtb`
+  - `extlinux/extlinux.conf`
+  - optional `uEnv.txt`
+- tiny path does not use `.wic` or a separate ext4 rootfs partition
+- tiny path still expects proof on hardware through UART boot logs
+
+### Known boot messages
+
+**"Kernel memory protection not selected by kernel config."**
+
+Source: `init/main.c::mark_readonly()`
+
+Meaning:
+- ARM architecture supports kernel memory protection (`CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y`)
+- Tiny kernel intentionally disables it (`CONFIG_STRICT_KERNEL_RWX=n`)
+- Trade-off: ~200-300 KB size savings vs. W^X kernel hardening
+
+Safety:
+- Acceptable for isolated learning board (no network, no USB in Phase 1)
+- Protection prevents code injection attacks and detects memory corruption bugs early
+- If adding network stack in future phases, consider enabling via `hardening.cfg` fragment
+
+This is an intentional configuration choice for the tiny profile, not a defect.
+
 ## Runtime contract
 
 The current Compose service name is `builder`.

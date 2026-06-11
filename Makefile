@@ -20,8 +20,15 @@ YOCTO_POKY_DIR ?= $(YOCTO_SOURCES_DIR)/poky
 YOCTO_BUILD_DIR ?= $(YOCTO_ROOT)/build
 YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
 YOCTO_SSTATE_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
+YOCTO_TINY_MACHINE ?= beaglebone-black-optimal-tiny
+YOCTO_TINY_DISTRO ?= optimal-tiny
+YOCTO_TINY_IMAGE ?= core-image-optimal-tiny-initramfs
 YOCTO_IMAGE ?= core-image-minimal
 IMAGE ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
+TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
+YOCTO_TINY_DTB ?= am335x-boneblack-optimal-tiny.dtb
+TINY_EXTLINUX_TEMPLATE ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
+TINY_UENV_TEMPLATE ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
 SDCARD ?=
 
 export DOCKER_IMAGE
@@ -35,17 +42,24 @@ export YOCTO_POKY_DIR
 export YOCTO_BUILD_DIR
 export YOCTO_DOWNLOADS_DIR
 export YOCTO_SSTATE_DIR
+export YOCTO_TINY_MACHINE
+export YOCTO_TINY_DISTRO
+export YOCTO_TINY_IMAGE
 export YOCTO_IMAGE
 export IMAGE
+export TINY_DEPLOY_DIR
+export YOCTO_TINY_DTB
+export TINY_EXTLINUX_TEMPLATE
+export TINY_UENV_TEMPLATE
 export SDCARD
 export CMD
 
 C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
-SHELL_FILES := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash))
+SHELL_FILES := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash scripts/sd-flash-tiny))
 YAML_LINT_FILES := $(shell $(GIT) ls-files -- 'compose.yaml' '.github/workflows/*.yml' '.github/workflows/*.yaml')
 DOCKERFILES := $(shell $(GIT) ls-files -- 'docker/Dockerfile')
 
-.PHONY: help docker-build docker-shell docker-run doctor yocto-init yocto-build sd-flash format format-check lint check
+.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-build sd-flash sd-flash-tiny format format-check lint check
 
 help:
 	@printf '%s\n' \
@@ -59,10 +73,17 @@ help:
 		'Environment check:' \
 		'  make doctor                       Validate Docker phase 1 setup.' \
 		'' \
-		'Yocto workflow:' \
+		'Baseline path:' \
 		'  make yocto-init                   Create Yocto build dir and validate poky checkout.' \
 		'  make yocto-build                  Build YOCTO_IMAGE inside the builder container.' \
 		'  make sd-flash SDCARD='\''/dev/sdX'\''   Flash IMAGE to an SD card on the host.' \
+		'' \
+		'Tiny path:' \
+		'  make yocto-list                   Show baseline and tiny public contract values.' \
+		'  make yocto-build YOCTO_IMAGE='$(YOCTO_TINY_IMAGE)'  Build the tiny image plus kernel and bootloader artifacts.' \
+		'  make sd-flash-tiny SDCARD='\''/dev/sdX'\''  Partition, format, and populate tiny FAT boot media.' \
+		'' \
+		'Quality:' \
 		'  make format                       Format tracked shell and C/C++ files.' \
 		'  make format-check                 Check tracked shell and C/C++ formatting.' \
 		'  make lint                         Lint tracked shell, YAML, and Docker files.' \
@@ -80,7 +101,39 @@ help:
 		'  YOCTO_SSTATE_DIR                  Host path for shared Yocto sstate cache.' \
 		'' \
 		'Build target:' \
-		'  YOCTO_IMAGE                       Yocto image target, default: core-image-minimal.'
+		'  YOCTO_IMAGE                       Yocto image target, default: core-image-minimal.' \
+		'' \
+		'Boot contract docs:' \
+		'  docs/boot-contract.md             Normative boot ownership rules.' \
+		'  yocto/conf/*.tiny.example         Tiny path example config files.'
+
+yocto-list:
+	@printf '%s\n' \
+		'Yocto contract surface:' \
+		'' \
+		'Baseline path:' \
+		'  image: core-image-minimal (default)' \
+		'  local.conf example: yocto/conf/local.conf.example' \
+		'  bblayers example: yocto/conf/bblayers.conf.example' \
+		'  build: make yocto-build' \
+		'  flash: make sd-flash SDCARD=/dev/sdX' \
+		'' \
+		'Tiny path:' \
+		'  machine: '$(YOCTO_TINY_MACHINE) \
+		'  distro: '$(YOCTO_TINY_DISTRO) \
+		'  image: '$(YOCTO_TINY_IMAGE) \
+		'  deploy dir: '$(TINY_DEPLOY_DIR) \
+		'  tiny dtb deploy name: '$(YOCTO_TINY_DTB) \
+		'  extlinux template: '$(TINY_EXTLINUX_TEMPLATE) \
+		'  uEnv template: '$(TINY_UENV_TEMPLATE) \
+		'  local.conf example: yocto/conf/local.conf.tiny.example' \
+		'  bblayers example: yocto/conf/bblayers.conf.tiny.example' \
+		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_TINY_IMAGE) \
+		'  flash: make sd-flash-tiny SDCARD=/dev/sdX' \
+		'' \
+		'Contract docs:' \
+		'  docs/boot-contract.md' \
+		'  docs/_RUNBOOK_EN.md'
 
 docker-build:
 	@docker compose build builder
@@ -95,13 +148,21 @@ doctor:
 	@bash scripts/docker/doctor.sh
 
 yocto-init:
-	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Project local.conf example: /workspace/yocto/conf/local.conf.example" "Project bblayers.conf example: /workspace/yocto/conf/bblayers.conf.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Baseline local.conf example: /workspace/yocto/conf/local.conf.example" "Baseline bblayers example: /workspace/yocto/conf/bblayers.conf.example" "Tiny local.conf example: /workspace/yocto/conf/local.conf.tiny.example" "Tiny bblayers example: /workspace/yocto/conf/bblayers.conf.tiny.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''
 
+ifneq ($(filter $(YOCTO_IMAGE),$(YOCTO_TINY_IMAGE)),)
+yocto-build:
+	@bash -lc 'source scripts/docker/lib.sh && require_yocto_image && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$$YOCTO_IMAGE" virtual/kernel u-boot'\'''
+else
 yocto-build:
 	@bash -lc 'source scripts/docker/lib.sh && require_yocto_image && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$$YOCTO_IMAGE"'\'''
+endif
 
 sd-flash:
-	@bash scripts/sd-flash
+	@bash scripts/sd-flash.sh
+
+sd-flash-tiny:
+	@bash scripts/sd-flash-tiny.sh
 
 format:
 	@if [ -n "$(C_FORMAT_FILES)" ]; then \
