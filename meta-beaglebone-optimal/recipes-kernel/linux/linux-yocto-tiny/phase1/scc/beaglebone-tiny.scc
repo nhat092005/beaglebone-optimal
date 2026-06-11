@@ -8,3 +8,4 @@ include kernel-policy.scc
 kconf non-hardware core.cfg
 kconf hardware hw.cfg
 kconf non-hardware disable.cfg
+kconf non-hardware hardening.cfg
