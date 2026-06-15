@@ -111,6 +111,11 @@
 	interrupts = <7>;
 	interrupt-parent = <&intc>;
 
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+
 	regulators {
 		dcdc1_reg: regulator@0 {
 			regulator-name = "vdds_dpr";
