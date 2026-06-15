@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+define KMETA_EXTERNAL_BSP t
+define KMACHINE beaglebone
+define KTYPE tiny
+define KARCH arm
+
+include kernel-policy.scc
+kconf non-hardware core.cfg
+kconf hardware hw.cfg
+kconf non-hardware disable.cfg
+kconf non-hardware hardening.cfg
