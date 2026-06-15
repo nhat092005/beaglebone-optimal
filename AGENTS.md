@@ -54,8 +54,7 @@ If docs disagree with code, trust code first, then update docs to match.
 - `docs/`: runbooks and quality guidance, not the primary behavior source
 - `yocto/conf/`: example config inputs copied into the external Yocto build dir
 - `assets/`: demo media only
-- `tmp/`: task-specific notes, roadmaps, or evidence; useful context, but not a
-  stable contract unless the task explicitly says so
+- `tmp/`: task-specific notes, roadmaps, or evidence; useful context, but not a stable contract unless the task explicitly says so. Files may be read or modified as needed, but must not be committed
 
 ## Working Model
 
@@ -132,7 +131,7 @@ bd close <id>         # Complete work
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **beaglebone-optimal** (175 symbols, 177 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **beaglebone-optimal** (200 symbols, 202 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
