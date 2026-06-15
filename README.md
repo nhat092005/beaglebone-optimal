@@ -141,3 +141,9 @@ Detailed design rules and guides are located in the `docs/` directory:
 > Running the bitbake build process inside the container to compile the target image.
 
 ![Yocto Build](assets/01-yocto-build.gif)
+
+---
+
+## License
+
+[MIT License](LICENSE.md)
