@@ -1,4 +1,8 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase1/dts:${THISDIR}/${PN}/phase1/patches:${THISDIR}/${PN}/phase1/scc:${THISDIR}/${PN}/phase1/cfg:"
+# Phase 1
+#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase1/dts:${THISDIR}/${PN}/phase1/patches:${THISDIR}/${PN}/phase1/scc:${THISDIR}/${PN}/phase1/cfg:"
+
+# Phase2
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase2/dts:${THISDIR}/${PN}/phase2/patches:${THISDIR}/${PN}/phase2/scc:${THISDIR}/${PN}/phase2/cfg:"
 
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
