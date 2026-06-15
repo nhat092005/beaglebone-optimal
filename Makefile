@@ -2,62 +2,61 @@
 
 SHELL := /bin/bash
 
-GIT ?= git
+# External tools
+GIT          ?= git
 CLANG_FORMAT ?= clang-format
-SHFMT ?= shfmt
-SHELLCHECK ?= shellcheck
-YAMLLINT ?= yamllint
-HADOLINT ?= hadolint
+SHFMT        ?= shfmt
+SHELLCHECK   ?= shellcheck
+YAMLLINT     ?= yamllint
+HADOLINT     ?= hadolint
 
-DOCKER_IMAGE ?= beaglebone-optimal-builder
-DOCKER_TAG ?= dev
+# Quality tool file lists
+C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
+SHELL_FILES    := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash scripts/sd-flash-tiny))
+YAML_LINT_FILES := $(shell $(GIT) ls-files -- 'compose.yaml' '.github/workflows/*.yml' '.github/workflows/*.yaml')
+DOCKERFILES    := $(shell $(GIT) ls-files -- 'docker/Dockerfile')
+
+# Input configuration (from local.mk or overridable)
 WORKSPACE_NAME ?= default
-DOCKER_USER ?= $(shell id -u):$(shell id -g)
+DOCKER_USER    ?= $(shell id -u):$(shell id -g)
 
-YOCTO_ROOT ?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
-YOCTO_SOURCES_DIR ?= $(YOCTO_ROOT)/sources
-YOCTO_POKY_DIR ?= $(YOCTO_SOURCES_DIR)/poky
-YOCTO_BUILD_DIR ?= $(YOCTO_ROOT)/build
-YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
-YOCTO_SSTATE_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
-YOCTO_TINY_MACHINE ?= beaglebone-black-optimal-tiny
-YOCTO_TINY_DISTRO ?= optimal-tiny
-YOCTO_TINY_IMAGE ?= core-image-optimal-tiny-initramfs
+# Project constants
+DOCKER_IMAGE ?= beaglebone-optimal-builder
+DOCKER_TAG   ?= dev
+
+# Yocto baseline
 YOCTO_IMAGE ?= core-image-minimal
-IMAGE ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
-TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
-YOCTO_TINY_DTB ?= am335x-boneblack-optimal-tiny.dtb
-TINY_EXTLINUX_TEMPLATE ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
-TINY_UENV_TEMPLATE ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
+
+# Yocto tiny
+YOCTO_TINY_MACHINE      ?= beaglebone-black-optimal-tiny
+YOCTO_TINY_DISTRO       ?= optimal-tiny
+YOCTO_TINY_IMAGE        ?= core-image-optimal-tiny-initramfs
+YOCTO_TINY_DTB          ?= am335x-boneblack-optimal-tiny.dtb
+TINY_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
+TINY_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
+
+# Derived paths
+YOCTO_ROOT          ?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
+YOCTO_SOURCES_DIR   ?= $(YOCTO_ROOT)/sources
+YOCTO_POKY_DIR      ?= $(YOCTO_SOURCES_DIR)/poky
+YOCTO_BUILD_DIR     ?= $(YOCTO_ROOT)/build
+YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
+YOCTO_SSTATE_DIR    ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
+IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
+TINY_DEPLOY_DIR     ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
+
+# Runtime arguments
 SDCARD ?=
 
-export DOCKER_IMAGE
-export DOCKER_TAG
-export WORKSPACE_NAME
-export DOCKER_USER
-export PROJECT_STORAGE_ROOT
-export YOCTO_ROOT
-export YOCTO_SOURCES_DIR
-export YOCTO_POKY_DIR
-export YOCTO_BUILD_DIR
-export YOCTO_DOWNLOADS_DIR
-export YOCTO_SSTATE_DIR
-export YOCTO_TINY_MACHINE
-export YOCTO_TINY_DISTRO
-export YOCTO_TINY_IMAGE
-export YOCTO_IMAGE
-export IMAGE
-export TINY_DEPLOY_DIR
-export YOCTO_TINY_DTB
-export TINY_EXTLINUX_TEMPLATE
-export TINY_UENV_TEMPLATE
-export SDCARD
-export CMD
-
-C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
-SHELL_FILES := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash scripts/sd-flash-tiny))
-YAML_LINT_FILES := $(shell $(GIT) ls-files -- 'compose.yaml' '.github/workflows/*.yml' '.github/workflows/*.yaml')
-DOCKERFILES := $(shell $(GIT) ls-files -- 'docker/Dockerfile')
+# Exported environment
+export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
+       PROJECT_STORAGE_ROOT \
+       YOCTO_ROOT YOCTO_SOURCES_DIR YOCTO_POKY_DIR YOCTO_BUILD_DIR \
+       YOCTO_DOWNLOADS_DIR YOCTO_SSTATE_DIR \
+       YOCTO_TINY_MACHINE YOCTO_TINY_DISTRO YOCTO_TINY_IMAGE \
+       YOCTO_IMAGE IMAGE TINY_DEPLOY_DIR YOCTO_TINY_DTB \
+       TINY_EXTLINUX_TEMPLATE TINY_UENV_TEMPLATE \
+       SDCARD CMD
 
 .PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-build sd-flash sd-flash-tiny format format-check lint check
 
