@@ -8,22 +8,18 @@
 # IDE files
 .vscode/
 
-# Understand Anything files
-.understand-anything
-.understand
-
 # temporary files
 tmp/
 
 # Local Docker config
 local.mk
 
-# CLAUDE files
+# AI assistants files
+.agents/
+.codex/
 .claude/
 CLAUDE.md
-
-# Open code
-.sisyphus
+AGENTS.md
 
 # User-specific files
 .mnhat

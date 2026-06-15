@@ -60,6 +60,10 @@ ENV CROSS_COMPILE=arm-linux-gnueabihf- \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 WORKDIR /workspace
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]

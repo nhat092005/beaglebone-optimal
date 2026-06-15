@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Wed, 10 Jun 2026 10:20:00 +0700
+Subject: [PATCH] mfd: tps65217: do not require PMIC child OF node
+
+Upstream-Status: Pending [needs review against TPS65217 MFD binding]
+
+The TPS65217 regulator binding models regulator constraints under the
+parent PMIC node's "regulators" container. It does not define a
+"ti,tps65217-pmic" child node.
+
+The regulator platform driver still binds by the platform device name
+"tps65217-pmic" and parses regulator constraints through the parent PMIC
+device. Keeping an OF compatible on the MFD cell only makes mfd-core look
+for a child node that the binding does not provide.
+
+Drop the MFD cell OF match for the PMIC regulator child while preserving the
+platform device name used by the regulator driver.
+
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ drivers/mfd/tps65217.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/mfd/tps65217.c b/drivers/mfd/tps65217.c
+index 000000000000..000000000000 100644
+--- a/drivers/mfd/tps65217.c
++++ b/drivers/mfd/tps65217.c
+@@ -80,7 +80,6 @@ static struct mfd_cell tps65217s[] = {
+ 	{
+ 		.name = "tps65217-pmic",
+-		.of_compatible = "ti,tps65217-pmic",
+ 	},
+ 	{
+ 		.name = "tps65217-bl",
+ 		.of_compatible = "ti,tps65217-bl",
+-- 
+2.43.0
