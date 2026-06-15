@@ -4,8 +4,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    user: "${DOCKER_USER:-1000:1000}"
     environment:
+      DOCKER_USER: ${DOCKER_USER:-1000:1000}
       PROJECT_STORAGE_ROOT: /storage
       WORKSPACE_NAME: ${WORKSPACE_NAME:-default}
       YOCTO_ROOT: /storage/workspaces/${WORKSPACE_NAME:-default}/yocto
