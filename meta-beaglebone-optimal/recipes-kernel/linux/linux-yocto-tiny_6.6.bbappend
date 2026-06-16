@@ -7,6 +7,15 @@
 # Phase3
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase3/dts:${THISDIR}/${PN}/phase3/patches:${THISDIR}/${PN}/phase3/scc:${THISDIR}/${PN}/phase3/cfg:"
 
+# Optional phase3-only gpio-leds feature, default-off.
+# Uncomment this block temporarily to verify BBB USR0 heartbeat support.
+#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/features/gpio-leds/dts:${THISDIR}/${PN}/features/gpio-leds/cfg:"
+#
+#SRC_URI:append:beaglebone-black-optimal-tiny = " \
+#	file://gpio-leds.dtsi \
+#	file://leds.cfg \
+#"
+
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
 
@@ -24,5 +33,18 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 "
 
 do_configure:prepend:beaglebone-black-optimal-tiny() {
-	install -m 0644 ${WORKDIR}/am335x-boneblack-optimal-tiny.dts ${S}/arch/arm/boot/dts/ti/omap/
+	if [ -f ${WORKDIR}/gpio-leds.dtsi ]; then
+		install -m 0644 ${WORKDIR}/gpio-leds.dtsi ${S}/arch/arm/boot/dts/ti/omap/
+		awk '
+			!inserted && /#include "am33xx.dtsi"/ {
+				print;
+				print "#include \"gpio-leds.dtsi\"";
+				inserted = 1;
+				next;
+			}
+			{ print }
+		' ${WORKDIR}/am335x-boneblack-optimal-tiny.dts > ${S}/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-tiny.dts
+	else
+		install -m 0644 ${WORKDIR}/am335x-boneblack-optimal-tiny.dts ${S}/arch/arm/boot/dts/ti/omap/
+	fi
 }
