@@ -7,23 +7,23 @@
 # Phase3
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase3/dts:${THISDIR}/${PN}/phase3/patches:${THISDIR}/${PN}/phase3/scc:${THISDIR}/${PN}/phase3/cfg:"
 
-# GPIO LEDS feature, default-off.
-# Uncomment this block temporarily to verify BBB USR0 heartbeat support.
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/features/gpio-leds/dts:${THISDIR}/${PN}/features/gpio-leds/cfg:"
-#
-#SRC_URI:append:beaglebone-black-optimal-tiny = " \
-#	file://gpio-leds.dtsi \
-#	file://leds.cfg \
-#"
+inherit linux-yocto-tiny-feature-dts
 
-# RTC DS3231 feature, default-off.
-# Uncomment this block temporarily to verify DS3231 RTC support over i2c2.
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/features/rtc-ds3231/dts:${THISDIR}/${PN}/features/rtc-ds3231/cfg:"
-#
-#SRC_URI:append:beaglebone-black-optimal-tiny = " \
-#	file://rtc-ds3231.dtsi \
-#	file://rtc.cfg \
-#"
+LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"
+LINUX_YOCTO_TINY_FEATURE_BASE_DTS = "am335x-boneblack-optimal-tiny.dts"
+LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS RTC_DS3231"
+
+# GPIO LEDS feature, default-off. Set ENABLED to "1" temporarily to verify BBB USR0 heartbeat support.
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DIR = "gpio-leds"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DTS = "gpio-leds.dtsi"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_CFG = "leds.cfg"
+
+# RTC DS3231 feature, default-off. Set ENABLED to "1" temporarily to verify DS3231 RTC support over i2c2.
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DIR = "rtc-ds3231"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DTS = "rtc-ds3231.dtsi"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_CFG = "rtc.cfg"
 
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
@@ -39,26 +39,5 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://core.cfg \
 	file://disable.cfg \
 	file://hw.cfg \
+	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
 "
-
-do_configure:prepend:beaglebone-black-optimal-tiny() {
-	base_dts="${WORKDIR}/am335x-boneblack-optimal-tiny.dts"
-	dest_dts="${S}/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-tiny.dts"
-	include_file="${T}/am335x-boneblack-optimal-tiny.feature-includes"
-
-	: > ${include_file}
-
-	for feature_dtsi in gpio-leds rtc-ds3231; do
-		if [ -f ${WORKDIR}/${feature_dtsi}.dtsi ]; then
-			install -m 0644 ${WORKDIR}/${feature_dtsi}.dtsi ${S}/arch/arm/boot/dts/ti/omap/
-			printf '#include "%s.dtsi"\n' "${feature_dtsi}" >> ${include_file}
-		fi
-	done
-
-	if [ -s ${include_file} ]; then
-		install -m 0644 ${base_dts} ${dest_dts}
-		cat ${include_file} >> ${dest_dts}
-	else
-		install -m 0644 ${base_dts} ${dest_dts}
-	fi
-}
