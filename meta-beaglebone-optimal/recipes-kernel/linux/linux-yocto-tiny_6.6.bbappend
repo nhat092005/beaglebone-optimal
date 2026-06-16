@@ -56,20 +56,8 @@ do_configure:prepend:beaglebone-black-optimal-tiny() {
 	done
 
 	if [ -s ${include_file} ]; then
-		awk '
-			FNR == NR {
-				includes[++include_count] = $0;
-				next;
-			}
-			!inserted && /#include "am33xx.dtsi"/ {
-				print;
-				for (include_index = 1; include_index <= include_count; include_index++)
-					print includes[include_index];
-				inserted = 1;
-				next;
-			}
-			{ print }
-		' ${include_file} ${base_dts} > ${dest_dts}
+		install -m 0644 ${base_dts} ${dest_dts}
+		cat ${include_file} >> ${dest_dts}
 	else
 		install -m 0644 ${base_dts} ${dest_dts}
 	fi
