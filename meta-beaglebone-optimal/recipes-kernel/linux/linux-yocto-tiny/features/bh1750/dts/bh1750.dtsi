@@ -1,0 +1,6 @@
+&i2c2 {
+	light-sensor@23 {
+		compatible = "rohm,bh1750";
+		reg = <0x23>;
+	};
+};

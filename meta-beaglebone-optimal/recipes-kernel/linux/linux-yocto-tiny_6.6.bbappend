@@ -11,7 +11,7 @@ inherit linux-yocto-tiny-feature-dts
 
 LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"
 LINUX_YOCTO_TINY_FEATURE_BASE_DTS = "am335x-boneblack-optimal-tiny.dts"
-LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS I2C2_BUS RTC_DS3231 SHT3X"
+LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS I2C2_BUS RTC_DS3231 SHT3X BH1750"
 
 # GPIO LEDS feature, default-off. Set ENABLED to "1" temporarily to verify BBB USR0 heartbeat support.
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED = "0"
@@ -36,6 +36,12 @@ LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_DIR = "sht3x"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_DTS = "sht3x.dtsi"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_CFG = "sht3x.cfg"
+
+# BH1750 feature, default-off. Set ENABLED to "1" temporarily with I2C2_BUS to verify BH1750 IIO support over i2c2 at 0x23.
+LINUX_YOCTO_TINY_FEATURE_BH1750_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_BH1750_DIR = "bh1750"
+LINUX_YOCTO_TINY_FEATURE_BH1750_DTS = "bh1750.dtsi"
+LINUX_YOCTO_TINY_FEATURE_BH1750_CFG = "bh1750.cfg"
 
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
