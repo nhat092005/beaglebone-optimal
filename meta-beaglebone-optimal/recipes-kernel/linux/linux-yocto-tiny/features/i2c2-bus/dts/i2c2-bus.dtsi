@@ -1,0 +1,15 @@
+&am33xx_pinmux {
+	i2c2_bus_pins: i2c2-bus-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_UART1_CTSN, PIN_INPUT_PULLUP, MUX_MODE3)
+			AM33XX_PADCONF(AM335X_PIN_UART1_RTSN, PIN_INPUT_PULLUP, MUX_MODE3)
+		>;
+	};
+};
+
+&i2c2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2_bus_pins>;
+	status = "okay";
+	clock-frequency = <400000>;
+};
