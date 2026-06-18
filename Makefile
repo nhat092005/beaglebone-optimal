@@ -28,12 +28,19 @@ DOCKER_TAG   ?= dev
 YOCTO_IMAGE ?= core-image-minimal
 
 # Yocto tiny
-YOCTO_TINY_MACHINE      ?= beaglebone-black-optimal-tiny
-YOCTO_TINY_DISTRO       ?= optimal-tiny
-YOCTO_TINY_IMAGE        ?= core-image-optimal-tiny-initramfs
-YOCTO_TINY_DTB          ?= am335x-boneblack-optimal-tiny.dtb
-TINY_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
-TINY_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
+YOCTO_TINY_MACHINE                 ?= beaglebone-black-optimal-tiny
+YOCTO_TINY_DISTRO                  ?= optimal-tiny
+YOCTO_TINY_IMAGE                   ?= core-image-optimal-tiny-initramfs
+YOCTO_TINY_DTB                     ?= am335x-boneblack-optimal-tiny.dtb
+YOCTO_TINY_BBLAYERS_TEMPLATE       ?= $(CURDIR)/yocto/conf/bblayers.conf.tiny.example
+YOCTO_TINY_LOCALCONF_TEMPLATE      ?= $(CURDIR)/yocto/conf/local.conf.tiny.example
+YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
+YOCTO_TINY_BOOT_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
+
+# Yocto Qt dashboard
+YOCTO_QT_DASHBOARD_IMAGE               ?= core-image-optimal-qt-dashboard
+YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE   ?= $(CURDIR)/yocto/conf/bblayers.conf.qt-dashboard.example
+YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE  ?= $(CURDIR)/yocto/conf/local.conf.qt-dashboard.example
 
 # Derived paths
 YOCTO_ROOT          ?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
@@ -43,7 +50,7 @@ YOCTO_BUILD_DIR     ?= $(YOCTO_ROOT)/build
 YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
 YOCTO_SSTATE_DIR    ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
 IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
-TINY_DEPLOY_DIR     ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
+YOCTO_TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
 
 # Runtime arguments
 SDCARD ?=
@@ -53,12 +60,14 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        PROJECT_STORAGE_ROOT \
        YOCTO_ROOT YOCTO_SOURCES_DIR YOCTO_POKY_DIR YOCTO_BUILD_DIR \
        YOCTO_DOWNLOADS_DIR YOCTO_SSTATE_DIR \
-       YOCTO_TINY_MACHINE YOCTO_TINY_DISTRO YOCTO_TINY_IMAGE \
-       YOCTO_IMAGE IMAGE TINY_DEPLOY_DIR YOCTO_TINY_DTB \
-       TINY_EXTLINUX_TEMPLATE TINY_UENV_TEMPLATE \
+       YOCTO_TINY_MACHINE YOCTO_TINY_DISTRO YOCTO_TINY_IMAGE YOCTO_TINY_DTB \
+       YOCTO_TINY_BBLAYERS_TEMPLATE YOCTO_TINY_LOCALCONF_TEMPLATE \
+       YOCTO_TINY_DEPLOY_DIR YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE YOCTO_TINY_BOOT_UENV_TEMPLATE \
+       YOCTO_QT_DASHBOARD_IMAGE YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE \
+       YOCTO_IMAGE IMAGE \
        SDCARD CMD
 
-.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-build sd-flash sd-flash-tiny format format-check lint check
+.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build sd-flash sd-flash-tiny format format-check lint check
 
 help:
 	@printf '%s\n' \
@@ -74,6 +83,10 @@ help:
 		'' \
 		'Baseline path:' \
 		'  make yocto-init                   Create Yocto build dir and validate poky checkout.' \
+		'  make yocto-layers                 Show active Yocto layers for the current build dir.' \
+		'  make yocto-parse                  Parse active Yocto metadata for the current build dir.' \
+		'  make yocto-qt-profile             Show effective qtbase profile for the current build dir.' \
+		'  make yocto-dry-run                Dry-run the current YOCTO_IMAGE dependency graph.' \
 		'  make yocto-build                  Build YOCTO_IMAGE inside the builder container.' \
 		'  make sd-flash SDCARD='\''/dev/sdX'\''   Flash IMAGE to an SD card on the host.' \
 		'' \
@@ -81,6 +94,9 @@ help:
 		'  make yocto-list                   Show baseline and tiny public contract values.' \
 		'  make yocto-build YOCTO_IMAGE='$(YOCTO_TINY_IMAGE)'  Build the tiny image plus kernel and bootloader artifacts.' \
 		'  make sd-flash-tiny SDCARD='\''/dev/sdX'\''  Partition, format, and populate tiny FAT boot media.' \
+		'' \
+		'Qt dashboard path:' \
+		'  make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)'  Dry-run the Qt dashboard image dependency graph.' \
 		'' \
 		'Quality:' \
 		'  make format                       Format tracked shell and C/C++ files.' \
@@ -121,14 +137,22 @@ yocto-list:
 		'  machine: '$(YOCTO_TINY_MACHINE) \
 		'  distro: '$(YOCTO_TINY_DISTRO) \
 		'  image: '$(YOCTO_TINY_IMAGE) \
-		'  deploy dir: '$(TINY_DEPLOY_DIR) \
+		'  deploy dir: '$(YOCTO_TINY_DEPLOY_DIR) \
 		'  tiny dtb deploy name: '$(YOCTO_TINY_DTB) \
-		'  extlinux template: '$(TINY_EXTLINUX_TEMPLATE) \
-		'  uEnv template: '$(TINY_UENV_TEMPLATE) \
-		'  local.conf example: yocto/conf/local.conf.tiny.example' \
-		'  bblayers example: yocto/conf/bblayers.conf.tiny.example' \
+		'  extlinux template: '$(YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE) \
+		'  uEnv template: '$(YOCTO_TINY_BOOT_UENV_TEMPLATE) \
+		'  local.conf example: '$(YOCTO_TINY_LOCALCONF_TEMPLATE) \
+		'  bblayers example: '$(YOCTO_TINY_BBLAYERS_TEMPLATE) \
 		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_TINY_IMAGE) \
 		'  flash: make sd-flash-tiny SDCARD=/dev/sdX' \
+		'' \
+		'Qt dashboard path:' \
+		'  image: '$(YOCTO_QT_DASHBOARD_IMAGE) \
+		'  local.conf example: '$(YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE) \
+		'  bblayers example: '$(YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE) \
+		'  parse: make yocto-parse' \
+		'  dry-run: make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
+		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
 		'' \
 		'Contract docs:' \
 		'  docs/boot-contract.md' \
@@ -147,7 +171,19 @@ doctor:
 	@bash scripts/docker/doctor.sh
 
 yocto-init:
-	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Baseline local.conf example: /workspace/yocto/conf/local.conf.example" "Baseline bblayers example: /workspace/yocto/conf/bblayers.conf.example" "Tiny local.conf example: /workspace/yocto/conf/local.conf.tiny.example" "Tiny bblayers example: /workspace/yocto/conf/bblayers.conf.tiny.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Baseline local.conf example: /workspace/yocto/conf/local.conf.example" "Baseline bblayers example: /workspace/yocto/conf/bblayers.conf.example" "Tiny local.conf example: /workspace/yocto/conf/local.conf.tiny.example" "Tiny bblayers example: /workspace/yocto/conf/bblayers.conf.tiny.example" "Qt dashboard local.conf example: /workspace/yocto/conf/local.conf.qt-dashboard.example" "Qt dashboard bblayers example: /workspace/yocto/conf/bblayers.conf.qt-dashboard.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''
+
+yocto-layers:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake-layers show-layers'\'''
+
+yocto-parse:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake -p'\'''
+
+yocto-qt-profile:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake -e qtbase | egrep "^(DISTRO_FEATURES=|PACKAGECONFIG=|QT_QPA_DEFAULT_PLATFORM=)"'\'''
+
+yocto-dry-run:
+	@bash -lc 'source scripts/docker/lib.sh && require_yocto_image && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake "$$YOCTO_IMAGE" -n'\'''
 
 ifneq ($(filter $(YOCTO_IMAGE),$(YOCTO_TINY_IMAGE)),)
 yocto-build:
