@@ -26,6 +26,7 @@ DOCKER_TAG   ?= dev
 
 # Yocto baseline
 YOCTO_IMAGE ?= core-image-minimal
+YOCTO_MACHINE ?= beaglebone-yocto
 
 # Yocto tiny
 YOCTO_TINY_MACHINE                 ?= beaglebone-black-optimal-tiny
@@ -38,6 +39,7 @@ YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
 YOCTO_TINY_BOOT_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
 
 # Yocto Qt dashboard
+YOCTO_QT_DASHBOARD_MACHINE             ?= beaglebone-black-optimal-qt-dashboard
 YOCTO_QT_DASHBOARD_IMAGE               ?= core-image-optimal-qt-dashboard
 YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE   ?= $(CURDIR)/yocto/conf/bblayers.conf.qt-dashboard.example
 YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE  ?= $(CURDIR)/yocto/conf/local.conf.qt-dashboard.example
@@ -49,7 +51,7 @@ YOCTO_POKY_DIR      ?= $(YOCTO_SOURCES_DIR)/poky
 YOCTO_BUILD_DIR     ?= $(YOCTO_ROOT)/build
 YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
 YOCTO_SSTATE_DIR    ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
-IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/beaglebone-yocto/$(YOCTO_IMAGE)-beaglebone-yocto.rootfs.wic
+IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_MACHINE)/$(YOCTO_IMAGE)-$(YOCTO_MACHINE).wic
 YOCTO_TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
 
 # Runtime arguments
@@ -60,10 +62,11 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        PROJECT_STORAGE_ROOT \
        YOCTO_ROOT YOCTO_SOURCES_DIR YOCTO_POKY_DIR YOCTO_BUILD_DIR \
        YOCTO_DOWNLOADS_DIR YOCTO_SSTATE_DIR \
+       YOCTO_MACHINE \
        YOCTO_TINY_MACHINE YOCTO_TINY_DISTRO YOCTO_TINY_IMAGE YOCTO_TINY_DTB \
        YOCTO_TINY_BBLAYERS_TEMPLATE YOCTO_TINY_LOCALCONF_TEMPLATE \
        YOCTO_TINY_DEPLOY_DIR YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE YOCTO_TINY_BOOT_UENV_TEMPLATE \
-       YOCTO_QT_DASHBOARD_IMAGE YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE \
+       YOCTO_QT_DASHBOARD_MACHINE YOCTO_QT_DASHBOARD_IMAGE YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE \
        YOCTO_IMAGE IMAGE \
        SDCARD CMD
 
@@ -117,6 +120,7 @@ help:
 		'' \
 		'Build target:' \
 		'  YOCTO_IMAGE                       Yocto image target, default: core-image-minimal.' \
+		'  YOCTO_MACHINE                     Deploy machine name used by sd-flash, default: beaglebone-yocto.' \
 		'' \
 		'Boot contract docs:' \
 		'  docs/boot-contract.md             Normative boot ownership rules.' \
@@ -147,12 +151,14 @@ yocto-list:
 		'  flash: make sd-flash-tiny SDCARD=/dev/sdX' \
 		'' \
 		'Qt dashboard path:' \
+		'  machine: '$(YOCTO_QT_DASHBOARD_MACHINE) \
 		'  image: '$(YOCTO_QT_DASHBOARD_IMAGE) \
 		'  local.conf example: '$(YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE) \
 		'  bblayers example: '$(YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE) \
 		'  parse: make yocto-parse' \
 		'  dry-run: make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
 		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
+		'  flash: make sd-flash YOCTO_MACHINE='$(YOCTO_QT_DASHBOARD_MACHINE)' YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)' SDCARD=/dev/sdX' \
 		'' \
 		'Contract docs:' \
 		'  docs/boot-contract.md' \
