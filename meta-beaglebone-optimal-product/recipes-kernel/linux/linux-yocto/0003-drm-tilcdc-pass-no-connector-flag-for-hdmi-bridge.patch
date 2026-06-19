@@ -1,0 +1,16 @@
+Upstream-Status: Inappropriate [product-specific HDMI bridge attach fix for BeagleBone Black Rev D Qt dashboard]
+
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_external.c b/drivers/gpu/drm/tilcdc/tilcdc_external.c
+index 3b86d00..90aa482 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_external.c
++++ b/drivers/gpu/drm/tilcdc/tilcdc_external.c
+@@ -94,7 +94,8 @@ int tilcdc_attach_bridge(struct drm_device *ddev, struct drm_bridge *bridge)
+ 
+ 	priv->external_encoder->possible_crtcs = BIT(0);
+ 
+-	ret = drm_bridge_attach(priv->external_encoder, bridge, NULL, 0);
++	ret = drm_bridge_attach(priv->external_encoder, bridge, NULL,
++				DRM_BRIDGE_ATTACH_NO_CONNECTOR);
+ 	if (ret)
+ 		return ret;
+ 

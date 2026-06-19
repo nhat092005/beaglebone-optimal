@@ -1,20 +1,19 @@
 Upstream-Status: Inappropriate [product-specific BBB Rev D device tree for Qt dashboard machine]
 
 diff --git a/arch/arm/boot/dts/ti/omap/Makefile b/arch/arm/boot/dts/ti/omap/Makefile
-index d2b5900..b175b67 100644
 --- a/arch/arm/boot/dts/ti/omap/Makefile
 +++ b/arch/arm/boot/dts/ti/omap/Makefile
-@@ -87,6 +87,7 @@ dtb-$(CONFIG_SOC_AM33XX) += \
+@@ -86,6 +86,7 @@
+ 	am335x-baltos-ir5221.dtb \
  	am335x-base0033.dtb \
  	am335x-bone.dtb \
- 	am335x-boneblack.dtb \
 +	am335x-boneblack-optimal-qt-dashboard.dtb \
+ 	am335x-boneblack.dtb \
  	am335x-boneblack-wireless.dtb \
  	am335x-boneblue.dtb \
- 	am335x-bonegreen.dtb \
 diff --git a/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts b/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts
 new file mode 100644
-index 0000000..73f743d
+index 0000000..ef363a1
 --- /dev/null
 +++ b/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts
 @@ -0,0 +1,93 @@
@@ -77,7 +76,7 @@ index 0000000..73f743d
 +		reg = <0x4c>;
 +		pinctrl-names = "default";
 +		pinctrl-0 = <&hdmi_gpio_pins_default>;
-+		vcn33-supply = <&vmmcsd_fixed>;
++		vcn33-supply = <&ldo2_reg>;
 +		vcn18-supply = <&ldo3_reg>;
 +		reset-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
 +		interrupt-parent = <&gpio1>;
