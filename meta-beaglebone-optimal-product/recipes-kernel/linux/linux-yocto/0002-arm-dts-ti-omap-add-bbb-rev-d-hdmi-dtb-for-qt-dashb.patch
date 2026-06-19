@@ -1,0 +1,113 @@
+Upstream-Status: Inappropriate [product-specific BBB Rev D device tree for Qt dashboard machine]
+
+diff --git a/arch/arm/boot/dts/ti/omap/Makefile b/arch/arm/boot/dts/ti/omap/Makefile
+index d2b5900..b175b67 100644
+--- a/arch/arm/boot/dts/ti/omap/Makefile
++++ b/arch/arm/boot/dts/ti/omap/Makefile
+@@ -87,6 +87,7 @@ dtb-$(CONFIG_SOC_AM33XX) += \
+ 	am335x-base0033.dtb \
+ 	am335x-bone.dtb \
+ 	am335x-boneblack.dtb \
++	am335x-boneblack-optimal-qt-dashboard.dtb \
+ 	am335x-boneblack-wireless.dtb \
+ 	am335x-boneblue.dtb \
+ 	am335x-bonegreen.dtb \
+diff --git a/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts b/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts
+new file mode 100644
+index 0000000..73f743d
+--- /dev/null
++++ b/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-qt-dashboard.dts
+@@ -0,0 +1,93 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Product DTS for the BeagleBone Black Rev D Qt dashboard image.
++ */
++
++/dts-v1/;
++
++#include "am335x-boneblack.dts"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/interrupt-controller/irq.h>
++
++/ {
++	model = "TI AM335x BeagleBone Black Rev D";
++	compatible = "ti,am335x-bone-black", "ti,am335x-bone", "ti,am33xx";
++
++	connector-hdmi {
++		compatible = "hdmi-connector";
++		label = "hdmi";
++		type = "a";
++
++		port {
++			hdmi_connector_in: endpoint {
++				remote-endpoint = <&it66122_out>;
++			};
++		};
++	};
++};
++
++&am33xx_pinmux {
++	hdmi_gpio_pins_default: hdmi-gpio-default-pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_GPMC_A9, PIN_INPUT_PULLUP, MUX_MODE7)
++			AM33XX_PADCONF(AM335X_PIN_UART0_RTSN, PIN_OUTPUT_PULLUP, MUX_MODE7)
++		>;
++	};
++};
++
++&tda19988 {
++	status = "disabled";
++};
++
++&lcdc {
++	pinctrl-names = "default";
++	pinctrl-0 = <&nxp_hdmi_bonelt_pins>;
++	blue-and-red-wiring = "straight";
++};
++
++&lcdc_0 {
++	remote-endpoint = <&it66122_in>;
++};
++
++&i2c0 {
++	status = "okay";
++
++	it66122: bridge-hdmi@4c {
++		compatible = "ite,it66122";
++		reg = <0x4c>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&hdmi_gpio_pins_default>;
++		vcn33-supply = <&vmmcsd_fixed>;
++		vcn18-supply = <&ldo3_reg>;
++		reset-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
++		interrupt-parent = <&gpio1>;
++		interrupts = <25 IRQ_TYPE_EDGE_FALLING>;
++		#sound-dai-cells = <0>;
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				it66122_in: endpoint {
++					bus-width = <24>;
++					remote-endpoint = <&lcdc_0>;
++				};
++			};
++
++			port@1 {
++				reg = <1>;
++
++				it66122_out: endpoint {
++					remote-endpoint = <&hdmi_connector_in>;
++				};
++			};
++		};
++	};
++};
++
++&{/sound/simple-audio-card,codec} {
++	sound-dai = <&it66122>;
++};

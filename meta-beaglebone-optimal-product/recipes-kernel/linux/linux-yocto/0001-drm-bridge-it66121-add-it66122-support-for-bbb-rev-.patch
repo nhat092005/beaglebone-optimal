@@ -1,0 +1,186 @@
+Upstream-Status: Inappropriate [product-specific BBB Rev D enablement for current Yocto kernel baseline]
+
+diff --git a/drivers/gpu/drm/bridge/ite-it66121.c b/drivers/gpu/drm/bridge/ite-it66121.c
+index 8f5846b..36025d1 100644
+--- a/drivers/gpu/drm/bridge/ite-it66121.c
++++ b/drivers/gpu/drm/bridge/ite-it66121.c
+@@ -287,6 +287,7 @@
+ enum chip_id {
+ 	ID_IT6610,
+ 	ID_IT66121,
++	ID_IT66122,
+ };
+ 
+ struct it66121_chip_info {
+@@ -315,6 +316,11 @@ struct it66121_ctx {
+ 	const struct it66121_chip_info *info;
+ };
+ 
++static bool it66121_is_66xx(struct it66121_ctx *ctx)
++{
++	return ctx->info->id == ID_IT66121 || ctx->info->id == ID_IT66122;
++}
++
+ static const struct regmap_range_cfg it66121_regmap_banks[] = {
+ 	{
+ 		.name = "it66121",
+@@ -402,7 +408,7 @@ static int it66121_configure_afe(struct it66121_ctx *ctx,
+ 		if (ret)
+ 			return ret;
+ 
+-		if (ctx->info->id == ID_IT66121) {
++		if (it66121_is_66xx(ctx)) {
+ 			ret = regmap_write_bits(ctx->regmap, IT66121_AFE_IP_REG,
+ 						IT66121_AFE_IP_EC1, 0);
+ 			if (ret)
+@@ -428,7 +434,7 @@ static int it66121_configure_afe(struct it66121_ctx *ctx,
+ 		if (ret)
+ 			return ret;
+ 
+-		if (ctx->info->id == ID_IT66121) {
++		if (it66121_is_66xx(ctx)) {
+ 			ret = regmap_write_bits(ctx->regmap, IT66121_AFE_IP_REG,
+ 						IT66121_AFE_IP_EC1,
+ 						IT66121_AFE_IP_EC1);
+@@ -598,7 +604,7 @@ static int it66121_bridge_attach(struct drm_bridge *bridge,
+ 	if (ret)
+ 		return ret;
+ 
+-	if (ctx->info->id == ID_IT66121) {
++	if (it66121_is_66xx(ctx)) {
+ 		ret = regmap_write_bits(ctx->regmap, IT66121_CLK_BANK_REG,
+ 					IT66121_CLK_BANK_PWROFF_RCLK, 0);
+ 		if (ret)
+@@ -804,7 +810,7 @@ void it66121_bridge_mode_set(struct drm_bridge *bridge,
+ 	if (regmap_write(ctx->regmap, IT66121_HDMI_MODE_REG, IT66121_HDMI_MODE_HDMI))
+ 		goto unlock;
+ 
+-	if (ctx->info->id == ID_IT66121 &&
++	if (it66121_is_66xx(ctx) &&
+ 	    regmap_write_bits(ctx->regmap, IT66121_CLK_BANK_REG,
+ 			      IT66121_CLK_BANK_PWROFF_TXCLK,
+ 			      IT66121_CLK_BANK_PWROFF_TXCLK)) {
+@@ -817,7 +823,7 @@ void it66121_bridge_mode_set(struct drm_bridge *bridge,
+ 	if (it66121_configure_afe(ctx, adjusted_mode))
+ 		goto unlock;
+ 
+-	if (ctx->info->id == ID_IT66121 &&
++	if (it66121_is_66xx(ctx) &&
+ 	    regmap_write_bits(ctx->regmap, IT66121_CLK_BANK_REG,
+ 			      IT66121_CLK_BANK_PWROFF_TXCLK, 0)) {
+ 		goto unlock;
+@@ -1500,14 +1506,35 @@ static int it66121_audio_codec_init(struct it66121_ctx *ctx, struct device *dev)
+ }
+ 
+ static const char * const it66121_supplies[] = {
+-	"vcn33", "vcn18", "vrf12"
++	"vcn33", "vcn18"
++};
++
++static int it66121_get_optional_vrf12(struct device *dev)
++{
++	int ret;
++
++	ret = devm_regulator_get_enable_optional(dev, "vrf12");
++	if (ret == -ENODEV)
++		return 0;
++
++	if (ret)
++		dev_err(dev, "Failed to enable optional vrf12 supply\n");
++
++	return ret;
++}
++
++static const struct it66121_chip_info it66xx_chip_info[] = {
++	{ .id = ID_IT6610, .vid = 0xca00, .pid = 0x0611 },
++	{ .id = ID_IT66121, .vid = 0x4954, .pid = 0x0612 },
++	{ .id = ID_IT66122, .vid = 0x4954, .pid = 0x0622 },
+ };
+ 
+ static int it66121_probe(struct i2c_client *client)
+ {
+-	const struct i2c_device_id *id = i2c_client_get_device_id(client);
+ 	u32 revision_id, vendor_ids[2] = { 0 }, device_ids[2] = { 0 };
+ 	struct device_node *ep;
++	const struct it66121_chip_info *chip_info = NULL;
++	int i;
+ 	int ret;
+ 	struct it66121_ctx *ctx;
+ 	struct device *dev = &client->dev;
+@@ -1527,7 +1554,6 @@ static int it66121_probe(struct i2c_client *client)
+ 
+ 	ctx->dev = dev;
+ 	ctx->client = client;
+-	ctx->info = (const struct it66121_chip_info *) id->driver_data;
+ 
+ 	of_property_read_u32(ep, "bus-width", &ctx->bus_width);
+ 	of_node_put(ep);
+@@ -1563,6 +1589,9 @@ static int it66121_probe(struct i2c_client *client)
+ 		dev_err(dev, "Failed to enable power supplies\n");
+ 		return ret;
+ 	}
++	ret = it66121_get_optional_vrf12(dev);
++	if (ret)
++		return ret;
+ 
+ 	it66121_hw_reset(ctx);
+ 
+@@ -1579,10 +1608,16 @@ static int it66121_probe(struct i2c_client *client)
+ 	revision_id = FIELD_GET(IT66121_REVISION_MASK, device_ids[1]);
+ 	device_ids[1] &= IT66121_DEVICE_ID1_MASK;
+ 
+-	if ((vendor_ids[1] << 8 | vendor_ids[0]) != ctx->info->vid ||
+-	    (device_ids[1] << 8 | device_ids[0]) != ctx->info->pid) {
+-		return -ENODEV;
++	for (i = 0; i < ARRAY_SIZE(it66xx_chip_info); i++) {
++		chip_info = &it66xx_chip_info[i];
++		if ((vendor_ids[1] << 8 | vendor_ids[0]) == chip_info->vid &&
++		    (device_ids[1] << 8 | device_ids[0]) == chip_info->pid)
++			break;
+ 	}
++	if (i == ARRAY_SIZE(it66xx_chip_info))
++		return -ENODEV;
++
++	ctx->info = chip_info;
+ 
+ 	ctx->bridge.funcs = &it66121_bridge_funcs;
+ 	ctx->bridge.of_node = dev->of_node;
+@@ -1600,7 +1635,7 @@ static int it66121_probe(struct i2c_client *client)
+ 
+ 	drm_bridge_add(&ctx->bridge);
+ 
+-	dev_info(ctx->dev, "IT66121 revision %d probed\n", revision_id);
++	dev_info(ctx->dev, "IT6612x revision %d probed\n", revision_id);
+ 
+ 	return 0;
+ }
+@@ -1616,25 +1651,15 @@ static void it66121_remove(struct i2c_client *client)
+ static const struct of_device_id it66121_dt_match[] = {
+ 	{ .compatible = "ite,it66121" },
+ 	{ .compatible = "ite,it6610" },
++	{ .compatible = "ite,it66122" },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(of, it66121_dt_match);
+ 
+-static const struct it66121_chip_info it66121_chip_info = {
+-	.id = ID_IT66121,
+-	.vid = 0x4954,
+-	.pid = 0x0612,
+-};
+-
+-static const struct it66121_chip_info it6610_chip_info = {
+-	.id = ID_IT6610,
+-	.vid = 0xca00,
+-	.pid = 0x0611,
+-};
+-
+ static const struct i2c_device_id it66121_id[] = {
+-	{ "it66121", (kernel_ulong_t) &it66121_chip_info },
+-	{ "it6610", (kernel_ulong_t) &it6610_chip_info },
++	{ "it66121" },
++	{ "it6610" },
++	{ "it66122" },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, it66121_id);
