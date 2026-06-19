@@ -54,30 +54,30 @@ unmount_child_partitions() {
 }
 
 require_tiny_deploy_dir() {
-    [ -n "${TINY_DEPLOY_DIR:-}" ] || die "TINY_DEPLOY_DIR must not be empty"
-    [ -d "$TINY_DEPLOY_DIR" ] || die "missing deploy dir: $TINY_DEPLOY_DIR. Run the tiny build first."
+    [ -n "${YOCTO_TINY_DEPLOY_DIR:-}" ] || die "YOCTO_TINY_DEPLOY_DIR must not be empty"
+    [ -d "$YOCTO_TINY_DEPLOY_DIR" ] || die "missing deploy dir: $YOCTO_TINY_DEPLOY_DIR. Run the tiny build first."
 }
 
 resolve_kernel_source() {
     local default_name="zImage-initramfs-${YOCTO_TINY_MACHINE}.bin"
 
-    if [ -f "${TINY_DEPLOY_DIR}/${default_name}" ]; then
-        printf '%s\n' "${TINY_DEPLOY_DIR}/${default_name}"
+    if [ -f "${YOCTO_TINY_DEPLOY_DIR}/${default_name}" ]; then
+        printf '%s\n' "${YOCTO_TINY_DEPLOY_DIR}/${default_name}"
         return
     fi
 
     local first_match
-    first_match="$(find "$TINY_DEPLOY_DIR" -maxdepth 1 -type f -name 'zImage-initramfs-*.bin' | sort | head -n 1)"
-    [ -n "$first_match" ] || die "missing bundled tiny kernel artifact under $TINY_DEPLOY_DIR"
+    first_match="$(find "$YOCTO_TINY_DEPLOY_DIR" -maxdepth 1 -type f -name 'zImage-initramfs-*.bin' | sort | head -n 1)"
+    [ -n "$first_match" ] || die "missing bundled tiny kernel artifact under $YOCTO_TINY_DEPLOY_DIR"
     printf '%s\n' "$first_match"
 }
 
 require_boot_sources() {
-    [ -f "${TINY_DEPLOY_DIR}/MLO" ] || die "missing ${TINY_DEPLOY_DIR}/MLO"
-    [ -f "${TINY_DEPLOY_DIR}/u-boot.img" ] || die "missing ${TINY_DEPLOY_DIR}/u-boot.img"
-    [ -f "${TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" ] || die "missing ${TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}"
-    [ -f "${TINY_EXTLINUX_TEMPLATE}" ] || die "missing extlinux template: ${TINY_EXTLINUX_TEMPLATE}"
-    [ -f "${TINY_UENV_TEMPLATE}" ] || die "missing uEnv template: ${TINY_UENV_TEMPLATE}"
+    [ -f "${YOCTO_TINY_DEPLOY_DIR}/MLO" ] || die "missing ${YOCTO_TINY_DEPLOY_DIR}/MLO"
+    [ -f "${YOCTO_TINY_DEPLOY_DIR}/u-boot.img" ] || die "missing ${YOCTO_TINY_DEPLOY_DIR}/u-boot.img"
+    [ -f "${YOCTO_TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" ] || die "missing ${YOCTO_TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}"
+    [ -f "${YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE}" ] || die "missing extlinux template: ${YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE}"
+    [ -f "${YOCTO_TINY_BOOT_UENV_TEMPLATE}" ] || die "missing uEnv template: ${YOCTO_TINY_BOOT_UENV_TEMPLATE}"
 }
 
 partition_disk() {
@@ -113,14 +113,14 @@ populate_partition() {
     run_privileged mount "$part_path" "$mount_dir"
 
     note "copying tiny boot artifacts into ${part_path}"
-    run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/MLO" "$mount_dir/MLO"
-    run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/u-boot.img" "$mount_dir/u-boot.img"
+    run_privileged install -m 0644 "${YOCTO_TINY_DEPLOY_DIR}/MLO" "$mount_dir/MLO"
+    run_privileged install -m 0644 "${YOCTO_TINY_DEPLOY_DIR}/u-boot.img" "$mount_dir/u-boot.img"
     run_privileged install -m 0644 "$kernel_source" "$mount_dir/zImage"
-    run_privileged install -m 0644 "${TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" "$mount_dir/${YOCTO_TINY_DTB}"
+    run_privileged install -m 0644 "${YOCTO_TINY_DEPLOY_DIR}/${YOCTO_TINY_DTB}" "$mount_dir/${YOCTO_TINY_DTB}"
 
     run_privileged mkdir -p "$mount_dir/extlinux"
-    run_privileged install -m 0644 "${TINY_EXTLINUX_TEMPLATE}" "$mount_dir/extlinux/extlinux.conf"
-    run_privileged install -m 0644 "${TINY_UENV_TEMPLATE}" "$mount_dir/uEnv.txt"
+    run_privileged install -m 0644 "${YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE}" "$mount_dir/extlinux/extlinux.conf"
+    run_privileged install -m 0644 "${YOCTO_TINY_BOOT_UENV_TEMPLATE}" "$mount_dir/uEnv.txt"
 
     run_privileged sync
     run_privileged umount "$mount_dir"
@@ -146,7 +146,7 @@ main() {
     require_tiny_deploy_dir
     require_boot_sources
 
-    note "tiny deploy dir: $TINY_DEPLOY_DIR"
+    note "tiny deploy dir: $YOCTO_TINY_DEPLOY_DIR"
     note "target: $SDCARD"
 
     unmount_child_partitions
