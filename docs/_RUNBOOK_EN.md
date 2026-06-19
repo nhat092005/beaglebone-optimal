@@ -151,6 +151,18 @@ Build the default Yocto image:
 make yocto-build
 ```
 
+Parse the active Yocto metadata:
+
+```bash
+make yocto-parse
+```
+
+Dry-run the current image dependency graph:
+
+```bash
+make yocto-dry-run
+```
+
 Flash the default Yocto image to an SD card on the host:
 
 ```bash
@@ -254,6 +266,35 @@ Use it when:
 - `make yocto-init` already created the build dir
 - `conf/local.conf` already includes the project settings you want
 
+### `make yocto-parse`
+
+Behavior:
+
+- runs the same preflight as `docker-shell`
+- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
+- sources `oe-init-build-env` for the storage-backed build dir
+- runs `bitbake -p`
+
+Use it when:
+
+- you want to confirm the active metadata parses before a real build
+- you changed `bblayers.conf`, recipes, or layer composition
+
+### `make yocto-dry-run`
+
+Behavior:
+
+- runs the same preflight as `docker-shell`
+- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
+- requires a non-empty `YOCTO_IMAGE`
+- sources `oe-init-build-env` for the storage-backed build dir
+- runs `bitbake ${YOCTO_IMAGE} -n`
+
+Use it when:
+
+- you want to confirm the current image dependency graph before a real build
+- you changed image, packagegroup, or recipe contracts
+
 ### `make sd-flash SDCARD='/dev/sdX'`
 
 Behavior:
@@ -318,6 +359,8 @@ Public contract files:
 - `docs/boot-contract.md`
 - `yocto/conf/local.conf.tiny.example`
 - `yocto/conf/bblayers.conf.tiny.example`
+- `yocto/boot/extlinux.tiny.conf`
+- `yocto/boot/uEnv.tiny.txt`
 
 Manual tiny config apply flow:
 
@@ -334,6 +377,8 @@ cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
 Build the tiny image:
 
 ```bash
+make yocto-parse
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 ```
 
@@ -355,6 +400,99 @@ Tiny path operator notes:
   - optional `uEnv.txt`
 - tiny path does not use `.wic` or a separate ext4 rootfs partition
 - tiny path still expects proof on hardware through UART boot logs
+
+## Qt dashboard product path
+
+The Qt dashboard path is a separate product-side product contract. It does not
+redefine the tiny path contract.
+
+Public contract files:
+
+- `yocto/conf/bblayers.conf.qt-dashboard.example`
+- `yocto/conf/local.conf.qt-dashboard.example`
+- `meta-beaglebone-optimal-product/conf/layer.conf`
+- `meta-beaglebone-optimal-product/recipes-core/images/core-image-optimal-qt-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-core/packagegroups/packagegroup-optimal-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-qt/qt6/qtbase_%.bbappend`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/qt-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.service`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.sh`
+- `qt-dashboard-app/`
+
+Expected upstream layer path:
+
+- `${YOCTO_SOURCES_DIR}/meta-qt6`
+
+Manual product config apply flow:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.qt-dashboard.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.qt-dashboard.example >> conf/local.conf
+```
+
+Build the product image:
+
+```bash
+make yocto-parse
+make yocto-qt-profile
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
+```
+
+Flash the BeagleBone Black product image:
+
+```bash
+make sd-flash \
+  YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard \
+  YOCTO_IMAGE=core-image-optimal-qt-dashboard \
+  SDCARD=/dev/sdX
+```
+
+Operator notes:
+
+- the product path keeps the current BSP layer at `/workspace/meta-beaglebone-optimal`
+- the product path adds `/workspace/meta-beaglebone-optimal-product` as a separate layer
+- the product path expects `meta-qt6` to exist beside `poky`
+- tiny stays headless; it must not become the owner of HDMI/display behavior
+- the product path owns HDMI/display behavior and verification
+- the product path now targets BeagleBone Black explicitly instead of the
+  generic `beaglebone-yocto` machine
+- runtime display defaults live in `qt-dashboard.sh`
+- build-time feature trimming lives in `local.conf.qt-dashboard.example` and `qtbase_%.bbappend`
+- product policy drops desktop, audio, wifi, and zeroconf stacks that are not
+  part of the local-only fullscreen appliance path
+- the launcher contract is a single fullscreen Qt Quick app on LinuxFB with software rendering
+
+Build-side proof checklist:
+
+```bash
+make yocto-parse
+make yocto-qt-profile
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc-source-13.4.0'
+make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc'
+make yocto-build WORKSPACE_NAME=qt-dashboard YOCTO_IMAGE=core-image-optimal-qt-dashboard
+```
+
+Board-side HDMI proof checklist:
+
+```bash
+ls -l /dev/fb0
+systemctl status qt-dashboard
+journalctl -u qt-dashboard -b --no-pager
+```
+
+Required operator observation:
+
+- the HDMI-attached screen shows the fullscreen dashboard
+
+If `/dev/fb0` is missing on the product image, treat that as a product-path
+display gap and pause before expanding into kernel or device tree work.
 
 ### Known boot messages
 

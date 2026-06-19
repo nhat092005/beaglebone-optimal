@@ -15,6 +15,7 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 - **Dual Boot Paths:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
+- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for a fullscreen Qt dashboard image that stays separate from the tiny BSP path and owns HDMI/display behavior.
 - **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`, `yamllint`, `hadolint`) verified through `make`.
 
 ---
@@ -86,12 +87,54 @@ make doctor
    ```
 3. Build the tiny image:
    ```bash
+   make yocto-parse
+   make yocto-dry-run YOCTO_IMAGE=core-image-optimal-tiny-initramfs
    make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
    ```
 4. Flash the single FAT boot partition:
    ```bash
    make sd-flash-tiny SDCARD=/dev/sdX
    ```
+
+#### Option C: Qt Dashboard Product Path
+
+1. Keep the existing baseline and tiny BSP flow intact.
+2. Add an upstream `meta-qt6` checkout beside `poky` under `"$YOCTO_SOURCES_DIR"`.
+3. Initialize the build directory and apply the product path examples:
+   ```bash
+   make yocto-init
+   cp yocto/conf/bblayers.conf.qt-dashboard.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+   cat yocto/conf/local.conf.qt-dashboard.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
+   ```
+4. Build the scaffolded product image path:
+   ```bash
+   make yocto-parse
+   make yocto-qt-profile
+   make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
+   make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
+   ```
+5. Flash the BBB Black product image:
+   ```bash
+   make sd-flash \
+     YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard \
+     YOCTO_IMAGE=core-image-optimal-qt-dashboard \
+     SDCARD=/dev/sdX
+   ```
+
+This product path defines a minimal appliance-style Qt profile:
+
+- tiny remains headless and does not own HDMI/display behavior
+- the product path owns HDMI/display behavior and runtime verification
+- the product path now targets BeagleBone Black explicitly instead of the
+  generic `beaglebone-yocto` machine
+- runtime display defaults live in `qt-dashboard.sh`
+- build-time feature trimming lives in the Yocto product layer and
+  `local.conf.qt-dashboard.example`
+- build-time policy drops desktop, audio, and service-discovery stacks that do
+  not help a local-only fullscreen dashboard appliance
+
+Hardware HDMI proof is still required on the real board before claiming the
+dashboard runtime is proven end-to-end.
 
 ---
 
