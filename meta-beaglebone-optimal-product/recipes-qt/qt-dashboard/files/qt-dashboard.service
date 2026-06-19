@@ -1,0 +1,11 @@
+[Unit]
+Description=BeagleBone Optimal Qt Dashboard
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/qt-dashboard.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
