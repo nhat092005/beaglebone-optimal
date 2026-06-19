@@ -15,6 +15,20 @@ qt_add_executable(qt-dashboard
     src/main.cpp
 )
 
+set_source_files_properties(fonts/DejaVuSans.ttf PROPERTIES
+    QT_RESOURCE_ALIAS "DejaVuSans.ttf"
+)
+set_source_files_properties(fonts/DejaVuSans-Bold.ttf PROPERTIES
+    QT_RESOURCE_ALIAS "DejaVuSans-Bold.ttf"
+)
+
+qt_add_resources(qt-dashboard dashboard_fonts
+    PREFIX "/fonts"
+    FILES
+        fonts/DejaVuSans.ttf
+        fonts/DejaVuSans-Bold.ttf
+)
+
 qt_add_qml_module(qt-dashboard
     URI QtDashboard
     VERSION 1.0
