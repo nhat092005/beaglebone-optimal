@@ -10,3 +10,5 @@ IMAGE_FSTYPES = "tar.gz wic"
 IMAGE_INSTALL:append = " packagegroup-optimal-dashboard"
 
 inherit core-image
+
+do_image_wic[file-checksums] += "${THISDIR}/../../wic/beaglebone-qt-dashboard-extlinux.conf:True"
