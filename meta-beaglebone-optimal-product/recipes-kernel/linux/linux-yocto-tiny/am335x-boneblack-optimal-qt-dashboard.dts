@@ -43,7 +43,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&nxp_hdmi_bonelt_pins>;
 	blue-and-red-wiring = "straight";
-	max-width = <2048>;
 };
 
 &lcdc_0 {
