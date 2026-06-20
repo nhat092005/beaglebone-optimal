@@ -10,8 +10,8 @@ DL_DIR ??= "/storage/shared/downloads"
 SSTATE_DIR ??= "/storage/shared/sstate"
 SERIAL_CONSOLES = "115200;ttyS0"
 
-# The product image path uses systemd to autostart the fullscreen dashboard.
-INIT_MANAGER = "systemd"
+# BusyBox init + inittab respawn. No systemd — keeps the tiny footprint.
+INIT_MANAGER = "none"
 
 # Reclaim completed recipe workdirs as the build progresses to fit
 # the Qt dashboard path on storage-constrained hosts.

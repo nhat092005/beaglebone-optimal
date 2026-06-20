@@ -60,9 +60,20 @@ python __anonymous() {
 }
 
 linux_yocto_tiny_feature_dts_apply() {
-	base_dts="${WORKDIR}/${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}"
+	base_dts_workdir="${WORKDIR}/${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}"
 	dest_dts="${S}/arch/arm/boot/dts/ti/omap/${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}"
+	base_dts_snapshot="${T}/${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}.base"
 	include_file="${T}/${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}.feature-includes"
+
+	if [ -f "${base_dts_workdir}" ]; then
+		base_dts="${base_dts_workdir}"
+	elif [ -f "${dest_dts}" ]; then
+		cp "${dest_dts}" "${base_dts_snapshot}"
+		base_dts="${base_dts_snapshot}"
+	else
+		echo "Missing declared base DTS: ${LINUX_YOCTO_TINY_FEATURE_BASE_DTS}" >&2
+		exit 1
+	fi
 
 	: > "${include_file}"
 

@@ -1,12 +1,15 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:${THISDIR}/linux-yocto-tiny:"
 
 COMPATIBLE_MACHINE:beaglebone-black-optimal-qt-dashboard = "beaglebone-black-optimal-qt-dashboard"
-
-KBRANCH:beaglebone-black-optimal-qt-dashboard = "v6.6/standard/beaglebone"
 KMACHINE:beaglebone-black-optimal-qt-dashboard ?= "beaglebone"
-SRCREV_machine:beaglebone-black-optimal-qt-dashboard ?= "06644f0d7193d7ec39d7fe41939a21953e7a0c65"
 
-LINUX_VERSION:beaglebone-black-optimal-qt-dashboard = "6.6.21"
+# The product path reuses the tiny feature catalog, but its composed base DTS is
+# the product HDMI dashboard board file rather than the Phase 1 tiny UART DTS.
+LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-qt-dashboard = "am335x-boneblack-optimal-qt-dashboard.dts"
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_BH1750_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 
 KERNEL_FEATURES:append:beaglebone-black-optimal-qt-dashboard = " beaglebone-qt-dashboard-hdmi.scc"
 

@@ -6,6 +6,5 @@ LICENSE = "MIT"
 inherit packagegroup
 
 RDEPENDS:${PN} = " \
-	i2c-tools \
 	qt-dashboard \
 "
