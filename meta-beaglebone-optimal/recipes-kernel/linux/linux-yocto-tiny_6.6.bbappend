@@ -7,23 +7,46 @@
 # Phase3
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase3/dts:${THISDIR}/${PN}/phase3/patches:${THISDIR}/${PN}/phase3/scc:${THISDIR}/${PN}/phase3/cfg:"
 
-# GPIO LEDS feature, default-off.
-# Uncomment this block temporarily to verify BBB USR0 heartbeat support.
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/features/gpio-leds/dts:${THISDIR}/${PN}/features/gpio-leds/cfg:"
-#
-#SRC_URI:append:beaglebone-black-optimal-tiny = " \
-#	file://gpio-leds.dtsi \
-#	file://leds.cfg \
-#"
+inherit linux-yocto-tiny-feature-dts
 
-# RTC DS3231 feature, default-off.
-# Uncomment this block temporarily to verify DS3231 RTC support over i2c2.
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/features/rtc-ds3231/dts:${THISDIR}/${PN}/features/rtc-ds3231/cfg:"
-#
-#SRC_URI:append:beaglebone-black-optimal-tiny = " \
-#	file://rtc-ds3231.dtsi \
-#	file://rtc.cfg \
-#"
+LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"
+LINUX_YOCTO_TINY_FEATURE_BASE_DTS = "am335x-boneblack-optimal-tiny.dts"
+LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS I2C2_BUS RTC_DS3231 SHT3X BH1750"
+
+# GPIO LEDS feature catalog entry. Product paths may override ENABLED to "1"
+# when they explicitly need the BBB USR0 heartbeat slice.
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DIR = "gpio-leds"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DTS = "gpio-leds.dtsi"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_CFG = "leds.cfg"
+
+# I2C2 shared bus feature catalog entry. Product paths may override ENABLED to
+# "1" alongside i2c2 devices that need bus bring-up and pinmux.
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_DIR = "i2c2-bus"
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_DTS = "i2c2-bus.dtsi"
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_CFG = ""
+
+# RTC DS3231 feature catalog entry. Product paths may override ENABLED to "1"
+# with I2C2_BUS to include DS3231 RTC support over i2c2.
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DIR = "rtc-ds3231"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DTS = "rtc-ds3231.dtsi"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_CFG = "rtc.cfg"
+
+# SHT3X feature catalog entry. Product paths may override ENABLED to "1" with
+# I2C2_BUS to include SHT3X hwmon support over i2c2 at 0x44.
+LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_SHT3X_DIR = "sht3x"
+LINUX_YOCTO_TINY_FEATURE_SHT3X_DTS = "sht3x.dtsi"
+LINUX_YOCTO_TINY_FEATURE_SHT3X_CFG = "sht3x.cfg"
+
+# BH1750 feature catalog entry. Product paths may override ENABLED to "1" with
+# I2C2_BUS to include BH1750 IIO support over i2c2 at 0x23.
+LINUX_YOCTO_TINY_FEATURE_BH1750_ENABLED = "0"
+LINUX_YOCTO_TINY_FEATURE_BH1750_DIR = "bh1750"
+LINUX_YOCTO_TINY_FEATURE_BH1750_DTS = "bh1750.dtsi"
+LINUX_YOCTO_TINY_FEATURE_BH1750_CFG = "bh1750.cfg"
 
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
@@ -39,26 +62,5 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://core.cfg \
 	file://disable.cfg \
 	file://hw.cfg \
+	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
 "
-
-do_configure:prepend:beaglebone-black-optimal-tiny() {
-	base_dts="${WORKDIR}/am335x-boneblack-optimal-tiny.dts"
-	dest_dts="${S}/arch/arm/boot/dts/ti/omap/am335x-boneblack-optimal-tiny.dts"
-	include_file="${T}/am335x-boneblack-optimal-tiny.feature-includes"
-
-	: > ${include_file}
-
-	for feature_dtsi in gpio-leds rtc-ds3231; do
-		if [ -f ${WORKDIR}/${feature_dtsi}.dtsi ]; then
-			install -m 0644 ${WORKDIR}/${feature_dtsi}.dtsi ${S}/arch/arm/boot/dts/ti/omap/
-			printf '#include "%s.dtsi"\n' "${feature_dtsi}" >> ${include_file}
-		fi
-	done
-
-	if [ -s ${include_file} ]; then
-		install -m 0644 ${base_dts} ${dest_dts}
-		cat ${include_file} >> ${dest_dts}
-	else
-		install -m 0644 ${base_dts} ${dest_dts}
-	fi
-}

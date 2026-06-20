@@ -1,0 +1,39 @@
+Upstream-Status: Inappropriate [product-specific bridge connector creation fix for BeagleBone Black Rev D Qt dashboard]
+
+diff --git a/drivers/gpu/drm/tilcdc/tilcdc_external.c b/drivers/gpu/drm/tilcdc/tilcdc_external.c
+index 90aa482..a22d00b 100644
+--- a/drivers/gpu/drm/tilcdc/tilcdc_external.c
++++ b/drivers/gpu/drm/tilcdc/tilcdc_external.c
+@@ -9,6 +9,7 @@
+ 
+ #include <drm/drm_atomic_helper.h>
+ #include <drm/drm_bridge.h>
++#include <drm/drm_bridge_connector.h>
+ #include <drm/drm_of.h>
+ #include <drm/drm_simple_kms_helper.h>
+ 
+@@ -90,6 +91,7 @@ static
+ int tilcdc_attach_bridge(struct drm_device *ddev, struct drm_bridge *bridge)
+ {
+ 	struct tilcdc_drm_private *priv = ddev->dev_private;
++	struct drm_connector *connector;
+ 	int ret;
+ 
+ 	priv->external_encoder->possible_crtcs = BIT(0);
+@@ -101,10 +103,12 @@ int tilcdc_attach_bridge(struct drm_device *ddev, struct drm_bridge *bridge)
+ 
+ 	tilcdc_crtc_set_panel_info(priv->crtc, &panel_info_default);
+ 
+-	priv->external_connector =
+-		tilcdc_encoder_find_connector(ddev, priv->external_encoder);
+-	if (!priv->external_connector)
+-		return -ENODEV;
++	connector = drm_bridge_connector_init(ddev, priv->external_encoder);
++	if (IS_ERR(connector))
++		return PTR_ERR(connector);
++
++	drm_connector_attach_encoder(connector, priv->external_encoder);
++	priv->external_connector = connector;
+ 
+ 	return 0;
+ }

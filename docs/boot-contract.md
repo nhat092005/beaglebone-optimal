@@ -22,7 +22,16 @@ The repo currently exposes two boot paths:
   - `core-image-optimal-tiny-initramfs`
   - boot media creation through `make sd-flash-tiny`
 
+- `Qt dashboard product path`
+  - BeagleBone Black Rev D only
+  - full rootfs product image
+  - `core-image-optimal-qt-dashboard`
+  - product-owned `.wic` flashing through `make sd-flash`
+  - reuses the tiny kernel feature catalog without redefining the tiny path
+
 The baseline path remains valid while the tiny path is being proven.
+The Qt dashboard product path is a separate product surface. It must not
+silently redefine the Phase 1 tiny path contract below.
 
 ## Tiny Path Scope
 
@@ -41,6 +50,22 @@ Phase 1 tiny path must not depend on:
 - `.wic`
 - a separate ext4 rootfs partition
 - board-side mutable boot state as project truth
+
+## Qt Dashboard Product Path Boundary
+
+The Qt dashboard product path may reuse the tiny kernel feature catalog and the
+`linux-yocto-tiny` provider as a base, but it is not the Phase 1 tiny path.
+
+The Qt dashboard product path may therefore keep product-owned surfaces that
+the tiny path explicitly removes, including:
+
+- a product-owned `.wic`
+- an ext4 rootfs partition
+- HDMI / DRM / framebuffer output
+- systemd service ownership for the single fullscreen Qt app
+
+Ownership for the Qt dashboard product path belongs in the product layer, not
+in the Phase 1 tiny contract surface.
 
 ## Boot Media Contract
 

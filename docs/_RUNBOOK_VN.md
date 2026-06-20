@@ -151,6 +151,18 @@ Build image Yocto mặc định:
 make yocto-build
 ```
 
+Parse metadata Yocto đang active:
+
+```bash
+make yocto-parse
+```
+
+Dry-run dependency graph của image hiện tại:
+
+```bash
+make yocto-dry-run
+```
+
 Flash image Yocto mặc định vào thẻ SD trên máy host:
 
 ```bash
@@ -254,6 +266,35 @@ Dùng khi:
 - `make yocto-init` đã tạo build dir
 - `conf/local.conf` đã có các setting project mà bạn muốn
 
+### `make yocto-parse`
+
+Hành vi:
+
+- chạy cùng preflight như `docker-shell`
+- yêu cầu có checkout `poky` và `YOCTO_BUILD_DIR/conf/local.conf`
+- source `oe-init-build-env` cho build dir nằm trên storage root
+- chạy `bitbake -p`
+
+Dùng khi:
+
+- bạn muốn xác nhận metadata đang active parse được trước khi build thật
+- bạn vừa đổi `bblayers.conf`, recipe, hoặc layer composition
+
+### `make yocto-dry-run`
+
+Hành vi:
+
+- chạy cùng preflight như `docker-shell`
+- yêu cầu có checkout `poky` và `YOCTO_BUILD_DIR/conf/local.conf`
+- yêu cầu `YOCTO_IMAGE` không rỗng
+- source `oe-init-build-env` cho build dir nằm trên storage root
+- chạy `bitbake ${YOCTO_IMAGE} -n`
+
+Dùng khi:
+
+- bạn muốn xác nhận dependency graph của image hiện tại trước khi build thật
+- bạn vừa đổi image, packagegroup, hoặc recipe contract
+
 ### `make sd-flash SDCARD='/dev/sdX'`
 
 Hành vi:
@@ -318,6 +359,8 @@ File contract public:
 - `docs/boot-contract.md`
 - `yocto/conf/local.conf.tiny.example`
 - `yocto/conf/bblayers.conf.tiny.example`
+- `yocto/boot/extlinux.tiny.conf`
+- `yocto/boot/uEnv.tiny.txt`
 
 Luồng áp dụng config tiny thủ công:
 
@@ -334,6 +377,8 @@ cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
 Build tiny image:
 
 ```bash
+make yocto-parse
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 ```
 
@@ -355,6 +400,98 @@ Lưu ý operator cho tiny path:
   - `uEnv.txt` (optional)
 - Tiny path không dùng `.wic` hay ext4 rootfs partition riêng
 - Tiny path vẫn cần chứng minh trên hardware qua UART boot logs
+
+## Qt dashboard product path
+
+Qt dashboard path là contract riêng ở lớp product. Nó không đổi nghĩa
+contract của tiny path.
+
+File contract public:
+
+- `yocto/conf/bblayers.conf.qt-dashboard.example`
+- `yocto/conf/local.conf.qt-dashboard.example`
+- `meta-beaglebone-optimal-product/conf/layer.conf`
+- `meta-beaglebone-optimal-product/recipes-core/images/core-image-optimal-qt-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-core/packagegroups/packagegroup-optimal-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-qt/qt6/qtbase_%.bbappend`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/qt-dashboard.bb`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.service`
+- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.sh`
+- `qt-dashboard-app/`
+
+Đường dẫn layer upstream kỳ vọng:
+
+- `${YOCTO_SOURCES_DIR}/meta-qt6`
+
+Luồng áp dụng config product thủ công:
+
+```bash
+make yocto-init
+
+cd "$YOCTO_POKY_DIR"
+source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+cp /workspace/yocto/conf/bblayers.conf.qt-dashboard.example conf/bblayers.conf
+cat /workspace/yocto/conf/local.conf.qt-dashboard.example >> conf/local.conf
+```
+
+Build product image:
+
+```bash
+make yocto-parse
+make yocto-qt-profile
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
+```
+
+Flash product image BBB Black:
+
+```bash
+make sd-flash \
+  YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard \
+  YOCTO_IMAGE=core-image-optimal-qt-dashboard \
+  SDCARD=/dev/sdX
+```
+
+Lưu ý operator:
+
+- product path vẫn giữ BSP layer hiện tại ở `/workspace/meta-beaglebone-optimal`
+- product path thêm `/workspace/meta-beaglebone-optimal-product` như một layer riêng
+- product path này kỳ vọng `meta-qt6` nằm cạnh `poky`
+- tiny vẫn headless; tiny không owner HDMI/display
+- product path owner HDMI/display và owner verification cho đường xuất hình
+- product path giờ target rõ BBB Black, không dùng machine chung `beaglebone-yocto`
+- runtime display default nằm trong `qt-dashboard.sh`
+- build-time feature trimming nằm trong `local.conf.qt-dashboard.example` và `qtbase_%.bbappend`
+- policy product loại bỏ desktop stack, audio, wifi, và zeroconf không phục vụ
+  cho appliance fullscreen local-only
+- launcher contract là một Qt Quick app fullscreen trên LinuxFB với software rendering
+
+Checklist proof phía build:
+
+```bash
+make yocto-parse
+make yocto-qt-profile
+make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc-source-13.4.0'
+make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc'
+make yocto-build WORKSPACE_NAME=qt-dashboard YOCTO_IMAGE=core-image-optimal-qt-dashboard
+```
+
+Checklist proof phía board HDMI:
+
+```bash
+ls -l /dev/fb0
+systemctl status qt-dashboard
+journalctl -u qt-dashboard -b --no-pager
+```
+
+Operator phải quan sát thêm:
+
+- màn hình HDMI thật hiển thị dashboard fullscreen
+
+Nếu product image không có `/dev/fb0`, coi đó là display gap của product path
+và pause trước khi nới scope sang kernel hoặc device tree.
 
 ### Thông điệp boot đã biết
 

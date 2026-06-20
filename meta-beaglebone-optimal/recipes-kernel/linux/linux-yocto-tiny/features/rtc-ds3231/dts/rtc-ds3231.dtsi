@@ -1,18 +1,4 @@
-&am33xx_pinmux {
-	rtc_ds3231_i2c2_pins: rtc-ds3231-i2c2-pins {
-		pinctrl-single,pins = <
-			AM33XX_PADCONF(AM335X_PIN_UART1_CTSN, PIN_INPUT_PULLUP, MUX_MODE3)
-			AM33XX_PADCONF(AM335X_PIN_UART1_RTSN, PIN_INPUT_PULLUP, MUX_MODE3)
-		>;
-	};
-};
-
 &i2c2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&rtc_ds3231_i2c2_pins>;
-	status = "okay";
-	clock-frequency = <400000>;
-
 	rtc_ds3231: rtc@68 {
 		compatible = "maxim,ds3231";
 		reg = <0x68>;

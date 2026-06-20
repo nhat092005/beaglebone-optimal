@@ -1,0 +1,45 @@
+# Qt dashboard product path example.
+# Append these lines into conf/local.conf after running:
+#   source oe-init-build-env "$YOCTO_BUILD_DIR"
+#
+# This file owns build-time policy for the Qt dashboard product path.
+# Runtime display defaults belong in qt-dashboard.sh / qt-dashboard.service.
+
+MACHINE ??= "beaglebone-black-optimal-qt-dashboard"
+DL_DIR ??= "/storage/shared/downloads"
+SSTATE_DIR ??= "/storage/shared/sstate"
+SERIAL_CONSOLES = "115200;ttyS0"
+
+# BusyBox init + inittab respawn. No systemd — keeps the tiny footprint.
+INIT_MANAGER = "none"
+
+# Reclaim completed recipe workdirs as the build progresses to fit
+# the Qt dashboard path on storage-constrained hosts.
+INHERIT += "rm_work"
+
+# Dev bring-up policy: keep console login simple until the BBB-side Qt path
+# is proven end-to-end. Revert to "" for a locked-down product image.
+EXTRA_IMAGE_FEATURES = "debug-tweaks"
+
+# Product policy: a local-only single-app appliance, not a desktop distro.
+# Drop audio and network-discovery surfaces that are not needed for the HDMI
+# dashboard appliance path.
+PACKAGECONFIG:remove:pn-qemu-system-native = "sdl"
+DISTRO_FEATURES:remove = " \
+    alsa \
+    x11 \
+    wayland \
+    opengl \
+    vulkan \
+    ptest \
+    pulseaudio \
+    bluetooth \
+    3g \
+    nfc \
+    wifi \
+    zeroconf \
+    ipv6 \
+    nfs \
+    gobject-introspection-data \
+"
+MACHINE_FEATURES:remove = "alsa"
