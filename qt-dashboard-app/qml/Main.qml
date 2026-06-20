@@ -23,7 +23,7 @@ Window {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "00:00:00"
+                    text: sensorBackend.time
                     color: "#17324d"
                     font.pixelSize: 192
                     font.weight: Font.Light
@@ -31,7 +31,7 @@ Window {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "SATURDAY · 6 Jun 2026"
+                    text: sensorBackend.date
                     color: "#42607b"
                     font.pixelSize: 54
                     font.capitalization: Font.AllUppercase
@@ -41,40 +41,92 @@ Window {
             Row {
                 spacing: 40
 
-                Repeater {
-                    model: [
-                        { label: "TEMPERATURE", value: "--" },
-                        { label: "HUMIDITY", value: "--" },
-                        { label: "LIGHT", value: "--" }
-                    ]
+                Rectangle {
+                    width: 360
+                    height: 240
+                    radius: 28
+                    color: "#ffffff"
+                    border.color: "#d8e1eb"
+                    border.width: 2
 
-                    delegate: Rectangle {
-                        width: 360
-                        height: 240
-                        radius: 28
-                        color: "#ffffff"
-                        border.color: "#d8e1eb"
-                        border.width: 2
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 16
 
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 16
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "TEMPERATURE"
+                            color: "#5d7890"
+                            font.pixelSize: 34
+                            font.capitalization: Font.AllUppercase
+                        }
 
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: modelData.label
-                                color: "#5d7890"
-                                font.pixelSize: 34
-                                font.capitalization: Font.AllUppercase
-                            }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: sensorBackend.temperature
+                            color: "#17324d"
+                            font.pixelSize: 88
+                            font.weight: Font.DemiBold
+                        }
+                    }
+                }
 
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: modelData.value
-                                color: "#17324d"
-                                font.pixelSize: 88
-                                font.weight: Font.DemiBold
-                            }
+                Rectangle {
+                    width: 360
+                    height: 240
+                    radius: 28
+                    color: "#ffffff"
+                    border.color: "#d8e1eb"
+                    border.width: 2
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 16
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "HUMIDITY"
+                            color: "#5d7890"
+                            font.pixelSize: 34
+                            font.capitalization: Font.AllUppercase
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: sensorBackend.humidity
+                            color: "#17324d"
+                            font.pixelSize: 88
+                            font.weight: Font.DemiBold
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: 360
+                    height: 240
+                    radius: 28
+                    color: "#ffffff"
+                    border.color: "#d8e1eb"
+                    border.width: 2
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 16
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "LIGHT"
+                            color: "#5d7890"
+                            font.pixelSize: 34
+                            font.capitalization: Font.AllUppercase
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: sensorBackend.light
+                            color: "#17324d"
+                            font.pixelSize: 88
+                            font.weight: Font.DemiBold
                         }
                     }
                 }

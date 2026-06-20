@@ -3,6 +3,8 @@
 #include <QtGui/qfontdatabase.h>
 #include <QtCore/qlogging.h>
 #include <QtQml/qqmlapplicationengine.h>
+#include <QtQml/qqmlcontext.h>
+#include "SensorBackend.h"
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +25,10 @@ int main(int argc, char *argv[])
             app.setFont(QFont(families.constFirst()));
     }
 
+    SensorBackend sensorBackend;
+
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty(QStringLiteral("sensorBackend"), &sensorBackend);
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
