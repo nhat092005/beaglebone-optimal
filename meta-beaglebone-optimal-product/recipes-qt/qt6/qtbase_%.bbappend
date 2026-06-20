@@ -4,7 +4,7 @@
 # network/security surfaces that are not part of the local-only dashboard.
 #
 
-PACKAGECONFIG:remove = " \
+PACKAGECONFIG:remove:beaglebone-black-optimal-qt-dashboard = " \
 	accessibility \
 	dbus \
 	icu \
