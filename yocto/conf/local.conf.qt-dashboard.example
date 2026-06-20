@@ -6,7 +6,8 @@
 # Runtime display defaults belong in qt-dashboard.sh / qt-dashboard.service.
 
 MACHINE ??= "beaglebone-black-optimal-qt-dashboard"
-DL_DIR ??= "/storage/shared/downloads"
+DISTRO  ??= "optimal-tiny"
+DL_DIR  ??= "/storage/shared/downloads"
 SSTATE_DIR ??= "/storage/shared/sstate"
 SERIAL_CONSOLES = "115200;ttyS0"
 
