@@ -1,0 +1,84 @@
+Upstream-Status: Inappropriate [product-specific BBB Rev D HDMI fix: retry EDID read on DDC busy]
+
+During HDMI re-negotiation (second HPD at ~7 s after boot) the IT66122
+DDC bus is briefly occupied by the internal HDMI handshake.
+it66121_preamble_ddc() or drm_do_get_edid() may therefore return NULL,
+causing the DRM core to fall back to a GTF-synthesised 720p mode whose
+timings differ from the CTA-861 mode read from the first EDID.  The
+stale CTA mode is then pruned with "User-defined mode not supported" and
+the CRTC reprograms to the GTF timings, which many monitors reject,
+resulting in a permanent black screen.
+
+Add a retry loop (up to 3 attempts, 100 ms apart) so that a transient
+DDC busy condition does not force the GTF fallback.
+
+diff --git a/drivers/gpu/drm/bridge/ite-it66121.c b/drivers/gpu/drm/bridge/ite-it66121.c
+index 0000000..0000000 100644
+--- a/drivers/gpu/drm/bridge/ite-it66121.c
++++ b/drivers/gpu/drm/bridge/ite-it66121.c
+@@ -10,6 +10,7 @@
+ #include <linux/media-bus-format.h>
+ #include <linux/module.h>
+ #include <linux/device.h>
++#include <linux/delay.h>
+ #include <linux/interrupt.h>
+ #include <linux/i2c.h>
+ #include <linux/bitfield.h>
+@@ -883,27 +884,36 @@ static struct edid *it66121_bridge_get_edid(struct drm_bridge *bridge,
+ 					    struct drm_connector *connector)
+ {
+ 	struct it66121_ctx *ctx = container_of(bridge, struct it66121_ctx, bridge);
+-	struct edid *edid;
+-	int ret;
+-
+-	mutex_lock(&ctx->lock);
+-	ret = it66121_preamble_ddc(ctx);
+-	if (ret) {
+-		edid = NULL;
+-		goto out_unlock;
+-	}
+-
+-	ret = regmap_write(ctx->regmap, IT66121_DDC_HEADER_REG,
+-			   IT66121_DDC_HEADER_EDID);
+-	if (ret) {
+-		edid = NULL;
+-		goto out_unlock;
++	struct edid *edid = NULL;
++	int ret, tries;
++
++	for (tries = 0; tries < 3; tries++) {
++		if (tries)
++			msleep(100);
++
++		mutex_lock(&ctx->lock);
++		ret = it66121_preamble_ddc(ctx);
++		if (ret) {
++			mutex_unlock(&ctx->lock);
++			continue;
++		}
++
++		ret = regmap_write(ctx->regmap, IT66121_DDC_HEADER_REG,
++				   IT66121_DDC_HEADER_EDID);
++		if (ret) {
++			mutex_unlock(&ctx->lock);
++			continue;
++		}
++
++		edid = drm_do_get_edid(connector, it66121_get_edid_block, ctx);
++		mutex_unlock(&ctx->lock);
++
++		if (drm_edid_is_valid(edid))
++			return edid;
++
++		kfree(edid);
++		edid = NULL;
+ 	}
+
+-	edid = drm_do_get_edid(connector, it66121_get_edid_block, ctx);
+-
+-out_unlock:
+-	mutex_unlock(&ctx->lock);
+-
+-	return edid;
++	return NULL;
+ }
