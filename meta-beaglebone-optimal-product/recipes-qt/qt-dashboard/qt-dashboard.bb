@@ -12,7 +12,7 @@ DEPENDS = "qtbase qtdeclarative qtdeclarative-native"
 
 inherit qt6-cmake externalsrc
 
-EXTERNALSRC = "/workspace/qt-dashboard-app"
+EXTERNALSRC ??= "/workspace/qt-dashboard-app"
 S = "${EXTERNALSRC}"
 
 do_install:append() {
