@@ -15,9 +15,9 @@ KERNEL_FEATURES:append:beaglebone-black-optimal-qt-dashboard = " beaglebone-qt-d
 
 SRC_URI:append:beaglebone-black-optimal-qt-dashboard = " \
 	file://0001-drm-bridge-it66121-add-it66122-support-for-bbb-rev-.patch \
-	file://0002-arm-dts-ti-omap-add-bbb-rev-d-hdmi-dtb-for-qt-dashb.patch \
 	file://0003-drm-tilcdc-pass-no-connector-flag-for-hdmi-bridge.patch \
 	file://0004-drm-tilcdc-create-bridge-connector-for-external-hdmi.patch \
+	file://am335x-boneblack-optimal-qt-dashboard.dts \
 	file://beaglebone-qt-dashboard-hdmi.cfg \
 	file://beaglebone-qt-dashboard-hdmi.scc \
 "
