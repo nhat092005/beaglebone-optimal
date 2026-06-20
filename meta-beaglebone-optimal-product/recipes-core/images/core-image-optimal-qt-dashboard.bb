@@ -5,6 +5,7 @@ LICENSE = "MIT"
 
 IMAGE_LINGUAS = ""
 IMAGE_NAME_SUFFIX ?= ""
+IMAGE_FSTYPES = "tar.gz wic"
 
 IMAGE_INSTALL:append = " packagegroup-optimal-dashboard"
 
