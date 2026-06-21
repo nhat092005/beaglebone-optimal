@@ -3,9 +3,12 @@
 
 ::sysinit:/bin/mount -t proc proc /proc
 ::sysinit:/bin/mount -t sysfs sysfs /sys
+::sysinit:/bin/hostname qt-dashboard
+::sysinit:/sbin/rtcsync
 
-ttyS0::respawn:/bin/sh -l
+ttyS0::respawn:/usr/bin/env HOME=/home/root /bin/sh -l
 ::respawn:/usr/bin/qt-dashboard.sh
 
 ::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/hwclock -w
 ::shutdown:/bin/umount -a -r

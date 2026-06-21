@@ -1,11 +1,4 @@
-# Phase 1
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase1/dts:${THISDIR}/${PN}/phase1/patches:${THISDIR}/${PN}/phase1/scc:${THISDIR}/${PN}/phase1/cfg:"
-
-# Phase2
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase2/dts:${THISDIR}/${PN}/phase2/patches:${THISDIR}/${PN}/phase2/scc:${THISDIR}/${PN}/phase2/cfg:"
-
-# Phase3
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}/phase3/dts:${THISDIR}/${PN}/phase3/patches:${THISDIR}/${PN}/phase3/scc:${THISDIR}/${PN}/phase3/cfg:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 inherit linux-yocto-tiny-feature-dts
 
@@ -62,5 +55,6 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://core.cfg \
 	file://disable.cfg \
 	file://hw.cfg \
+	file://hardening.cfg \
 	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
 "

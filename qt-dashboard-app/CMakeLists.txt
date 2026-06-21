@@ -13,6 +13,8 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(qt-dashboard
     src/main.cpp
+    src/SensorBackend.h
+    src/SensorBackend.cpp
 )
 
 set_source_files_properties(fonts/DejaVuSans.ttf PROPERTIES
