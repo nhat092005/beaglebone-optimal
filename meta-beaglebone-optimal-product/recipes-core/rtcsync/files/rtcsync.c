@@ -37,12 +37,12 @@ int main(void)
 
 	/* RTC stores UTC; timegm converts UTC struct tm → time_t without TZ */
 	struct tm tm = {
-		.tm_sec   = rt.tm_sec,
-		.tm_min   = rt.tm_min,
-		.tm_hour  = rt.tm_hour,
-		.tm_mday  = rt.tm_mday,
-		.tm_mon   = rt.tm_mon,
-		.tm_year  = rt.tm_year,
+		.tm_sec = rt.tm_sec,
+		.tm_min = rt.tm_min,
+		.tm_hour = rt.tm_hour,
+		.tm_mday = rt.tm_mday,
+		.tm_mon = rt.tm_mon,
+		.tm_year = rt.tm_year,
 		.tm_isdst = 0,
 	};
 	time_t t = timegm(&tm);
