@@ -88,6 +88,13 @@
 	};
 };
 
+&tps {
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+};
+
 /* HDMI Audio codec mapping for Rev D (ITE IT66122 transmitter) */
 &{/sound/simple-audio-card,codec} {
 	sound-dai = <&it66122>;
