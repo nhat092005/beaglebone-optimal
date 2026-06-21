@@ -1,14 +1,18 @@
 # /etc/inittab — BeagleBone Optimal Qt dashboard
 # BusyBox init, minimal single-app kiosk
 
+# Mount virtual filesystems and sync clock
 ::sysinit:/bin/mount -t proc proc /proc
 ::sysinit:/bin/mount -t sysfs sysfs /sys
 ::sysinit:/bin/hostname qt-dashboard
 ::sysinit:/sbin/rtcsync
 
+# Spawn login shell on the debug serial console
 ttyS0::respawn:/usr/bin/env HOME=/home/root /bin/sh -l
-::respawn:/usr/bin/qt-dashboard.sh
 
+# Spawn Qt Dashboard kiosk app on /dev/null to avoid serial port conflict
+null::respawn:/usr/bin/qt-dashboard.sh
+
+# Handle reboot and shutdown actions
 ::ctrlaltdel:/sbin/reboot
-::shutdown:/sbin/hwclock -w
 ::shutdown:/bin/umount -a -r
