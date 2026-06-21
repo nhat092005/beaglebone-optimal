@@ -7,6 +7,5 @@ inherit packagegroup
 
 RDEPENDS:${PN} = " \
 	qt-dashboard \
-	util-linux-hwclock \
 	rtcsync \
 "
