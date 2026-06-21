@@ -88,6 +88,13 @@
 	};
 };
 
+&tps {
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+};
+
 /* HDMI Audio codec mapping for Rev D (ITE IT66122 transmitter) */
 &{/sound/simple-audio-card,codec} {
 	sound-dai = <&it66122>;
@@ -121,6 +128,10 @@
 /* Delete standard board LEDs to allow clean custom GPIO_LEDS feature overlay */
 / {
 	/delete-node/ leds;
+};
+
+&mmc1 {
+	cd-debounce-delay-ms = <0>;
 };
 
 

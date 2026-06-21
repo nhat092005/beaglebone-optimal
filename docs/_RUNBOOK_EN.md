@@ -410,12 +410,13 @@ Public contract files:
 
 - `yocto/conf/bblayers.conf.qt-dashboard.example`
 - `yocto/conf/local.conf.qt-dashboard.example`
+- `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-qt-dashboard.conf`
+- `meta-beaglebone-optimal/recipes-kernel/linux/files-qt-dashboard/`
 - `meta-beaglebone-optimal-product/conf/layer.conf`
 - `meta-beaglebone-optimal-product/recipes-core/images/core-image-optimal-qt-dashboard.bb`
 - `meta-beaglebone-optimal-product/recipes-core/packagegroups/packagegroup-optimal-dashboard.bb`
 - `meta-beaglebone-optimal-product/recipes-qt/qt6/qtbase_%.bbappend`
 - `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/qt-dashboard.bb`
-- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.service`
 - `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.sh`
 - `qt-dashboard-app/`
 
@@ -459,9 +460,8 @@ Operator notes:
 - the product path adds `/workspace/meta-beaglebone-optimal-product` as a separate layer
 - the product path expects `meta-qt6` to exist beside `poky`
 - tiny stays headless; it must not become the owner of HDMI/display behavior
-- the product path owns HDMI/display behavior and verification
-- the product path now targets BeagleBone Black explicitly instead of the
-  generic `beaglebone-yocto` machine
+- the BSP layer (`meta-beaglebone-optimal`) contains the machine definition and hardware enablement (DTS, kernel config, and patches) for the HDMI display, while the product layer (`meta-beaglebone-optimal-product`) owns the application software and Distro configuration.
+- the product path targets BeagleBone Black explicitly via `beaglebone-black-optimal-qt-dashboard` instead of the generic `beaglebone-yocto` machine
 - runtime display defaults live in `qt-dashboard.sh`
 - build-time feature trimming lives in `local.conf.qt-dashboard.example` and `qtbase_%.bbappend`
 - product policy drops desktop, audio, wifi, and zeroconf stacks that are not
