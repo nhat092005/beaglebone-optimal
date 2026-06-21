@@ -3,6 +3,11 @@
 # Copy relevant lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
+# Absolute path to the workspace root (the directory containing
+# meta-beaglebone-optimal* and qt-dashboard-app).
+# Inside the Docker builder this is always /workspace.
+BSPDIR ??= "/workspace"
+
 MACHINE    = "beaglebone-black-optimal-qt-dashboard"
 DISTRO     = "optimal-qt-dashboard"
 DL_DIR    ??= "/storage/shared/downloads"

@@ -13,8 +13,8 @@ BBLAYERS ?= " \
   ${TOPDIR}/../sources/poky/meta \
   ${TOPDIR}/../sources/poky/meta-poky \
   ${TOPDIR}/../sources/poky/meta-yocto-bsp \
-  /workspace/meta-beaglebone-optimal \
-  /workspace/meta-beaglebone-optimal-product \
+  ${TOPDIR}/../meta-beaglebone-optimal \
+  ${TOPDIR}/../meta-beaglebone-optimal-product \
   ${TOPDIR}/../sources/meta-openembedded/meta-oe \
   ${TOPDIR}/../sources/meta-openembedded/meta-python \
   ${TOPDIR}/../sources/meta-qt6 \
