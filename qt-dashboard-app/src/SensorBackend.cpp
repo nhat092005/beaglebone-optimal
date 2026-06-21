@@ -30,7 +30,7 @@ SensorBackend::SensorBackend(QObject *parent)
 		&SensorBackend::updateSensors);
 
 	m_timeTimer.start(1000);
-	m_sensorTimer.start(5000);
+	m_sensorTimer.start(1000);
 
 	updateTime();
 	updateSensors();
