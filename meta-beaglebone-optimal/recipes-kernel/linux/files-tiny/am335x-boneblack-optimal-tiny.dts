@@ -190,3 +190,10 @@
 &wkup_m3_ipc {
 	status = "disabled";
 };
+
+&tps {
+	backlight {
+		compatible = "ti,tps65217-bl";
+		status = "disabled";
+	};
+};

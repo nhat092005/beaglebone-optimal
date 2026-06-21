@@ -12,10 +12,16 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 
 - **Containerized Build Host:** A Docker-based development environment mapping host UID/GID to prevent permission issues.
 - **Storage-Backed Workspace:** Reusable shared caches (`downloads` and `sstate-cache`) and workspace-isolated build directories stored under a configurable host path (`PROJECT_STORAGE_ROOT`).
+- **Optimized Fast-Boot Display (~2s):** Shows the Qt dashboard on screen in **only 2 seconds** from kernel boot (excluding the 3s U-Boot bootdelay). This is achieved by combining a kernel driver patch to debounce transient HDMI Hotplug (HPD) drops with a streamlined user-space startup script.
+- **Hardware & Sensor Catalog:** Includes built-in support for target peripherals:
+  - **HDMI Display Output:** Powered by the `tilcdc` driver and IT66122 transmitter.
+  - **I2C2 Shared Bus:** Hardware wiring and pinmux for connecting external sensors.
+  - **Sensors & RTC:** Drivers for SHT3x (temperature/humidity), BH1750 (ambient light IIO), and DS3231 (high-accuracy RTC).
+  - **GPIO LEDs:** BeagleBone Black onboard user LEDs mapped for heartbeat/status.
 - **Dual Boot Paths:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
-- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for a fullscreen Qt dashboard image that stays separate from the tiny BSP path and owns HDMI/display behavior.
+- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for the fullscreen Qt dashboard application and Distro configuration, building upon the hardware HDMI support enabled by the BSP layer.
 - **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`, `yamllint`, `hadolint`) verified through `make`.
 
 ---
@@ -124,7 +130,7 @@ make doctor
 This product path defines a minimal appliance-style Qt profile:
 
 - tiny remains headless and does not own HDMI/display behavior
-- the product path owns HDMI/display behavior and runtime verification
+- the BSP layer (`meta-beaglebone-optimal`) enables the HDMI hardware display drivers and device tree, while the product layer (`meta-beaglebone-optimal-product`) handles the application software and Distro configurations
 - the product path now targets BeagleBone Black explicitly instead of the
   generic `beaglebone-yocto` machine
 - runtime display defaults live in `qt-dashboard.sh`
