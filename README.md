@@ -15,7 +15,7 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 - **Dual Boot Paths:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
-- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for a fullscreen Qt dashboard image that stays separate from the tiny BSP path and owns HDMI/display behavior.
+- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for the fullscreen Qt dashboard application and Distro configuration, building upon the hardware HDMI support enabled by the BSP layer.
 - **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`, `yamllint`, `hadolint`) verified through `make`.
 
 ---
@@ -124,7 +124,7 @@ make doctor
 This product path defines a minimal appliance-style Qt profile:
 
 - tiny remains headless and does not own HDMI/display behavior
-- the product path owns HDMI/display behavior and runtime verification
+- the BSP layer (`meta-beaglebone-optimal`) enables the HDMI hardware display drivers and device tree, while the product layer (`meta-beaglebone-optimal-product`) handles the application software and Distro configurations
 - the product path now targets BeagleBone Black explicitly instead of the
   generic `beaglebone-yocto` machine
 - runtime display defaults live in `qt-dashboard.sh`

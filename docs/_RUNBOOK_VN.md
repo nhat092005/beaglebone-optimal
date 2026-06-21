@@ -410,12 +410,13 @@ File contract public:
 
 - `yocto/conf/bblayers.conf.qt-dashboard.example`
 - `yocto/conf/local.conf.qt-dashboard.example`
+- `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-qt-dashboard.conf`
+- `meta-beaglebone-optimal/recipes-kernel/linux/files-qt-dashboard/`
 - `meta-beaglebone-optimal-product/conf/layer.conf`
 - `meta-beaglebone-optimal-product/recipes-core/images/core-image-optimal-qt-dashboard.bb`
 - `meta-beaglebone-optimal-product/recipes-core/packagegroups/packagegroup-optimal-dashboard.bb`
 - `meta-beaglebone-optimal-product/recipes-qt/qt6/qtbase_%.bbappend`
 - `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/qt-dashboard.bb`
-- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.service`
 - `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.sh`
 - `qt-dashboard-app/`
 
@@ -459,8 +460,8 @@ Lưu ý operator:
 - product path thêm `/workspace/meta-beaglebone-optimal-product` như một layer riêng
 - product path này kỳ vọng `meta-qt6` nằm cạnh `poky`
 - tiny vẫn headless; tiny không owner HDMI/display
-- product path owner HDMI/display và owner verification cho đường xuất hình
-- product path giờ target rõ BBB Black, không dùng machine chung `beaglebone-yocto`
+- Layer BSP (`meta-beaglebone-optimal`) chứa định nghĩa machine và cấu hình phần cứng (DTS, kernel config, patch) cho màn hình HDMI, trong khi layer product (`meta-beaglebone-optimal-product`) chứa các cấu hình phần mềm Distro và ứng dụng dashboard.
+- product path giờ target rõ BBB Black qua `beaglebone-black-optimal-qt-dashboard`, không dùng machine chung `beaglebone-yocto`
 - runtime display default nằm trong `qt-dashboard.sh`
 - build-time feature trimming nằm trong `local.conf.qt-dashboard.example` và `qtbase_%.bbappend`
 - policy product loại bỏ desktop stack, audio, wifi, và zeroconf không phục vụ
