@@ -88,6 +88,36 @@
 	};
 };
 
+/* HDMI Audio codec mapping for Rev D (ITE IT66122 transmitter) */
 &{/sound/simple-audio-card,codec} {
 	sound-dai = <&it66122>;
 };
+
+/* Disable unused peripherals for boot optimization */
+&{/sound} {
+	status = "disabled";
+};
+
+&{/ocp/interconnect@48000000/segment@0/target-module@38000} {
+	status = "disabled"; /* mcasp0 (HDMI Audio controller) */
+};
+
+&{/ocp/interconnect@48000000/segment@100000/target-module@d8000} {
+	status = "disabled"; /* mmc2 (eMMC) */
+};
+
+&{/ocp/interconnect@4a000000/segment@0/target-module@100000} {
+	status = "disabled"; /* switch@0 (CPSW Ethernet) */
+};
+
+&{/ocp/target-module@53500000} {
+	status = "disabled"; /* aes (AES crypt engine) */
+};
+
+&{/ocp/target-module@53100000} {
+	status = "disabled"; /* sham (SHA crypt engine) */
+};
+
+
+
+
