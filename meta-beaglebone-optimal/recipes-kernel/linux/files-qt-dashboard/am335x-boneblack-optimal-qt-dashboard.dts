@@ -123,6 +123,10 @@
 	/delete-node/ leds;
 };
 
+&mmc1 {
+	cd-debounce-delay-ms = <0>;
+};
+
 
 
 
