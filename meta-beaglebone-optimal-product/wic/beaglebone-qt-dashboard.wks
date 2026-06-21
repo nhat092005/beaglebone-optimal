@@ -1,8 +1,3 @@
-# short-description: Create SD card image for BeagleBone Black Qt Dashboard
-# long-description: Creates a partitioned SD card image for BeagleBone Black
-# with Qt dashboard product path. Boot files are in the first vfat partition.
-
-# Boot partition 32 MiB: MLO (~100 KiB) + u-boot.img (~700 KiB) + zImage (~6 MiB) + DTB (~100 KiB) + headroom
 part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4 --fixed-size 32 --sourceparams="loader=u-boot" --use-uuid
 part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root --align 4 --use-uuid
 bootloader --configfile="beaglebone-qt-dashboard-extlinux.conf"
