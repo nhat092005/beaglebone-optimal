@@ -1,4 +1,5 @@
 obj-m += optimal_env_manager.o
+optimal_env_manager-y := optimal_env_core.o optimal_env_sysfs.o optimal_env_chardev.o optimal_env_sensors.o
 
 SRC := $(shell pwd)
 

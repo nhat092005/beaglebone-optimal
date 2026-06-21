@@ -7,7 +7,11 @@ inherit module
 
 SRC_URI = " \
     file://Makefile \
-    file://optimal_env_manager.c \
+    file://optimal_env_core.h \
+    file://optimal_env_core.c \
+    file://optimal_env_sysfs.c \
+    file://optimal_env_chardev.c \
+    file://optimal_env_sensors.c \
     file://COPYING \
 "
 
