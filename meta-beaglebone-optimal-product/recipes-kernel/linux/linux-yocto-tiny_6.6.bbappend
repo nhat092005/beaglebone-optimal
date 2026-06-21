@@ -4,7 +4,7 @@ COMPATIBLE_MACHINE:beaglebone-black-optimal-qt-dashboard = "beaglebone-black-opt
 KMACHINE:beaglebone-black-optimal-qt-dashboard ?= "beaglebone"
 
 LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-qt-dashboard = "am335x-boneblack-optimal-qt-dashboard.dts"
-LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED:beaglebone-black-optimal-qt-dashboard = "0"
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
