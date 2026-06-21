@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 4 Jun 2026 03:30:00 +0700
+Subject: [PATCH] configs: am335x_evm: align qt-dashboard boot env with canonical dtb
+
+Upstream-Status: Inappropriate [project-specific BeagleBone Optimal Qt Dashboard boot contract]
+
+--- a/include/configs/am335x_evm.h
++++ b/include/configs/am335x_evm.h
+@@ -81,7 +81,6 @@
+ #define CFG_EXTRA_ENV_SETTINGS \
+ 	DEFAULT_LINUX_BOOT_ENV \
+ 	"fdtfile=undefined\0" \
+-	"finduuid=part uuid mmc 0:2 uuid\0" \
+ 	"console=ttyO0,115200n8\0" \
+ 	"partitions=" \
+ 		"uuid_disk=${uuid_gpt_disk};" \
+@@ -115,8 +114,8 @@
+ 	"findfdt="\
+ 		"if test $board_name = A335BONE; then " \
+ 			"setenv fdtfile am335x-bone.dtb; fi; " \
+-		"if test $board_name = A335BNLT; then " \
+-			"setenv fdtfile am335x-boneblack.dtb; fi; " \
++		"if test $board_name = A335BNLT; then " \
++			"setenv fdtfile am335x-boneblack-optimal-qt-dashboard.dtb; fi; " \
+ 		"if test $board_name = A335PBGL; then " \
+ 			"setenv fdtfile am335x-pocketbeagle.dtb; fi; " \
+ 		"if test $board_name = BBBW; then " \
