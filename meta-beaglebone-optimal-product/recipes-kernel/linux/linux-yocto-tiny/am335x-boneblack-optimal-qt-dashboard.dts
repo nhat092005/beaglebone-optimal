@@ -118,6 +118,12 @@
 	status = "disabled"; /* sham (SHA crypt engine) */
 };
 
+/* Delete standard board LEDs to allow clean custom GPIO_LEDS feature overlay */
+/ {
+	/delete-node/ leds;
+};
+
+
 
 
 
