@@ -3,9 +3,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 COMPATIBLE_MACHINE:beaglebone-black-optimal-qt-dashboard = "beaglebone-black-optimal-qt-dashboard"
 KMACHINE:beaglebone-black-optimal-qt-dashboard ?= "beaglebone"
 
-# The product path reuses the tiny feature catalog, but its composed base DTS is
-# the product HDMI dashboard board file rather than the Phase 1 tiny UART DTS.
 LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-qt-dashboard = "am335x-boneblack-optimal-qt-dashboard.dts"
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
