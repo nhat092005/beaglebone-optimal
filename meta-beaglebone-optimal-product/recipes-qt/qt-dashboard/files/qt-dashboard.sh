@@ -10,7 +10,7 @@ until [ -c /dev/fb0 ]; do sleep 1; done
 prev=""
 stable=0
 while [ "$stable" -lt 3 ]; do
-    curr="$(cat /sys/class/drm/card0-HDMI-A-1/modes 2>/dev/null)"
+    curr="$(cat /sys/class/drm/card0-HDMI-A-1/modes 2> /dev/null)"
     if [ -n "$curr" ] && [ "$curr" = "$prev" ]; then
         stable=$((stable + 1))
     else
