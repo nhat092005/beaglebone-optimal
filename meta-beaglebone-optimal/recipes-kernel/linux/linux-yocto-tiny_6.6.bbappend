@@ -1,9 +1,9 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend:beaglebone-black-optimal-tiny := "${THISDIR}/files-tiny:"
+FILESEXTRAPATHS:prepend:beaglebone-black-optimal-qt-dashboard := "${THISDIR}/files-qt-dashboard:"
 
 inherit linux-yocto-tiny-feature-dts
 
 LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"
-LINUX_YOCTO_TINY_FEATURE_BASE_DTS = "am335x-boneblack-optimal-tiny.dts"
 LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS I2C2_BUS RTC_DS3231 SHT3X BH1750"
 
 # GPIO LEDS feature catalog entry. Product paths may override ENABLED to "1"
@@ -41,8 +41,10 @@ LINUX_YOCTO_TINY_FEATURE_BH1750_DIR = "bh1750"
 LINUX_YOCTO_TINY_FEATURE_BH1750_DTS = "bh1750.dtsi"
 LINUX_YOCTO_TINY_FEATURE_BH1750_CFG = "bh1750.cfg"
 
+# --- Tiny Machine Defaults ---
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
+LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-tiny = "am335x-boneblack-optimal-tiny.dts"
 
 SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://am335x-boneblack-optimal-tiny.dts \
@@ -57,4 +59,28 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://hw.cfg \
 	file://hardening.cfg \
 	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
+"
+
+# --- Product Machine Defaults ---
+COMPATIBLE_MACHINE:beaglebone-black-optimal-qt-dashboard = "beaglebone-black-optimal-qt-dashboard"
+KMACHINE:beaglebone-black-optimal-qt-dashboard ?= "beaglebone"
+LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-qt-dashboard = "am335x-boneblack-optimal-qt-dashboard.dts"
+
+LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+LINUX_YOCTO_TINY_FEATURE_BH1750_ENABLED:beaglebone-black-optimal-qt-dashboard = "1"
+
+KERNEL_FEATURES:append:beaglebone-black-optimal-qt-dashboard = " beaglebone-qt-dashboard-hdmi.scc"
+
+SRC_URI:append:beaglebone-black-optimal-qt-dashboard = " \
+	file://0001-drm-bridge-it66121-add-it66122-support-for-bbb-rev-.patch \
+	file://0002-drm-bridge-it66121-retry-edid-read-on-ddc-busy.patch \
+	file://0003-drm-tilcdc-pass-no-connector-flag-for-hdmi-bridge.patch \
+	file://0004-drm-tilcdc-create-bridge-connector-for-external-hdmi.patch \
+	file://0005-drm-bridge-it66121-debounce-hpd-disconnect-glitch.patch \
+	file://am335x-boneblack-optimal-qt-dashboard.dts \
+	file://beaglebone-qt-dashboard-hdmi.cfg \
+	file://beaglebone-qt-dashboard-hdmi.scc \
 "
