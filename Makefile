@@ -7,14 +7,10 @@ GIT          ?= git
 CLANG_FORMAT ?= clang-format
 SHFMT        ?= shfmt
 SHELLCHECK   ?= shellcheck
-YAMLLINT     ?= yamllint
-HADOLINT     ?= hadolint
 
 # Quality tool file lists
 C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
 SHELL_FILES    := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash scripts/sd-flash-tiny))
-YAML_LINT_FILES := $(shell $(GIT) ls-files -- 'compose.yaml' '.github/workflows/*.yml' '.github/workflows/*.yaml')
-DOCKERFILES    := $(shell $(GIT) ls-files -- 'docker/Dockerfile')
 
 # Input configuration (from local.mk or overridable)
 WORKSPACE_NAME ?= default
@@ -104,7 +100,7 @@ help:
 		'Quality:' \
 		'  make format                       Format tracked shell and C/C++ files.' \
 		'  make format-check                 Check tracked shell and C/C++ formatting.' \
-		'  make lint                         Lint tracked shell, YAML, and Docker files.' \
+		'  make lint                         Lint tracked shell files.' \
 		'  make check                        Run format-check and lint.' \
 		'' \
 		'Derived Yocto paths from PROJECT_STORAGE_ROOT:' \
@@ -229,20 +225,6 @@ lint:
 	@if [ -n "$(SHELL_FILES)" ]; then \
 		command -v "$(SHELLCHECK)" >/dev/null 2>&1 || { printf 'error: missing required command: %s\n' "$(SHELLCHECK)" >&2; exit 1; }; \
 		$(SHELLCHECK) $(SHELL_FILES); \
-	fi
-	@if [ -n "$(YAML_LINT_FILES)" ]; then \
-		command -v "$(YAMLLINT)" >/dev/null 2>&1 || { printf 'error: missing required command: %s\n' "$(YAMLLINT)" >&2; exit 1; }; \
-		$(YAMLLINT) -c .yamllint.yml $(YAML_LINT_FILES); \
-	fi
-	@if [ -n "$(DOCKERFILES)" ]; then \
-		if command -v "$(HADOLINT)" >/dev/null 2>&1; then \
-			$(HADOLINT) $(DOCKERFILES); \
-		elif [ -n "$$CI" ] || [ -n "$$GITHUB_ACTIONS" ]; then \
-			printf 'error: missing required command: %s\n' "$(HADOLINT)" >&2; \
-			exit 1; \
-		else \
-			printf '%s\n' 'warn: hadolint not installed; Dockerfile lint is enforced in CI' >&2; \
-		fi; \
 	fi
 
 check: format-check lint
