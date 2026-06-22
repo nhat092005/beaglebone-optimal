@@ -8,13 +8,12 @@ static ssize_t temperature_show(struct device *dev,
 
 	mutex_lock(&priv->buffer_mutex);
 	if (priv->ring_buffer_count > 0) {
-		int last_idx =
-			(priv->ring_buffer_head - 1 + RECORD_COUNT) %
-			RECORD_COUNT;
+		int last_idx = (priv->ring_buffer_head - 1 + RECORD_COUNT) %
+			       RECORD_COUNT;
 		temp = priv->ring_buffer[last_idx].temperature;
 	}
 	mutex_unlock(&priv->buffer_mutex);
-	return sysfs_emit(buf, "%d\n", temp / 1000);
+	return sysfs_emit(buf, "%d\n", temp);
 }
 static DEVICE_ATTR_RO(temperature);
 
@@ -26,13 +25,12 @@ static ssize_t humidity_show(struct device *dev, struct device_attribute *attr,
 
 	mutex_lock(&priv->buffer_mutex);
 	if (priv->ring_buffer_count > 0) {
-		int last_idx =
-			(priv->ring_buffer_head - 1 + RECORD_COUNT) %
-			RECORD_COUNT;
+		int last_idx = (priv->ring_buffer_head - 1 + RECORD_COUNT) %
+			       RECORD_COUNT;
 		humid = priv->ring_buffer[last_idx].humidity;
 	}
 	mutex_unlock(&priv->buffer_mutex);
-	return sysfs_emit(buf, "%d\n", humid / 1000);
+	return sysfs_emit(buf, "%d\n", humid);
 }
 static DEVICE_ATTR_RO(humidity);
 
@@ -44,9 +42,8 @@ static ssize_t lux_show(struct device *dev, struct device_attribute *attr,
 
 	mutex_lock(&priv->buffer_mutex);
 	if (priv->ring_buffer_count > 0) {
-		int last_idx =
-			(priv->ring_buffer_head - 1 + RECORD_COUNT) %
-			RECORD_COUNT;
+		int last_idx = (priv->ring_buffer_head - 1 + RECORD_COUNT) %
+			       RECORD_COUNT;
 		lx = priv->ring_buffer[last_idx].lux;
 	}
 	mutex_unlock(&priv->buffer_mutex);
@@ -110,46 +107,18 @@ static ssize_t humid_alarm_limit_store(struct device *dev,
 }
 static DEVICE_ATTR_RW(humid_alarm_limit);
 
-static ssize_t lux_dark_limit_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct optimal_env_priv *priv = dev_get_drvdata(dev);
-	int val;
-
-	spin_lock(&priv->state_lock);
-	val = priv->lux_dark_limit;
-	spin_unlock(&priv->state_lock);
-	return sysfs_emit(buf, "%d\n", val);
-}
-static ssize_t lux_dark_limit_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct optimal_env_priv *priv = dev_get_drvdata(dev);
-	int val, ret;
-
-	ret = kstrtoint(buf, 10, &val);
-	if (ret)
-		return ret;
-	spin_lock(&priv->state_lock);
-	priv->lux_dark_limit = val;
-	spin_unlock(&priv->state_lock);
-	return count;
-}
-static DEVICE_ATTR_RW(lux_dark_limit);
-
-static ssize_t lux_light_limit_show(struct device *dev,
+static ssize_t lux_alarm_limit_show(struct device *dev,
 				    struct device_attribute *attr, char *buf)
 {
 	struct optimal_env_priv *priv = dev_get_drvdata(dev);
 	int val;
 
 	spin_lock(&priv->state_lock);
-	val = priv->lux_light_limit;
+	val = priv->lux_alarm_limit;
 	spin_unlock(&priv->state_lock);
 	return sysfs_emit(buf, "%d\n", val);
 }
-static ssize_t lux_light_limit_store(struct device *dev,
+static ssize_t lux_alarm_limit_store(struct device *dev,
 				     struct device_attribute *attr,
 				     const char *buf, size_t count)
 {
@@ -160,11 +129,11 @@ static ssize_t lux_light_limit_store(struct device *dev,
 	if (ret)
 		return ret;
 	spin_lock(&priv->state_lock);
-	priv->lux_light_limit = val;
+	priv->lux_alarm_limit = val;
 	spin_unlock(&priv->state_lock);
 	return count;
 }
-static DEVICE_ATTR_RW(lux_light_limit);
+static DEVICE_ATTR_RW(lux_alarm_limit);
 
 static ssize_t alarm_state_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
@@ -211,8 +180,7 @@ static struct attribute *optimal_attrs[] = {
 	&dev_attr_lux.attr,
 	&dev_attr_temp_alarm_limit.attr,
 	&dev_attr_humid_alarm_limit.attr,
-	&dev_attr_lux_dark_limit.attr,
-	&dev_attr_lux_light_limit.attr,
+	&dev_attr_lux_alarm_limit.attr,
 	&dev_attr_alarm_state.attr,
 	&dev_attr_night_mode.attr,
 	&dev_attr_sensor_status.attr,
@@ -242,9 +210,9 @@ static int optimal_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 	if (type == hwmon_temp && attr == hwmon_temp_input) {
 		mutex_lock(&priv->buffer_mutex);
 		if (priv->ring_buffer_count > 0) {
-			int last_idx = (priv->ring_buffer_head - 1 +
-					RECORD_COUNT) %
-				       RECORD_COUNT;
+			int last_idx =
+				(priv->ring_buffer_head - 1 + RECORD_COUNT) %
+				RECORD_COUNT;
 			*val = priv->ring_buffer[last_idx].temperature;
 		} else {
 			*val = 0;
@@ -255,9 +223,9 @@ static int optimal_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 	if (type == hwmon_humidity && attr == hwmon_humidity_input) {
 		mutex_lock(&priv->buffer_mutex);
 		if (priv->ring_buffer_count > 0) {
-			int last_idx = (priv->ring_buffer_head - 1 +
-					RECORD_COUNT) %
-				       RECORD_COUNT;
+			int last_idx =
+				(priv->ring_buffer_head - 1 + RECORD_COUNT) %
+				RECORD_COUNT;
 			*val = priv->ring_buffer[last_idx].humidity;
 		} else {
 			*val = 0;
@@ -294,9 +262,9 @@ int optimal_env_sysfs_init(struct optimal_env_priv *priv)
 	}
 
 	/* Pass 'priv' as the drvdata so sysfs attribute functions can retrieve it */
-	priv->optimal_device =
-		device_create(priv->optimal_class, priv->dev, priv->dev_num,
-			      priv, "optimal_env");
+	priv->optimal_device = device_create(priv->optimal_class, priv->dev,
+					     priv->dev_num, priv,
+					     "optimal_env");
 	if (IS_ERR(priv->optimal_device)) {
 		ret = PTR_ERR(priv->optimal_device);
 		goto err_class_destroy;

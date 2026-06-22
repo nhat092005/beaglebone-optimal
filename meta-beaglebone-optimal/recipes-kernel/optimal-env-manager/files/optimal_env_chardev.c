@@ -2,9 +2,8 @@
 
 static int optimal_env_open(struct inode *inode, struct file *file)
 {
-	struct optimal_env_priv *priv = container_of(inode->i_cdev,
-						     struct optimal_env_priv,
-						     optimal_cdev);
+	struct optimal_env_priv *priv = container_of(
+		inode->i_cdev, struct optimal_env_priv, optimal_cdev);
 	file->private_data = priv;
 	return 0;
 }
@@ -55,21 +54,6 @@ static long optimal_env_ioctl(struct file *file, unsigned int cmd,
 		return -EPERM;
 
 	switch (cmd) {
-	case OP_ENV_IOCTL_TEST_ALARM_ON:
-		spin_lock(&priv->state_lock);
-		priv->test_alarm_mode = true;
-		priv->test_mode_expires = jiffies + 60 * HZ;
-		spin_unlock(&priv->state_lock);
-		wake_up_interruptible(&priv->measure_wait);
-		break;
-
-	case OP_ENV_IOCTL_TEST_ALARM_OFF:
-		spin_lock(&priv->state_lock);
-		priv->test_alarm_mode = false;
-		spin_unlock(&priv->state_lock);
-		wake_up_interruptible(&priv->measure_wait);
-		break;
-
 	case OP_ENV_IOCTL_CLEAR_HISTORY:
 		mutex_lock(&priv->buffer_mutex);
 		priv->ring_buffer_head = 0;

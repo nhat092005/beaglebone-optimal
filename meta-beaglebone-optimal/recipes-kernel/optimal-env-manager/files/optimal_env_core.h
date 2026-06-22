@@ -23,13 +23,11 @@
 #include <linux/backlight.h>
 
 #define OP_ENV_IOC_MAGIC 'O'
-#define OP_ENV_IOCTL_TEST_ALARM_ON _IO(OP_ENV_IOC_MAGIC, 1)
-#define OP_ENV_IOCTL_TEST_ALARM_OFF _IO(OP_ENV_IOC_MAGIC, 2)
-#define OP_ENV_IOCTL_CLEAR_HISTORY _IO(OP_ENV_IOC_MAGIC, 3)
-#define OP_ENV_IOCTL_TRIGGER_MEASURE _IO(OP_ENV_IOC_MAGIC, 4)
+#define OP_ENV_IOCTL_CLEAR_HISTORY _IO(OP_ENV_IOC_MAGIC, 1)
+#define OP_ENV_IOCTL_TRIGGER_MEASURE _IO(OP_ENV_IOC_MAGIC, 2)
 
 #define RECORD_COUNT 10
-#define MAX_LEDS 3
+#define MAX_LEDS 2
 
 struct env_record {
 	u64 timestamp_ms;
@@ -58,12 +56,7 @@ struct optimal_env_priv {
 	/* Limits / Thresholds */
 	int temp_alarm_limit;
 	int humid_alarm_limit;
-	int lux_dark_limit;
-	int lux_light_limit;
-
-	/* Test Alarm Mode */
-	bool test_alarm_mode;
-	unsigned long test_mode_expires;
+	int lux_alarm_limit;
 
 	/* GPIO LEDs */
 	struct gpio_desc *leds[MAX_LEDS];
@@ -88,8 +81,8 @@ struct optimal_env_priv {
 };
 
 /* Core helper functions */
-void push_record(struct optimal_env_priv *priv, u64 time_ms, s32 temp, s32 humid,
-		 s32 lux);
+void push_record(struct optimal_env_priv *priv, u64 time_ms, s32 temp,
+		 s32 humid, s32 lux);
 
 /* Core sub-system init & remove declarations */
 int optimal_env_sysfs_init(struct optimal_env_priv *priv);
