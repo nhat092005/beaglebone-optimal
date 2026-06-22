@@ -1,5 +1,5 @@
 &i2c2 {
-	sht3x@44 {
+	sht3x: sht3x@44 {
 		compatible = "sensirion,sht3x";
 		reg = <0x44>;
 	};

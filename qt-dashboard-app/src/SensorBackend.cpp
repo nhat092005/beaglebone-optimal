@@ -6,6 +6,17 @@
 #include <QtCore/qtextstream.h>
 #include <QtCore/qlogging.h>
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstdlib>
+
+struct EnvRecord {
+	uint64_t timestamp_ms;
+	int32_t temperature;
+	int32_t humidity;
+	int32_t lux;
+} __attribute__((packed));
+
 static const char *const kDayNames[] = { "MONDAY",   "TUESDAY", "WEDNESDAY",
 					 "THURSDAY", "FRIDAY",	"SATURDAY",
 					 "SUNDAY" };
@@ -16,21 +27,13 @@ static const char *const kMonthNames[] = { "JAN", "FEB", "MAR", "APR",
 SensorBackend::SensorBackend(QObject *parent)
 	: QObject(parent)
 {
-	m_hwmonPath = findHwmon(QStringLiteral("sht3x"));
-	m_iioPath = findIioDevice(QStringLiteral("bh1750"));
-
-	if (m_hwmonPath.isEmpty())
-		qWarning() << "SensorBackend: sht3x hwmon device not found";
-	if (m_iioPath.isEmpty())
-		qWarning() << "SensorBackend: bh1750 iio device not found";
-
 	connect(&m_timeTimer, &QTimer::timeout, this,
 		&SensorBackend::updateTime);
 	connect(&m_sensorTimer, &QTimer::timeout, this,
 		&SensorBackend::updateSensors);
 
 	m_timeTimer.start(1000);
-	m_sensorTimer.start(5000);
+	m_sensorTimer.start(1000);
 
 	updateTime();
 	updateSensors();
@@ -61,84 +64,173 @@ void SensorBackend::updateTime()
 
 void SensorBackend::updateSensors()
 {
-	if (!m_hwmonPath.isEmpty()) {
-		const QString rawTemp =
-			readSysfs(m_hwmonPath + QLatin1String("/temp1_input"));
-		const QString rawHum = readSysfs(
-			m_hwmonPath + QLatin1String("/humidity1_input"));
+	const QString optRoot =
+		QStringLiteral("/sys/class/optimal-env/optimal_env/");
+	if (QDir(optRoot).exists()) {
+		// Read values from custom sysfs class
+		const QString tempStr =
+			readSysfs(optRoot + QStringLiteral("temperature"));
+		const QString humStr =
+			readSysfs(optRoot + QStringLiteral("humidity"));
+		const QString luxStr =
+			readSysfs(optRoot + QStringLiteral("lux"));
+		const QString nightStr =
+			readSysfs(optRoot + QStringLiteral("night_mode"));
+
+		const QString tLimitStr =
+			readSysfs(optRoot + QStringLiteral("temp_alarm_limit"));
+		const QString hLimitStr = readSysfs(
+			optRoot + QStringLiteral("humid_alarm_limit"));
+		const QString lLimitStr =
+			readSysfs(optRoot + QStringLiteral("lux_alarm_limit"));
 
 		bool ok = false;
-		const int tempMilli = rawTemp.toInt(&ok);
-		if (ok) {
-			const QString v =
-				QString::number(tempMilli / 1000.0, 'f', 1) +
-				QString::fromUtf8("\xc2\xb0"
-						  "C");
-			if (v != m_temperature) {
-				m_temperature = v;
-				emit temperatureChanged();
+		if (!tempStr.isEmpty()) {
+			const int tempMilli = tempStr.toInt(&ok);
+			if (ok) {
+				const QString v =
+					QString::number(tempMilli / 1000.0, 'f',
+							1) +
+					QStringLiteral(" °C");
+				if (v != m_temperature) {
+					m_temperature = v;
+					emit temperatureChanged();
+				}
 			}
 		}
 
 		ok = false;
-		const int humMilli = rawHum.toInt(&ok);
-		if (ok) {
-			const QString v =
-				QString::number(humMilli / 1000.0, 'f', 1) +
-				QLatin1String("%");
-			if (v != m_humidity) {
-				m_humidity = v;
-				emit humidityChanged();
+		if (!humStr.isEmpty()) {
+			const int humMilli = humStr.toInt(&ok);
+			if (ok) {
+				const QString v =
+					QString::number(humMilli / 1000.0, 'f',
+							1) +
+					QStringLiteral("%");
+				if (v != m_humidity) {
+					m_humidity = v;
+					emit humidityChanged();
+				}
 			}
 		}
-	}
 
-	if (!m_iioPath.isEmpty()) {
-		const QString rawStr = readSysfs(
-			m_iioPath + QLatin1String("/in_illuminance_raw"));
-		const QString scaleStr = readSysfs(
-			m_iioPath + QLatin1String("/in_illuminance_scale"));
-		bool okR = false, okS = false;
-		const double raw = rawStr.toDouble(&okR);
-		const double scale = scaleStr.toDouble(&okS);
-		if (okR && okS) {
-			const QString v =
-				QString::number(static_cast<int>(raw * scale)) +
-				QLatin1String(" lx");
-			if (v != m_light) {
-				m_light = v;
-				emit lightChanged();
+		ok = false;
+		if (!luxStr.isEmpty()) {
+			const int luxVal = luxStr.toInt(&ok);
+			if (ok) {
+				const QString v = QString::number(luxVal) +
+						  QStringLiteral(" lx");
+				if (v != m_light) {
+					m_light = v;
+					emit lightChanged();
+				}
 			}
 		}
-	}
-}
 
-QString SensorBackend::findHwmon(const QString &driverName)
-{
-	const QDir hwmonRoot(QStringLiteral("/sys/class/hwmon"));
-	const auto entries =
-		hwmonRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-	for (const QString &entry : entries) {
-		const QString base = hwmonRoot.absoluteFilePath(entry);
-		if (readSysfs(base + QLatin1String("/name")).trimmed() ==
-		    driverName)
-			return base;
-	}
-	return {};
-}
+		if (!nightStr.isEmpty()) {
+			const int nm = nightStr.toInt(&ok);
+			if (ok && nm != m_nightMode) {
+				m_nightMode = nm;
+				emit nightModeChanged();
+			}
+		}
 
-QString SensorBackend::findIioDevice(const QString &driverName)
-{
-	const QDir iioRoot(QStringLiteral("/sys/bus/iio/devices"));
-	const auto entries =
-		iioRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-	for (const QString &entry : entries) {
-		const QString base = iioRoot.absoluteFilePath(entry);
-		if (readSysfs(base + QLatin1String("/name")).trimmed() ==
-		    driverName)
-			return base;
+		if (!tLimitStr.isEmpty()) {
+			const int val = tLimitStr.toInt(&ok);
+			if (ok && val != m_tempAlarmLimit) {
+				m_tempAlarmLimit = val;
+				emit tempAlarmLimitChanged();
+			}
+		}
+
+		if (!hLimitStr.isEmpty()) {
+			const int val = hLimitStr.toInt(&ok);
+			if (ok && val != m_humidAlarmLimit) {
+				m_humidAlarmLimit = val;
+				emit humidAlarmLimitChanged();
+			}
+		}
+
+		if (!lLimitStr.isEmpty()) {
+			const int val = lLimitStr.toInt(&ok);
+			if (ok && val != m_luxAlarmLimit) {
+				m_luxAlarmLimit = val;
+				emit luxAlarmLimitChanged();
+			}
+		}
+
+		// Read history from /dev/optimal_env
+		int fd = ::open("/dev/optimal_env", O_RDONLY);
+		if (fd >= 0) {
+			EnvRecord buf[10];
+			int bytes = ::read(fd, buf, sizeof(buf));
+			::close(fd);
+			if (bytes > 0) {
+				int count = bytes / sizeof(EnvRecord);
+				QVariantList tempHist, humidHist, luxHist;
+				for (int i = 0; i < count; ++i) {
+					tempHist.append(buf[i].temperature /
+							1000.0);
+					humidHist.append(buf[i].humidity /
+							 1000.0);
+					luxHist.append(static_cast<double>(
+						buf[i].lux));
+				}
+				m_tempHistory = tempHist;
+				m_humidityHistory = humidHist;
+				m_lightHistory = luxHist;
+				emit historyChanged();
+			}
+		}
+	} else {
+		// Fallback PC simulation
+		static double t = 30.0;
+		static double h = 60.0;
+		static double l = 100.0;
+
+		t += ((double)std::rand() / RAND_MAX - 0.5) * 1.5;
+		h += ((double)std::rand() / RAND_MAX - 0.5) * 2.0;
+		l += ((double)std::rand() / RAND_MAX - 0.5) * 10.0;
+		if (l < 0)
+			l = 0;
+
+		m_temperature =
+			QString::number(t, 'f', 1) + QStringLiteral(" °C");
+		m_humidity = QString::number(h, 'f', 1) + QStringLiteral("%");
+		m_light = QString::number(static_cast<int>(l)) +
+			  QStringLiteral(" lx");
+
+		emit temperatureChanged();
+		emit humidityChanged();
+		emit lightChanged();
+
+		m_tempAlarmLimit = 45.0;
+		m_humidAlarmLimit = 80.0;
+		m_luxAlarmLimit = 20.0;
+
+		emit tempAlarmLimitChanged();
+		emit humidAlarmLimitChanged();
+		emit luxAlarmLimitChanged();
+
+		int nm = (l < m_luxAlarmLimit) ? 1 : 0;
+		if (nm != m_nightMode) {
+			m_nightMode = nm;
+			emit nightModeChanged();
+		}
+
+		m_tempHistory.append(t);
+		m_humidityHistory.append(h);
+		m_lightHistory.append(l);
+
+		if (m_tempHistory.size() > 10)
+			m_tempHistory.removeFirst();
+		if (m_humidityHistory.size() > 10)
+			m_humidityHistory.removeFirst();
+		if (m_lightHistory.size() > 10)
+			m_lightHistory.removeFirst();
+
+		emit historyChanged();
 	}
-	return {};
 }
 
 QString SensorBackend::readSysfs(const QString &path)

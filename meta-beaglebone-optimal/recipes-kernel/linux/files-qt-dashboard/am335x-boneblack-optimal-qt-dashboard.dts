@@ -24,6 +24,18 @@
 			};
 		};
 	};
+
+	optimal_env_manager {
+		compatible = "optimal,env-manager";
+		pinctrl-names = "default";
+		pinctrl-0 = <&optimal_env_pins>;
+		hwmon-sensor = <&sht3x>;
+		io-channels = <&bh1750 0>;
+		io-channel-names = "lux";
+		status-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>, /* USR1 */
+		               <&gpio1 23 GPIO_ACTIVE_HIGH>; /* USR2 */
+		status = "okay";
+	};
 };
 
 &am33xx_pinmux {
@@ -31,6 +43,13 @@
 		pinctrl-single,pins = <
 			AM33XX_PADCONF(AM335X_PIN_GPMC_A9, PIN_INPUT_PULLUP, MUX_MODE7)
 			AM33XX_PADCONF(AM335X_PIN_UART0_RTSN, PIN_OUTPUT_PULLUP, MUX_MODE7)
+		>;
+	};
+
+	optimal_env_pins: optimal-env-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A6, PIN_OUTPUT_PULLDOWN, MUX_MODE7) /* USR1 */
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A7, PIN_OUTPUT_PULLDOWN, MUX_MODE7) /* USR2 */
 		>;
 	};
 };

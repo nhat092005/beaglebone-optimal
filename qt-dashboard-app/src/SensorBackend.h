@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QVariantList>
 
 class SensorBackend : public QObject {
 	Q_OBJECT
@@ -12,6 +13,21 @@ class SensorBackend : public QObject {
 		QString temperature READ temperature NOTIFY temperatureChanged)
 	Q_PROPERTY(QString humidity READ humidity NOTIFY humidityChanged)
 	Q_PROPERTY(QString light READ light NOTIFY lightChanged)
+
+	Q_PROPERTY(double tempAlarmLimit READ tempAlarmLimit NOTIFY
+			   tempAlarmLimitChanged)
+	Q_PROPERTY(double humidAlarmLimit READ humidAlarmLimit NOTIFY
+			   humidAlarmLimitChanged)
+	Q_PROPERTY(double luxAlarmLimit READ luxAlarmLimit NOTIFY
+			   luxAlarmLimitChanged)
+	Q_PROPERTY(int nightMode READ nightMode NOTIFY nightModeChanged)
+
+	Q_PROPERTY(
+		QVariantList tempHistory READ tempHistory NOTIFY historyChanged)
+	Q_PROPERTY(QVariantList humidityHistory READ humidityHistory NOTIFY
+			   historyChanged)
+	Q_PROPERTY(QVariantList lightHistory READ lightHistory NOTIFY
+			   historyChanged)
 
     public:
 	explicit SensorBackend(QObject *parent = nullptr);
@@ -37,6 +53,36 @@ class SensorBackend : public QObject {
 		return m_light;
 	}
 
+	double tempAlarmLimit() const
+	{
+		return m_tempAlarmLimit;
+	}
+	double humidAlarmLimit() const
+	{
+		return m_humidAlarmLimit;
+	}
+	double luxAlarmLimit() const
+	{
+		return m_luxAlarmLimit;
+	}
+	int nightMode() const
+	{
+		return m_nightMode;
+	}
+
+	QVariantList tempHistory() const
+	{
+		return m_tempHistory;
+	}
+	QVariantList humidityHistory() const
+	{
+		return m_humidityHistory;
+	}
+	QVariantList lightHistory() const
+	{
+		return m_lightHistory;
+	}
+
     signals:
 	void timeChanged();
 	void dateChanged();
@@ -44,13 +90,17 @@ class SensorBackend : public QObject {
 	void humidityChanged();
 	void lightChanged();
 
+	void tempAlarmLimitChanged();
+	void humidAlarmLimitChanged();
+	void luxAlarmLimitChanged();
+	void nightModeChanged();
+	void historyChanged();
+
     private slots:
 	void updateTime();
 	void updateSensors();
 
     private:
-	static QString findHwmon(const QString &driverName);
-	static QString findIioDevice(const QString &driverName);
 	static QString readSysfs(const QString &path);
 
 	QString m_time{ QStringLiteral("--:--:--") };
@@ -59,8 +109,14 @@ class SensorBackend : public QObject {
 	QString m_humidity{ QStringLiteral("--") };
 	QString m_light{ QStringLiteral("--") };
 
-	QString m_hwmonPath;
-	QString m_iioPath;
+	double m_tempAlarmLimit{ 45.0 };
+	double m_humidAlarmLimit{ 80.0 };
+	double m_luxAlarmLimit{ 20.0 };
+	int m_nightMode{ 0 };
+
+	QVariantList m_tempHistory;
+	QVariantList m_humidityHistory;
+	QVariantList m_lightHistory;
 
 	QTimer m_timeTimer;
 	QTimer m_sensorTimer;

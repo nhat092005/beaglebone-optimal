@@ -4,6 +4,7 @@
 # Mount virtual filesystems and sync clock
 ::sysinit:/bin/mount -t proc proc /proc
 ::sysinit:/bin/mount -t sysfs sysfs /sys
+::sysinit:/sbin/modprobe optimal_env_manager
 ::sysinit:/bin/hostname qt-dashboard
 ::sysinit:/sbin/rtcsync
 
