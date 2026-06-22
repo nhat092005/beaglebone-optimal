@@ -17,7 +17,8 @@ This repository provides a reproducible, Docker-isolated workspace for building 
   - **HDMI Display Output:** Powered by the `tilcdc` driver and IT66122 transmitter.
   - **I2C2 Shared Bus:** Hardware wiring and pinmux for connecting external sensors.
   - **Sensors & RTC:** Drivers for SHT3x (temperature/humidity), BH1750 (ambient light IIO), and DS3231 (high-accuracy RTC).
-  - **GPIO LEDs:** BeagleBone Black onboard user LEDs mapped for heartbeat/status.
+  - **GPIO LEDs:** Onboard USR1 and USR2 LEDs mapped for Temperature and Humidity threshold alerts flashing at a fast 50ms interval.
+  - **Optimal Environment Manager:** Custom kernel watchdog driver aggregating measurements via `/sys/class/optimal-env/optimal_env/` and providing a binary 10-point history buffer via `/dev/optimal_env`.
 - **Dual Boot Paths:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.

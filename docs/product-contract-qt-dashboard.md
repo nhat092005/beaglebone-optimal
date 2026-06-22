@@ -48,12 +48,28 @@ The product image must remain a single-app appliance path:
 - avoid network, audio, Wayland, X11, or other unrelated desktop surfaces
   unless product scope changes explicitly
 
-## Sensor Data Rule
+## Sensor Data & Watchdog Rule
 
-The product app reads kernel-native surfaces directly:
+The product app reads aggregated kernel surfaces directly from the custom environment manager module (`optimal-env-manager`):
 
-- RTC -> system clock
-- SHT3X -> hwmon sysfs
-- BH1750 -> IIO sysfs
+- **Current Metrics:** Reads `/sys/class/optimal-env/optimal_env/` attributes (`temperature` in milli-Celsius, `humidity` in milli-percent, `lux` in Lux, and `night_mode`).
+- **Thresholds:** Reads `/sys/class/optimal-env/optimal_env/` configuration limits (`temp_alarm_limit`, `humid_alarm_limit`, `lux_alarm_limit`).
+- **History Data & Charts:** Reads the binary 10-point measurement history log array from `/dev/optimal_env` to plot real-time line charts on the dashboard.
+- **RTC:** Synchronized directly to the system clock.
 
-No sensor daemon or middleware layer is part of this contract.
+No user-space sensor daemon or intermediate middleware is part of this contract.
+
+## Warning LED Indicators Rule
+
+The environment manager driver maps the BeagleBone Black onboard user LEDs to warn of environmental anomalies:
+
+- **USR1:** Alternates high/low at 50ms interval when temperature exceeds `temp_alarm_limit`.
+- **USR2:** Alternates high/low at 50ms interval when humidity exceeds `humid_alarm_limit`.
+- **USR3:** Completely unused and deleted from the DTS/code layout.
+
+## /dev/optimal_env IOCTL Rule
+
+The character device `/dev/optimal_env` supports exactly two control operations from user-space:
+
+- `OP_ENV_IOCTL_CLEAR_HISTORY`: Resets the 10-point historical log buffer.
+- `OP_ENV_IOCTL_TRIGGER_MEASURE`: Immediately prompts a sensor reading update in the kernel.
