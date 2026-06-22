@@ -22,7 +22,11 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 - **Dual Boot Paths:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
-- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for the fullscreen Qt dashboard application and Distro configuration, building upon the hardware HDMI support enabled by the BSP layer.
+- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) containing the fullscreen Qt dashboard application and Distro configuration:
+  - **Dynamic Theme (Light/Dark Mode):** Automatically toggles between a clean white layout and a slate-dark theme (`#0F172A`) based on ambient light (`night_mode` attribute from the kernel).
+  - **Real-time Historical Charts:** Reads the binary 10-point measurement history log array from `/dev/optimal_env` to plot real-time line charts for temperature, humidity, and ambient light.
+  - **Visual Alert Indicators:** Border animations pulse and display alert pills when temperature or humidity exceeds their respective kernel-level thresholds.
+  - **System Clock & Seconds Ring:** Features a large digital clock paired with a circular canvas-drawn seconds progress ring.
 - **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`) verified through `make`.
 
 ---
@@ -168,25 +172,31 @@ Detailed design rules and guides are located in the `docs/` directory:
 
 ## Demo
 
-### Docker Build
+### Docker
+
+#### Docker Build
 
 > Building the Docker image for the isolated development build environment.
 
 ![Docker Build](assets/00-build-docker.gif)
 
-### Docker Shell
+#### Docker Shell
 
 > Entering the interactive bash shell within the running builder container.
 
 ![Docker Shell](assets/01-docker-shell.gif)
 
-### Yocto Init
+---
+
+### Yocto
+
+#### Yocto Init
 
 > Initializing the storage-backed Yocto build directory environment.
 
 ![Yocto Init](assets/00-yocto-init.gif)
 
-### Yocto Build
+#### Yocto Build
 
 > Running the bitbake build process inside the container to compile the target image.
 
