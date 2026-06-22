@@ -23,7 +23,7 @@ This repository provides a reproducible, Docker-isolated workspace for building 
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
   - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
 - **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) for the fullscreen Qt dashboard application and Distro configuration, building upon the hardware HDMI support enabled by the BSP layer.
-- **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`, `yamllint`, `hadolint`) verified through `make`.
+- **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`) verified through `make`.
 
 ---
 
