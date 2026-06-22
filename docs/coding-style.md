@@ -10,15 +10,11 @@ for `beaglebone-optimal`.
 - `.clang-format` defines the official formatting policy for future C/C++ code.
 - `.clangd` is editor assistance only. It must stay portable and must not
   hardcode machine-specific LLVM include paths.
-- `.yamllint.yml` defines the YAML lint policy for tracked repo YAML files.
-- `.hadolint.yaml` defines the Dockerfile lint policy for tracked Dockerfiles.
 
 ## Current Policy
 
 - Shell scripts are formatted with `shfmt -i 4 -ci -sr`.
 - Shell scripts are linted with `shellcheck`.
-- YAML files covered by the repo contract are linted with `yamllint`.
-- Dockerfiles are linted with `hadolint`.
 - Markdown belongs to the style contract through `.editorconfig`, but v1 does
   not require a local Markdown linter.
 
@@ -40,14 +36,9 @@ Required local tools for the v1 contract:
 
 - `shfmt`
 - `shellcheck`
-- `yamllint`
 
 `clang-format` becomes a required local tool when the repo contains tracked
 C/C++ files covered by the formatting contract.
-
-`hadolint` is optional for local development but mandatory in CI. If it is not
-installed locally, `make lint` warns and skips Dockerfile lint while CI still
-enforces it.
 
 ## C and C++ Roadmap
 
