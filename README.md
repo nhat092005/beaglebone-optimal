@@ -12,7 +12,7 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 
 - **Containerized Build Host:** A Docker-based development environment mapping host UID/GID to prevent permission issues.
 - **Storage-Backed Workspace:** Reusable shared caches (`downloads` and `sstate-cache`) and workspace-isolated build directories stored under a configurable host path (`PROJECT_STORAGE_ROOT`).
-- **Optimized Fast-Boot Display (~2s):** Shows the Qt dashboard on screen in **only 2 seconds** from kernel boot (excluding the 3s U-Boot bootdelay). This is achieved by combining a kernel driver patch to debounce transient HDMI Hotplug (HPD) drops with a streamlined user-space startup script.
+- **Optimized Fast-Boot Display (1.5s boot, 4s HDMI display):** Reaches system boot in **only 1.5 seconds** from kernel boot, with the Qt dashboard displayed on screen via HDMI in **4 seconds** (excluding the 3s U-Boot bootdelay). This is achieved by combining a kernel driver patch to debounce transient HDMI Hotplug (HPD) drops with a streamlined user-space startup script.
 - **Hardware & Sensor Catalog:** Includes built-in support for target peripherals:
   - **HDMI Display Output:** Powered by the `tilcdc` driver and IT66122 transmitter.
   - **I2C2 Shared Bus:** Hardware wiring and pinmux for connecting external sensors.
