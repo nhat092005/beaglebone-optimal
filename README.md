@@ -210,6 +210,22 @@ Detailed design rules and guides are located in the `docs/` directory:
 
 ---
 
+### Target Demo
+
+#### Boot Log
+
+> Real-time boot log showing the fast-boot optimization on the BeagleBone Black.
+
+![BeagleBone Black Boot Log](assets/bbb-log.gif)
+
+#### Qt Dashboard
+
+> The responsive Qt6 kiosk dashboard application running over HDMI.
+
+![Qt Dashboard](assets/qt.gif)
+
+---
+
 ## License
 
 [MIT License](LICENSE.md)
