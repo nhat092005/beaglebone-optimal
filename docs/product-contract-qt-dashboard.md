@@ -73,3 +73,36 @@ The character device `/dev/optimal_env` supports exactly two control operations 
 
 - `OP_ENV_IOCTL_CLEAR_HISTORY`: Resets the 10-point historical log buffer.
 - `OP_ENV_IOCTL_TRIGGER_MEASURE`: Immediately prompts a sensor reading update in the kernel.
+
+## Kernel-Userspace Integration Details
+
+### 1. Sysfs Attributes Reference (`/sys/class/optimal-env/optimal_env/`)
+
+| Attribute | Mode | Unit | Description |
+| :--- | :---: | :---: | :--- |
+| **`temperature`** | RO | milli-°C | Current SHT3x temperature reading (e.g. `27500` for 27.5 °C). |
+| **`humidity`** | RO | milli-% | Current SHT3x humidity reading (e.g. `55400` for 55.4%). |
+| **`lux`** | RO | Lux | Current BH1750 ambient light intensity. |
+| **`night_mode`** | RO | Binary | `1` if `lux < lux_alarm_limit` (triggering dark theme), else `0`. |
+| **`temp_alarm_limit`** | RW | °C | Temperature threshold for alerts. Defaults to `45`. |
+| **`humid_alarm_limit`** | RW | % | Humidity threshold for alerts. Defaults to `80`. |
+| **`lux_alarm_limit`** | RW | Lux | Ambient light threshold for night mode. Defaults to `20`. |
+| **`alarm_state`** | RO | Binary | `1` if temperature or humidity exceeds their limit, else `0`. |
+| **`sensor_status`** | RO | Bitmask | Diagnostics flag: `0` = OK, `1` = SHT3x fault, `2` = BH1750 fault, `3` = Both. |
+
+### 2. Character Device Structure (`/dev/optimal_env`)
+
+Each read from `/dev/optimal_env` returns a binary stream of up to 10 historical records formatted as:
+
+```c
+struct env_record {
+    uint64_t timestamp_ms; // Monotonic boot time or real time in milliseconds
+    int32_t temperature;   // in milli-°C
+    int32_t humidity;      // in milli-%
+    int32_t lux;           // in Lux
+} __attribute__((packed));
+```
+
+The device supports standard read and control operations via `unlocked_ioctl`:
+- `OP_ENV_IOCTL_CLEAR_HISTORY` (`_IO('O', 1)`): Resets the 10-point historical log buffer.
+- `OP_ENV_IOCTL_TRIGGER_MEASURE` (`_IO('O', 2)`): Wakes up the monitoring thread for an immediate sensor reading.

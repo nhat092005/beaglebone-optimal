@@ -1,6 +1,6 @@
 # beaglebone-optimal
 
-Self-learning Board Support Package (BSP) workspace for BeagleBone Black / TI AM335x.
+A self-study Yocto Project Board Support Package (BSP) workspace for BeagleBone Black / TI AM335x.
 
 ![BeagleBone Black BSP](assets/hero.png)
 
@@ -10,24 +10,30 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 
 ## Key Features
 
-- **Containerized Build Host:** A Docker-based development environment mapping host UID/GID to prevent permission issues.
-- **Storage-Backed Workspace:** Reusable shared caches (`downloads` and `sstate-cache`) and workspace-isolated build directories stored under a configurable host path (`PROJECT_STORAGE_ROOT`).
-- **Optimized Fast-Boot Display (1.5s boot, 4s HDMI display):** Reaches system boot in **only 1.5 seconds** from kernel boot, with the Qt dashboard displayed on screen via HDMI in **4 seconds** (excluding the 3s U-Boot bootdelay). This is achieved by combining a kernel driver patch to debounce transient HDMI Hotplug (HPD) drops with a streamlined user-space startup script.
-- **Hardware & Sensor Catalog:** Includes built-in support for target peripherals:
-  - **HDMI Display Output:** Powered by the `tilcdc` driver and IT66122 transmitter.
-  - **I2C2 Shared Bus:** Hardware wiring and pinmux for connecting external sensors.
-  - **Sensors & RTC:** Drivers for SHT3x (temperature/humidity), BH1750 (ambient light IIO), and DS3231 (high-accuracy RTC).
-  - **GPIO LEDs:** Onboard USR1 and USR2 LEDs mapped for Temperature and Humidity threshold alerts flashing at a fast 50ms interval.
-  - **Optimal Environment Manager:** Custom kernel watchdog driver aggregating measurements via `/sys/class/optimal-env/optimal_env/` and providing a binary 10-point history buffer via `/dev/optimal_env`.
-- **Dual Boot Paths:**
+- **Docker-Isolated Build Host:**
+  - Provides a reproducible, containerized development environment mapping host `UID`/`GID` to avoid file permissions conflicts.
+  - Keeps the git repository clean by storing all build caches (`downloads`, `sstate-cache`), workspace files, and build directories outside the source tree via a host-side `PROJECT_STORAGE_ROOT`.
+  - Integrates automated quality check gates mapping `clang-format`, `shfmt`, and `shellcheck` static code analysis directly to standard `make format` and `make check` commands.
+- **Optimized Fast-Boot HDMI Paths:**
+  - Reaches kernel space boot to user space startup in **only 1.5 seconds**.
+  - Launches the fullscreen Qt dashboard application over HDMI output in **4.0 seconds** total (excluding the 3s U-Boot delay).
+  - Utilizes a kernel driver patch to debounce transient HDMI Hotplug (HPD) signal drops on the IT66122 transmitter.
+  - Automatically loads the environment manager kernel module on boot and runs the kiosk application directly via BusyBox init respawn (bypassing systemd, Wayland, or X11 to save boot overhead).
+- **Multi-Target Boot & Distro Catalog:**
   - **Baseline Path:** Standard BeagleBone Black SD card boot (`core-image-minimal`) built via Yocto and flashed as a full-disk `.wic` image.
-  - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint. Boot artifacts are flashed directly onto a single FAT partition.
-- **Product Qt Path:** A separate product-side layer (`meta-beaglebone-optimal-product`) containing the fullscreen Qt dashboard application and Distro configuration:
-  - **Dynamic Theme (Light/Dark Mode):** Automatically toggles between a clean white layout and a slate-dark theme (`#0F172A`) based on ambient light (`night_mode` attribute from the kernel).
-  - **Real-time Historical Charts:** Reads the binary 10-point measurement history log array from `/dev/optimal_env` to plot real-time line charts for temperature, humidity, and ambient light.
-  - **Visual Alert Indicators:** Border animations pulse and display alert pills when temperature or humidity exceeds their respective kernel-level thresholds.
-  - **System Clock & Seconds Ring:** Features a large digital clock paired with a circular canvas-drawn seconds progress ring.
-- **Quality Gates:** Integrated code style formatting (`clang-format`, `shfmt`) and linting (`shellcheck`) verified through `make`.
+  - **Tiny Path:** Highly optimized, initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for extremely fast boot times and a minimal footprint, flashing boot artifacts onto a single FAT partition.
+  - **Product Qt Path:** Dedicated product layer (`meta-beaglebone-optimal-product`) targeting the BeagleBone Black explicitly, stripping out unused desktop packages, audio, and network services for a secure, local-only fullscreen dashboard appliance.
+- **Custom Environment Platform Driver (`optimal-env-manager`):**
+  - Aggregates real-time measurements in kernel-space from target SHT3x (temperature/humidity) and BH1750 (ambient light) sensors.
+  - Exposes a **Sysfs API** (`/sys/class/optimal-env/...`) featuring read-only sensor metrics, hardware health diagnostic flags (bitmask), and read-write threshold limits (`temp_alarm_limit`, `humid_alarm_limit`, `lux_alarm_limit`).
+  - Publishes a packed binary 10-point measurement history log via a custom character device node (`/dev/optimal_env`) supporting custom IOCTL controls (`OP_ENV_IOCTL_CLEAR_HISTORY` and `OP_ENV_IOCTL_TRIGGER_MEASURE`) (see [Kernel-Userspace Integration Details](docs/product-contract-qt-dashboard.md#kernel-userspace-integration-details)).
+  - Triggers direct GPIO-based alerts, pulsing the onboard `USR1` LED (Temperature Alert) and `USR2` LED (Humidity Alert) at a rapid **50ms flash interval** on threshold violation.
+- **Responsive Qt6 Kiosk Dashboard:**
+  - Operates a lightweight fullscreen QML UI directly on the raw framebuffer (`linuxfb`).
+  - Implements **ambient-responsive theme switching** (slate-dark `#0F172A` vs. clean white layout) mapped to the kernel's `night_mode` status.
+  - Draws **real-time historical charts** for temperature, humidity, and ambient light using HTML5 Canvas elements sourced from `/dev/optimal_env` logs.
+  - Features **visual alert indicators**, including pulsing border animations and warnings badges when alerts are triggered.
+  - Displays a **system clock & seconds progress ring** synchronized automatically with the high-accuracy DS3231 RTC on startup.
 
 ---
 
