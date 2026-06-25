@@ -11,6 +11,10 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 # Machine-specific fallback DTB patches. We use an anonymous python block
 # to append the correct DTB-selection patch based on the exact MACHINE name,
 # preventing MACHINEOVERRIDES leakage from the product override.
+do_configure:append:beaglebone-black-optimal-tiny() {
+    ${S}/scripts/kconfig/merge_config.sh -m ${B}/.config ${WORKDIR}/tiny-deterministic.cfg
+}
+
 python () {
     machine = d.getVar('MACHINE')
     if machine == 'beaglebone-black-optimal-tiny':

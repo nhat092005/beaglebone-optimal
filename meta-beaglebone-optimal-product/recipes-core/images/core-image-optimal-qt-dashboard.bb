@@ -11,4 +11,4 @@ IMAGE_INSTALL:append = " packagegroup-optimal-dashboard"
 
 inherit core-image
 
-do_image_wic[file-checksums] += "${THISDIR}/../../wic/beaglebone-qt-dashboard-extlinux.conf:True"
+do_image_wic[file-checksums] += "${BEAGLEBONE_OPTIMAL_PRODUCT_LAYERDIR}/wic/beaglebone-qt-dashboard-extlinux.conf:True"

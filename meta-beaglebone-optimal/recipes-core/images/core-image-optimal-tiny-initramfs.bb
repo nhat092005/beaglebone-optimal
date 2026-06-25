@@ -27,7 +27,7 @@ install_tiny_init() {
 	install -d ${IMAGE_ROOTFS}/dev
 	install -m 0755 ${TINY_INIT_SOURCE} ${IMAGE_ROOTFS}/init
 	if [ ! -e ${IMAGE_ROOTFS}/dev/console ]; then
-		mknod -m 622 ${IMAGE_ROOTFS}/dev/console c 5 1
+		mknod -m 620 ${IMAGE_ROOTFS}/dev/console c 5 1
 	fi
 }
 

@@ -21,7 +21,7 @@ python __anonymous() {
         enabled = d.getVar(prefix + "_ENABLED")
         feature_dir = d.getVar(prefix + "_DIR")
         dts_file = d.getVar(prefix + "_DTS")
-        cfg_file = d.getVar(prefix + "_CFG", False)
+        cfg_file = d.getVar(prefix + "_CFG")
 
         if enabled not in ("0", "1"):
             bb.fatal("%s_ENABLED must be \"0\" or \"1\"" % prefix)
