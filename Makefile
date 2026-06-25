@@ -51,7 +51,9 @@ IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_MACHINE)/$(Y
 YOCTO_TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
 
 # Runtime arguments
-SDCARD ?=
+SDCARD         ?=
+BITBAKE_RECIPE ?=
+BITBAKE_TASK   ?=
 
 # Exported environment
 export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
@@ -66,7 +68,7 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        YOCTO_IMAGE IMAGE \
        SDCARD CMD
 
-.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build sd-flash sd-flash-tiny format format-check lint check
+.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake sd-flash sd-flash-tiny format format-check lint check
 
 help:
 	@printf '%s\n' \
@@ -87,6 +89,8 @@ help:
 		'  make yocto-qt-profile             Show effective qtbase profile for the current build dir.' \
 		'  make yocto-dry-run                Dry-run the current YOCTO_IMAGE dependency graph.' \
 		'  make yocto-build                  Build YOCTO_IMAGE inside the builder container.' \
+		'  make yocto-bitbake BITBAKE_RECIPE=<recipe> [BITBAKE_TASK=<task>]' \
+		'                                    Run bitbake on a recipe (cleansstate, cleanall, clean, compile, install, package…).' \
 		'  make sd-flash SDCARD='\''/dev/sdX'\''   Flash IMAGE to an SD card on the host.' \
 		'' \
 		'Tiny path:' \
@@ -194,6 +198,10 @@ else
 yocto-build:
 	@bash -lc 'source scripts/docker/lib.sh && require_yocto_image && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$$YOCTO_IMAGE"'\'''
 endif
+
+yocto-bitbake:
+	$(if $(BITBAKE_RECIPE),,$(error BITBAKE_RECIPE is required. Usage: make yocto-bitbake BITBAKE_RECIPE=<recipe> [BITBAKE_TASK=<task>]))
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$(BITBAKE_RECIPE)" $(if $(BITBAKE_TASK),-c $(BITBAKE_TASK))'\'''
 
 sd-flash:
 	@bash scripts/sd-flash.sh
