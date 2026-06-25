@@ -87,7 +87,7 @@ The character device `/dev/optimal_env` supports exactly two control operations 
 | **`temp_alarm_limit`** | RW | °C | Temperature threshold for alerts. Defaults to `45`. |
 | **`humid_alarm_limit`** | RW | % | Humidity threshold for alerts. Defaults to `80`. |
 | **`lux_alarm_limit`** | RW | Lux | Ambient light threshold for night mode. Defaults to `20`. |
-| **`alarm_state`** | RO | Binary | `1` if temperature or humidity exceeds their limit, else `0`. |
+| **`alarm_state`** | RO | Bitmask | Per-sensor alarm flags: bit 0 = temperature alarm, bit 1 = humidity alarm. `0` = no alarm. |
 | **`sensor_status`** | RO | Bitmask | Diagnostics flag: `0` = OK, `1` = SHT3x fault, `2` = BH1750 fault, `3` = Both. |
 
 ### 2. Character Device Structure (`/dev/optimal_env`)

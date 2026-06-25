@@ -11,6 +11,10 @@
 # temporary files
 tmp/
 
+# BitBake externalsrc build symlinks (created by bitbake when using externalsrc class)
+qt-dashboard-app/oe-logs
+qt-dashboard-app/oe-workdir
+
 # Local Docker config
 local.mk
 
