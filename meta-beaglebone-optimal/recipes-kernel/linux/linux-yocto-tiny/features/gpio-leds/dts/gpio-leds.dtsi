@@ -10,13 +10,27 @@
 			linux,default-trigger = "heartbeat";
 			default-state = "off";
 		};
+
+		alarm0_led: led-alarm0 {
+			label = "optimal:green:alarm0";
+			gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		alarm1_led: led-alarm1 {
+			label = "optimal:green:alarm1";
+			gpios = <&gpio1 23 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
 	};
 };
 
 &am33xx_pinmux {
 	user_leds_s0: user-leds-s0-pins {
 		pinctrl-single,pins = <
-			AM33XX_PADCONF(AM335X_PIN_GPMC_A5, PIN_OUTPUT_PULLDOWN, MUX_MODE7)
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A5, PIN_OUTPUT_PULLDOWN, MUX_MODE7) /* USR0 */
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A6, PIN_OUTPUT_PULLDOWN, MUX_MODE7) /* alarm0 */
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A7, PIN_OUTPUT_PULLDOWN, MUX_MODE7) /* alarm1 */
 		>;
 	};
 };
