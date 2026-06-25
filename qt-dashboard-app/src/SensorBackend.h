@@ -21,6 +21,9 @@ class SensorBackend : public QObject {
 	Q_PROPERTY(double luxAlarmLimit READ luxAlarmLimit NOTIFY
 			   luxAlarmLimitChanged)
 	Q_PROPERTY(int nightMode READ nightMode NOTIFY nightModeChanged)
+	Q_PROPERTY(int alarmState READ alarmState NOTIFY alarmStateChanged)
+	Q_PROPERTY(int sensorStatus READ sensorStatus NOTIFY sensorStatusChanged)
+	Q_PROPERTY(bool rtcFault READ rtcFault NOTIFY rtcFaultChanged)
 
 	Q_PROPERTY(
 		QVariantList tempHistory READ tempHistory NOTIFY historyChanged)
@@ -69,6 +72,18 @@ class SensorBackend : public QObject {
 	{
 		return m_nightMode;
 	}
+	int alarmState() const
+	{
+		return m_alarmState;
+	}
+	int sensorStatus() const
+	{
+		return m_sensorStatus;
+	}
+	bool rtcFault() const
+	{
+		return m_rtcFault;
+	}
 
 	QVariantList tempHistory() const
 	{
@@ -94,6 +109,9 @@ class SensorBackend : public QObject {
 	void humidAlarmLimitChanged();
 	void luxAlarmLimitChanged();
 	void nightModeChanged();
+	void alarmStateChanged();
+	void sensorStatusChanged();
+	void rtcFaultChanged();
 	void historyChanged();
 
     private slots:
@@ -113,6 +131,9 @@ class SensorBackend : public QObject {
 	double m_humidAlarmLimit{ 80.0 };
 	double m_luxAlarmLimit{ 20.0 };
 	int m_nightMode{ 0 };
+	int m_alarmState{ 0 };
+	int m_sensorStatus{ 0 };
+	bool m_rtcFault{ false };
 
 	QVariantList m_tempHistory;
 	QVariantList m_humidityHistory;

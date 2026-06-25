@@ -90,16 +90,17 @@ Window {
 
     function pad(n) { return n < 10 ? "0" + n : "" + n }
     readonly property int    _h24:    now.getHours()
-    readonly property string hh:      use24h ? pad(_h24) : ("" + (((_h24 % 12) === 0) ? 12 : (_h24 % 12)))
-    readonly property string mm:      pad(now.getMinutes())
-    readonly property string ss:      pad(now.getSeconds())
-    readonly property string ampm:    use24h ? "" : (_h24 >= 12 ? "PM" : "AM")
+    readonly property string hh:      sensorBackend.rtcFault ? "--" : (use24h ? pad(_h24) : ("" + (((_h24 % 12) === 0) ? 12 : (_h24 % 12))))
+    readonly property string mm:      sensorBackend.rtcFault ? "--" : pad(now.getMinutes())
+    readonly property string ss:      sensorBackend.rtcFault ? "--" : pad(now.getSeconds())
+    readonly property string ampm:    sensorBackend.rtcFault ? "" : (use24h ? "" : (_h24 >= 12 ? "PM" : "AM"))
     readonly property real   secFrac: (now.getSeconds() + now.getMilliseconds() / 1000) / 60
 
     readonly property var _days:   ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"]
     readonly property var _months: ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-    readonly property string dateLine: _days[now.getDay()] + "  ·  " + now.getDate()
-                                       + " " + _months[now.getMonth()] + " " + now.getFullYear()
+    readonly property string dateLine: sensorBackend.rtcFault ? "RTC FAULT"
+                                       : (_days[now.getDay()] + "  ·  " + now.getDate()
+                                          + " " + _months[now.getMonth()] + " " + now.getFullYear())
 
     // ===================== Responsive Scaling =====================
     readonly property real u: width / 1920
@@ -110,22 +111,22 @@ Window {
             "label": "Temp",
             "value": splitValueAndUnit(sensorBackend.temperature, "°C").value,
             "unit": "°C",
-            "alert": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit,
+            "alert": (sensorBackend.alarmState & 1) !== 0,
             "alertColor": "#EF4444",
             "accent": "#EF4444",
-            "labelColor": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit ? "#EF4444" : (isDark ? "#F87171" : "#F97316"),
-            "valueColor": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit ? "#EF4444" : root.textMainColor,
+            "labelColor": (sensorBackend.alarmState & 1) !== 0 ? "#EF4444" : (isDark ? "#F87171" : "#F97316"),
+            "valueColor": (sensorBackend.alarmState & 1) !== 0 ? "#EF4444" : root.textMainColor,
             "history": sensorBackend.tempHistory
         },
         {
             "label": "Humidity",
             "value": splitValueAndUnit(sensorBackend.humidity, "%").value,
             "unit": "%",
-            "alert": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit,
+            "alert": (sensorBackend.alarmState & 2) !== 0,
             "alertColor": "#3B82F6",
             "accent": "#3B82F6",
-            "labelColor": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit ? "#3B82F6" : (isDark ? "#60A5FA" : "#3B82F6"),
-            "valueColor": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit ? "#3B82F6" : root.textMainColor,
+            "labelColor": (sensorBackend.alarmState & 2) !== 0 ? "#3B82F6" : (isDark ? "#60A5FA" : "#3B82F6"),
+            "valueColor": (sensorBackend.alarmState & 2) !== 0 ? "#3B82F6" : root.textMainColor,
             "history": sensorBackend.humidityHistory
         },
         {
@@ -177,7 +178,7 @@ Window {
 
                 // Seconds Ring on Right
                 Item {
-                    visible: root.showSeconds
+                    visible: root.showSeconds && !sensorBackend.rtcFault
                     Layout.preferredWidth:  72 * u
                     Layout.preferredHeight: 72 * u
                     Layout.alignment: Qt.AlignVCenter
