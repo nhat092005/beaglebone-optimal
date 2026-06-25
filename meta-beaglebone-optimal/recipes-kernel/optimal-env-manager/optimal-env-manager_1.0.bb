@@ -17,5 +17,4 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-# Automatically load the driver on boot
-KERNEL_MODULE_AUTOLOAD += "optimal_env_manager"
+COMPATIBLE_MACHINE = "beaglebone-black-optimal-.*"

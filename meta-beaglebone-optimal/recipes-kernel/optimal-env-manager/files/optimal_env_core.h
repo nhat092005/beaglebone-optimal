@@ -5,9 +5,8 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
 #include <linux/hwmon.h>
-#include <linux/iio/consumer.h>
+#include <linux/leds.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
@@ -58,14 +57,13 @@ struct optimal_env_priv {
 	int humid_alarm_limit;
 	int lux_alarm_limit;
 
-	/* GPIO LEDs */
-	struct gpio_desc *leds[MAX_LEDS];
-	int led_count;
+	/* LED class devices (alarm indicators) */
+	struct led_classdev *alarm_leds[MAX_LEDS];
 
 	/* Devices / Resources */
 	struct i2c_client *sht3x_client;
+	struct i2c_client *bh1750_client;
 	struct device *hwmon_dev;
-	struct iio_channel *lux_chan;
 	struct backlight_device *bd;
 
 	/* Kthread Monitoring */
@@ -93,7 +91,8 @@ void optimal_env_chardev_remove(struct optimal_env_priv *priv);
 
 int optimal_env_sensors_init(struct optimal_env_priv *priv);
 void optimal_env_sensors_cleanup(struct optimal_env_priv *priv);
-int sht3x_read_temp_humid(struct i2c_client *client, int *temp, int *humid);
+int optimal_env_sensors_measure(struct optimal_env_priv *priv, int *temp,
+				int *humid, int *lux);
 
 extern const struct hwmon_chip_info optimal_hwmon_chip_info;
 

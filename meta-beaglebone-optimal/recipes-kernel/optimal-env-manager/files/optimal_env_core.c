@@ -27,13 +27,11 @@ static int optimal_env_thread(void *data)
 {
 	struct optimal_env_priv *priv = (struct optimal_env_priv *)data;
 	int temp = 0, humid = 0, lux = 0;
-	int ret;
-	int bh1750_lux = 0;
+	int fault_status;
 	u64 now_ms;
 	struct timespec64 ts;
-	int i;
 	int temp_alarm = 0, humid_alarm = 0, alarm, night;
-	int fault_status = 0;
+	int prev_alarm = -1, prev_status = -1;
 	unsigned long next_sensor_read = jiffies;
 
 	while (!kthread_should_stop()) {
@@ -42,85 +40,35 @@ static int optimal_env_thread(void *data)
 			priv->trigger_measure = false;
 			next_sensor_read = jiffies + HZ;
 
-			temp = 0;
-			humid = 0;
-			fault_status = 0;
-
-			if (priv->sht3x_client) {
-				int t_milli = 0, h_milli = 0;
-				ret = sht3x_read_temp_humid(priv->sht3x_client,
-							    &t_milli, &h_milli);
-				if (ret < 0) {
-					fault_status |= 1;
-				} else {
-					temp = t_milli;
-					humid = h_milli;
-				}
-			} else {
-				fault_status |= 1;
-			}
-
-			lux = 0;
-			if (priv->lux_chan) {
-				ret = iio_read_channel_raw(priv->lux_chan,
-							   &bh1750_lux);
-				if (ret < 0) {
-					fault_status |= 2;
-				} else {
-					lux = bh1750_lux;
-				}
-			} else {
-				fault_status |= 2;
-			}
+			fault_status = optimal_env_sensors_measure(priv, &temp,
+								   &humid, &lux);
 
 			ktime_get_real_ts64(&ts);
 			now_ms = (u64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 
-			if (fault_status == 0) {
+			if (fault_status == 0)
 				push_record(priv, now_ms, temp, humid, lux);
-			}
 
 			spin_lock(&priv->state_lock);
 
 			temp_alarm = 0;
 			humid_alarm = 0;
 			if (fault_status == 0) {
-				if (temp >= priv->temp_alarm_limit * 1000) {
+				if (temp >= priv->temp_alarm_limit * 1000)
 					temp_alarm = 1;
-				}
-				if (humid >= priv->humid_alarm_limit * 1000) {
+				if (humid >= priv->humid_alarm_limit * 1000)
 					humid_alarm = 1;
-				}
 			}
 
-			alarm = temp_alarm || humid_alarm;
+			alarm = (temp_alarm ? 1 : 0) | (humid_alarm ? 2 : 0);
 
 			night = priv->night_mode;
-			if (fault_status == 0) {
-				if (lux < priv->lux_alarm_limit) {
-					night = 1;
-				} else {
-					night = 0;
-				}
-			}
+			if (fault_status == 0)
+				night = (lux < priv->lux_alarm_limit) ? 1 : 0;
 
-			if (alarm != priv->alarm_state) {
-				priv->alarm_state = alarm;
-				sysfs_notify(&priv->optimal_device->kobj, NULL,
-					     "alarm_state");
-			}
-
-			if (night != priv->night_mode) {
-				priv->night_mode = night;
-				sysfs_notify(&priv->optimal_device->kobj, NULL,
-					     "night_mode");
-			}
-
-			if (fault_status != priv->sensor_status) {
-				priv->sensor_status = fault_status;
-				sysfs_notify(&priv->optimal_device->kobj, NULL,
-					     "sensor_status");
-			}
+			priv->alarm_state = alarm;
+			priv->night_mode = night;
+			priv->sensor_status = fault_status;
 
 			spin_unlock(&priv->state_lock);
 
@@ -133,38 +81,53 @@ static int optimal_env_thread(void *data)
 				priv->bd->props.brightness = brightness;
 				backlight_update_status(priv->bd);
 			}
+
+			if (alarm != prev_alarm || fault_status != prev_status) {
+				unsigned long on_ms, off_ms;
+
+				if (alarm) {
+					on_ms = 50; off_ms = 50;
+					if (temp_alarm)
+						led_blink_set(priv->alarm_leds[0],
+							      &on_ms, &off_ms);
+					else
+						led_set_brightness(
+							priv->alarm_leds[0],
+							LED_OFF);
+					on_ms = 50; off_ms = 50;
+					if (humid_alarm)
+						led_blink_set(priv->alarm_leds[1],
+							      &on_ms, &off_ms);
+					else
+						led_set_brightness(
+							priv->alarm_leds[1],
+							LED_OFF);
+				} else if (fault_status != 0) {
+					on_ms = 500; off_ms = 500;
+					led_blink_set(priv->alarm_leds[0],
+						      &on_ms, &off_ms);
+					led_blink_set(priv->alarm_leds[1],
+						      &on_ms, &off_ms);
+				} else {
+					led_set_brightness(priv->alarm_leds[0],
+							   LED_OFF);
+					led_set_brightness(priv->alarm_leds[1],
+							   LED_OFF);
+				}
+
+				prev_alarm = alarm;
+				prev_status = fault_status;
+			}
 		}
 
-		if (priv->alarm_state) {
-			if (temp_alarm)
-				gpiod_set_value(priv->leds[0], 1);
-			if (humid_alarm)
-				gpiod_set_value(priv->leds[1], 1);
-			msleep(50);
-			if (temp_alarm)
-				gpiod_set_value(priv->leds[0], 0);
-			if (humid_alarm)
-				gpiod_set_value(priv->leds[1], 0);
-			msleep(50);
-		} else if (priv->sensor_status != 0) {
-			static int toggle = 0;
-			gpiod_set_value(priv->leds[0], toggle);
-			gpiod_set_value(priv->leds[1], !toggle);
-			toggle = !toggle;
-			msleep(500);
-		} else {
-			gpiod_set_value(priv->leds[0], 0);
-			gpiod_set_value(priv->leds[1], 0);
-			wait_event_interruptible_timeout(
-				priv->measure_wait,
-				priv->trigger_measure || kthread_should_stop(),
-				HZ);
-		}
+		wait_event_interruptible_timeout(
+			priv->measure_wait,
+			priv->trigger_measure || kthread_should_stop(),
+			HZ);
 	}
 
-	for (i = 0; i < priv->led_count; i++) {
-		gpiod_set_value(priv->leds[i], 0);
-	}
+	led_set_brightness(priv->alarm_leds[0], LED_OFF);
+	led_set_brightness(priv->alarm_leds[1], LED_OFF);
 	return 0;
 }
 
@@ -174,7 +137,6 @@ static int optimal_env_probe(struct platform_device *pdev)
 	struct optimal_env_priv *priv;
 	struct backlight_properties props;
 	int ret;
-	int i;
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
@@ -191,24 +153,18 @@ static int optimal_env_probe(struct platform_device *pdev)
 	priv->humid_alarm_limit = 80;
 	priv->lux_alarm_limit = 20;
 
-	priv->led_count = gpiod_count(dev, "status");
-	if (priv->led_count < 0) {
-		dev_err(dev, "Failed to get LED count\n");
-		return priv->led_count;
+	priv->alarm_leds[0] = devm_led_get(dev, "alarm0");
+	if (IS_ERR(priv->alarm_leds[0])) {
+		dev_err(dev, "Failed to get alarm0 LED\n");
+		return PTR_ERR(priv->alarm_leds[0]);
 	}
-	if (priv->led_count > MAX_LEDS)
-		priv->led_count = MAX_LEDS;
-
-	for (i = 0; i < priv->led_count; i++) {
-		priv->leds[i] =
-			devm_gpiod_get_index(dev, "status", i, GPIOD_OUT_LOW);
-		if (IS_ERR(priv->leds[i])) {
-			dev_err(dev, "Failed to get LED %d\n", i);
-			return PTR_ERR(priv->leds[i]);
-		}
+	priv->alarm_leds[1] = devm_led_get(dev, "alarm1");
+	if (IS_ERR(priv->alarm_leds[1])) {
+		dev_err(dev, "Failed to get alarm1 LED\n");
+		return PTR_ERR(priv->alarm_leds[1]);
 	}
 
-	/* Initialize Sensors (SHT3x and BH1750 IIO) */
+	/* Initialize Sensors (SHT3x and BH1750 via raw I2C) */
 	ret = optimal_env_sensors_init(priv);
 	if (ret < 0) {
 		return ret;
@@ -262,20 +218,18 @@ err_sensors_cleanup:
 static int optimal_env_remove(struct platform_device *pdev)
 {
 	struct optimal_env_priv *priv = platform_get_drvdata(pdev);
-	int i;
 
 	if (priv->monitor_task) {
 		kthread_stop(priv->monitor_task);
 		priv->monitor_task = NULL;
 	}
 
+	led_set_brightness(priv->alarm_leds[0], LED_OFF);
+	led_set_brightness(priv->alarm_leds[1], LED_OFF);
+
 	optimal_env_sysfs_remove(priv);
 	optimal_env_chardev_remove(priv);
 	optimal_env_sensors_cleanup(priv);
-
-	for (i = 0; i < priv->led_count; i++) {
-		gpiod_set_value(priv->leds[i], 0);
-	}
 
 	dev_info(&pdev->dev,
 		 "Optimal Environment Manager removed successfully\n");
