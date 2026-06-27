@@ -27,3 +27,6 @@ AGENTS.md
 
 # User-specific files
 .mnhat
+
+# BeagleBone optimal build files
+qt-dashboard-app/build/**

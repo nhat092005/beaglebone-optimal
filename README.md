@@ -216,7 +216,7 @@ Detailed design rules and guides are located in the `docs/` directory:
 
 > Real-time boot log showing the fast-boot optimization on the BeagleBone Black.
 
-![BeagleBone Black Boot Log](assets/bbb-log.gif)
+![BeagleBone Black Boot Log](assets/02-bbb-log.gif)
 
 #### Qt Dashboard
 
