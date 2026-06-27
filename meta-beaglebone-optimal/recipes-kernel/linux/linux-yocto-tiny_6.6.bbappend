@@ -1,6 +1,8 @@
 FILESEXTRAPATHS:prepend:beaglebone-black-optimal-tiny := "${THISDIR}/files-tiny:"
 FILESEXTRAPATHS:prepend:beaglebone-black-optimal-qt-dashboard := "${THISDIR}/files-qt-dashboard:"
 
+DEPENDS += "lz4-native"
+
 inherit linux-yocto-tiny-feature-dts
 
 LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"

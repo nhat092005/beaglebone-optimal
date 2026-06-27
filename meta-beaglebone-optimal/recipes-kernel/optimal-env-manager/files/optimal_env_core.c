@@ -23,6 +23,23 @@ static const struct backlight_ops optimal_bl_ops = {
 	.update_status = optimal_bl_update_status,
 };
 
+static int optimal_env_get_alarm_leds(struct device *dev,
+				      struct optimal_env_priv *priv)
+{
+	int i;
+
+	for (i = 0; i < MAX_LEDS; i++) {
+		priv->alarm_leds[i] = devm_of_led_get(dev, i);
+		if (IS_ERR(priv->alarm_leds[i])) {
+			dev_err(dev, "Failed to get alarm LED at index %d (err=%ld)\n",
+				i, PTR_ERR(priv->alarm_leds[i]));
+			return PTR_ERR(priv->alarm_leds[i]);
+		}
+	}
+
+	return 0;
+}
+
 static int optimal_env_thread(void *data)
 {
 	struct optimal_env_priv *priv = (struct optimal_env_priv *)data;
@@ -153,16 +170,9 @@ static int optimal_env_probe(struct platform_device *pdev)
 	priv->humid_alarm_limit = 80;
 	priv->lux_alarm_limit = 20;
 
-	priv->alarm_leds[0] = devm_led_get(dev, "alarm0");
-	if (IS_ERR(priv->alarm_leds[0])) {
-		dev_err(dev, "Failed to get alarm0 LED\n");
-		return PTR_ERR(priv->alarm_leds[0]);
-	}
-	priv->alarm_leds[1] = devm_led_get(dev, "alarm1");
-	if (IS_ERR(priv->alarm_leds[1])) {
-		dev_err(dev, "Failed to get alarm1 LED\n");
-		return PTR_ERR(priv->alarm_leds[1]);
-	}
+	ret = optimal_env_get_alarm_leds(dev, priv);
+	if (ret < 0)
+		return ret;
 
 	/* Initialize Sensors (SHT3x and BH1750 via raw I2C) */
 	ret = optimal_env_sensors_init(priv);
