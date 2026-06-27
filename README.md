@@ -220,6 +220,13 @@ Detailed design rules and guides are located in the `docs/` directory:
 
 #### Qt Dashboard
 
+> Qt UI
+
+<p align="center">
+  <img src="assets/03-qt-link.png" alt="PCB Front" width="48%">
+  <img src="assets/03-qt-dark.png" alt="PCB Back" width="48%">
+</p>
+
 > The responsive Qt6 kiosk dashboard application running over HDMI.
 
 ![Qt Dashboard](assets/qt.gif)
