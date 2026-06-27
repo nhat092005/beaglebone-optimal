@@ -240,54 +240,6 @@ void SensorBackend::updateSensors()
 				emit luxAlarmLimitChanged();
 			}
 		}
-	} else {
-		// Fallback PC simulation
-		static double t = 30.0;
-		static double h = 60.0;
-		static double l = 100.0;
-
-		t += ((double)std::rand() / RAND_MAX - 0.5) * 1.5;
-		h += ((double)std::rand() / RAND_MAX - 0.5) * 2.0;
-		l += ((double)std::rand() / RAND_MAX - 0.5) * 10.0;
-		if (l < 0)
-			l = 0;
-
-		m_temperature =
-			QString::number(t, 'f', 1) + QStringLiteral(" °C");
-		m_humidity = QString::number(h, 'f', 1) + QStringLiteral("%");
-		m_light = QString::number(static_cast<int>(l)) +
-			  QStringLiteral(" lx");
-
-		emit temperatureChanged();
-		emit humidityChanged();
-		emit lightChanged();
-
-		m_tempAlarmLimit = 45.0;
-		m_humidAlarmLimit = 80.0;
-		m_luxAlarmLimit = 20.0;
-
-		emit tempAlarmLimitChanged();
-		emit humidAlarmLimitChanged();
-		emit luxAlarmLimitChanged();
-
-		int nm = (l < m_luxAlarmLimit) ? 1 : 0;
-		if (nm != m_nightMode) {
-			m_nightMode = nm;
-			emit nightModeChanged();
-		}
-
-		m_tempHistory.append(t);
-		m_humidityHistory.append(h);
-		m_lightHistory.append(l);
-
-		if (m_tempHistory.size() > 10)
-			m_tempHistory.removeFirst();
-		if (m_humidityHistory.size() > 10)
-			m_humidityHistory.removeFirst();
-		if (m_lightHistory.size() > 10)
-			m_lightHistory.removeFirst();
-
-		emit historyChanged();
 	}
 }
 

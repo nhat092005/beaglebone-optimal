@@ -34,7 +34,12 @@ int main(int argc, char *argv[])
 		&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
 		[]() { QCoreApplication::exit(EXIT_FAILURE); },
 		Qt::QueuedConnection);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 	engine.loadFromModule("QtDashboard", "Main");
+#else
+	engine.load(QUrl(QStringLiteral("qrc:/QtDashboard/qml/Main.qml")));
+#endif
 
 	return QGuiApplication::exec();
 }
