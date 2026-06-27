@@ -22,6 +22,7 @@ python __anonymous() {
         feature_dir = d.getVar(prefix + "_DIR")
         dts_file = d.getVar(prefix + "_DTS")
         cfg_file = d.getVar(prefix + "_CFG")
+        scc_file = d.getVar(prefix + "_SCC")
 
         if enabled not in ("0", "1"):
             bb.fatal("%s_ENABLED must be \"0\" or \"1\"" % prefix)
@@ -31,6 +32,8 @@ python __anonymous() {
             bb.fatal("%s_DTS must be set" % prefix)
         if cfg_file is None:
             bb.fatal("%s_CFG must be set explicitly, even if empty" % prefix)
+        if scc_file is None:
+            bb.fatal("%s_SCC must be set explicitly, even if empty" % prefix)
 
         dts_dir = os.path.join(feature_root, feature_dir, "dts")
         cfg_dir = os.path.join(feature_root, feature_dir, "cfg")
@@ -44,6 +47,11 @@ python __anonymous() {
             if not os.path.exists(cfg_path):
                 bb.fatal("Missing declared CFG file: %s" % cfg_path)
 
+        if scc_file:
+            scc_path = os.path.join(cfg_dir, scc_file)
+            if not os.path.exists(scc_path):
+                bb.fatal("Missing declared SCC file: %s" % scc_path)
+
         filespath_entries.extend([dts_dir, cfg_dir])
 
         if enabled == "1":
@@ -51,6 +59,9 @@ python __anonymous() {
             enabled_dts_files.append(dts_file)
             if cfg_file:
                 src_uri_entries.append(" file://%s" % cfg_file)
+            if scc_file:
+                src_uri_entries.append(" file://%s" % scc_file)
+                d.appendVar("KERNEL_FEATURES", " %s" % scc_file)
 
     if filespath_entries:
         d.prependVar("FILESEXTRAPATHS", ":".join(filespath_entries) + ":")
