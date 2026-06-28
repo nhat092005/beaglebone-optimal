@@ -88,6 +88,7 @@ SRC_URI:append:beaglebone-black-optimal-qt-dashboard = " \
 	file://0004-drm-tilcdc-create-bridge-connector-for-external-hdmi.patch \
 	file://0005-drm-bridge-it66121-debounce-hpd-disconnect-glitch.patch \
 	file://0005-mm-memfd-silence-memfd_create-warning.patch \
+	file://0006-drm-bridge-it66121-use-dev_err_probe-on-supply-defer.patch \
 	file://am335x-boneblack-optimal-qt-dashboard.dts \
 	file://beaglebone-qt-dashboard-hdmi.cfg \
 	file://beaglebone-qt-dashboard-hdmi.scc \
