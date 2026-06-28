@@ -35,6 +35,16 @@ int main(void)
 	}
 	close(fd);
 
+	/* DS3231 with a dead/absent backup battery reports an invalid year after
+	 * power loss (OSF). The kernel ds1307 driver normally returns -EINVAL on
+	 * RTC_RD_TIME above; guard explicitly so a bogus-but-parseable value never
+	 * sets a wrong system clock. */
+	if (rt.tm_year + 1900 < 2024) {
+		fprintf(stderr, "rtcsync: RTC year %d invalid, not setting clock\n",
+			rt.tm_year + 1900);
+		return 1;
+	}
+
 	/* RTC stores UTC; timegm converts UTC struct tm → time_t without TZ */
 	struct tm tm = {
 		.tm_sec = rt.tm_sec,
