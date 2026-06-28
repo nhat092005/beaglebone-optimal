@@ -17,9 +17,6 @@ qt_add_executable(qt-dashboard
     src/SensorBackend.cpp
 )
 
-set_source_files_properties(fonts/DejaVuSans.ttf PROPERTIES
-    QT_RESOURCE_ALIAS "DejaVuSans.ttf"
-)
 set_source_files_properties(fonts/DejaVuSans-Bold.ttf PROPERTIES
     QT_RESOURCE_ALIAS "DejaVuSans-Bold.ttf"
 )
@@ -27,7 +24,6 @@ set_source_files_properties(fonts/DejaVuSans-Bold.ttf PROPERTIES
 qt_add_resources(qt-dashboard dashboard_fonts
     PREFIX "/fonts"
     FILES
-        fonts/DejaVuSans.ttf
         fonts/DejaVuSans-Bold.ttf
 )
 
