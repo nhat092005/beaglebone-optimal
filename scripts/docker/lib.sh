@@ -66,7 +66,7 @@ prepare_storage_root() {
 }
 
 ensure_image() {
-    local image_ref="${DOCKER_IMAGE}:${DOCKER_TAG}"
+    local image_ref="${DOCKER_IMAGE:?DOCKER_IMAGE must not be empty}:${DOCKER_TAG:?DOCKER_TAG must not be empty}"
     if ! docker image inspect "$image_ref" > /dev/null 2>&1; then
         note "builder image missing -> docker compose build builder"
         docker compose build builder
