@@ -10,17 +10,13 @@ int main(int argc, char *argv[])
 {
 	QGuiApplication app(argc, argv);
 
-	const int regularFontId =
-		QFontDatabase::addApplicationFont(":/fonts/DejaVuSans.ttf");
-	const int boldFontId = QFontDatabase::addApplicationFont(
-		":/fonts/DejaVuSans-Bold.ttf");
-
-	if (regularFontId == -1 || boldFontId == -1) {
-		qWarning() << "Failed to load embedded dashboard fonts"
-			   << regularFontId << boldFontId;
+	const int boldFontId =
+		QFontDatabase::addApplicationFont(":/fonts/DejaVuSans-Bold.ttf");
+	if (boldFontId == -1) {
+		qWarning() << "Failed to load embedded bold font";
 	} else {
 		const QStringList families =
-			QFontDatabase::applicationFontFamilies(regularFontId);
+			QFontDatabase::applicationFontFamilies(boldFontId);
 		if (!families.isEmpty())
 			app.setFont(QFont(families.constFirst()));
 	}

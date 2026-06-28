@@ -15,8 +15,7 @@ This repository provides a reproducible, Docker-isolated workspace for building 
   - Keeps the git repository clean by storing all build caches (`downloads`, `sstate-cache`), workspace files, and build directories outside the source tree via a host-side `PROJECT_STORAGE_ROOT`.
   - Integrates automated quality check gates mapping `clang-format`, `shfmt`, and `shellcheck` static code analysis directly to standard `make format` and `make check` commands.
 - **Optimized Fast-Boot HDMI Paths:**
-  - Reaches kernel space boot to user space startup in **only 1.5 seconds**.
-  - Launches the fullscreen Qt dashboard application over HDMI output in **4.0 seconds** total (excluding the 3s U-Boot delay).
+  - Reaches kernel space boot to user space startup in **only 1.3 seconds**.
   - Utilizes a kernel driver patch to debounce transient HDMI Hotplug (HPD) signal drops on the IT66122 transmitter.
   - Automatically loads the environment manager kernel module on boot and runs the kiosk application directly via BusyBox init respawn (bypassing systemd, Wayland, or X11 to save boot overhead).
 - **Multi-Target Boot & Distro Catalog:**
