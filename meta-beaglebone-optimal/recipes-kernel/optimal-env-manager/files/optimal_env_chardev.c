@@ -63,7 +63,7 @@ static long optimal_env_ioctl(struct file *file, unsigned int cmd,
 		break;
 
 	case OP_ENV_IOCTL_TRIGGER_MEASURE:
-		priv->trigger_measure = true;
+		WRITE_ONCE(priv->trigger_measure, true);
 		wake_up_interruptible(&priv->measure_wait);
 		break;
 

@@ -83,8 +83,8 @@ static int bh1750_read_result(struct i2c_client *client, int *lux)
 }
 
 /*
- * Triggers both sensors, waits 120ms for both to complete (SHT3x needs 20ms,
- * BH1750 needs 120ms), then reads both results.
+ * Triggers both sensors, waits 180ms for both to complete (SHT3x needs ~15ms,
+ * BH1750 needs up to 180ms (datasheet max)), then reads both results.
  * Returns fault bitmask: bit 0 = SHT3x fault, bit 1 = BH1750 fault.
  * Output values are 0 for any faulted sensor.
  */
@@ -105,7 +105,7 @@ int optimal_env_sensors_measure(struct optimal_env_priv *priv, int *temp,
 	else
 		fault |= 2;
 
-	msleep(120);
+	msleep(180);
 
 	if (sht_ok && sht3x_read_result(priv->sht3x_client, &t, &h) < 0)
 		fault |= 1;

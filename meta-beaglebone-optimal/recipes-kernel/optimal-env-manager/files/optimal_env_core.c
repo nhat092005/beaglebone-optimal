@@ -53,8 +53,8 @@ static int optimal_env_thread(void *data)
 
 	while (!kthread_should_stop()) {
 		if (time_is_before_eq_jiffies(next_sensor_read) ||
-		    priv->trigger_measure) {
-			priv->trigger_measure = false;
+		    READ_ONCE(priv->trigger_measure)) {
+			WRITE_ONCE(priv->trigger_measure, false);
 			next_sensor_read = jiffies + HZ;
 
 			fault_status = optimal_env_sensors_measure(priv, &temp,
@@ -139,7 +139,7 @@ static int optimal_env_thread(void *data)
 
 		wait_event_interruptible_timeout(
 			priv->measure_wait,
-			priv->trigger_measure || kthread_should_stop(),
+			READ_ONCE(priv->trigger_measure) || kthread_should_stop(),
 			HZ);
 	}
 
@@ -233,9 +233,6 @@ static int optimal_env_remove(struct platform_device *pdev)
 		kthread_stop(priv->monitor_task);
 		priv->monitor_task = NULL;
 	}
-
-	led_set_brightness(priv->alarm_leds[0], LED_OFF);
-	led_set_brightness(priv->alarm_leds[1], LED_OFF);
 
 	optimal_env_sysfs_remove(priv);
 	optimal_env_chardev_remove(priv);
