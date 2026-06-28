@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Fri, 27 Jun 2026 00:00:00 +0700
+Subject: [PATCH] configs: am335x_evm: drop finduuid from extra env settings
+
+finduuid runs "part uuid mmc 0:2 uuid" to resolve a GPT partition UUID
+for root= on the kernel cmdline.  The Optimal Tiny boot contract uses
+extlinux.conf for all kernel arguments (root= included), so the U-Boot
+env variable is never consumed.  Remove it to reduce unused env surface.
+
+DTB selection is intentionally left to the extlinux.conf fdt directive
+instead of the findfdt env; sysboot ignores ${fdtfile} when the config
+file carries an explicit fdt line.
+
+Upstream-Status: Inappropriate [project-specific BeagleBone Optimal boot contract]
+
+--- a/include/configs/am335x_evm.h
++++ b/include/configs/am335x_evm.h
+@@ -81,7 +81,6 @@
+ #define CFG_EXTRA_ENV_SETTINGS \
+ 	DEFAULT_LINUX_BOOT_ENV \
+ 	"fdtfile=undefined\0" \
+-	"finduuid=part uuid mmc 0:2 uuid\0" \
+ 	"console=ttyO0,115200n8\0" \
+ 	"partitions=" \
+ 		"uuid_disk=${uuid_gpt_disk};" \

@@ -1,7 +1,15 @@
 #!/bin/sh
 
-# Wait for framebuffer device before launching
-until [ -c /dev/fb0 ]; do sleep 0.1; done
+# Wait up to 30 seconds for framebuffer device before launching
+i=0
+until [ -c /dev/fb0 ]; do
+    i=$((i + 1))
+    if [ "$i" -ge 300 ]; then
+        echo "qt-dashboard: /dev/fb0 not ready after 30s" >&2
+        exit 1
+    fi
+    sleep 0.1
+done
 
 # Runtime display policy lives here, not in the app source tree.
 export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-linuxfb:fb=/dev/fb0}"

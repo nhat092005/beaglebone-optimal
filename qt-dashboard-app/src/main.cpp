@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
 		&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
 		[]() { QCoreApplication::exit(EXIT_FAILURE); },
 		Qt::QueuedConnection);
-	engine.loadFromModule("QtDashboard", "Main");
+
+	engine.load(QUrl(QStringLiteral("qrc:/QtDashboard/qml/Main.qml")));
 
 	return QGuiApplication::exec();
 }

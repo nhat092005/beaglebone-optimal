@@ -494,6 +494,65 @@ Operator phải quan sát thêm:
 Nếu product image không có `/dev/fb0`, coi đó là display gap của product path
 và pause trước khi nới scope sang kernel hoặc device tree.
 
+## RTC DS3231: chẩn đoán và khôi phục
+
+Mục này áp dụng cho product image `beaglebone-black-optimal-qt-dashboard`.
+Theo contract hiện tại, feature `RTC_DS3231` chỉ được bật cho machine product
+này, không bật mặc định cho baseline hay tiny image.
+
+Triệu chứng thường gặp trên board:
+
+- dashboard hiện `RTC FAULT`
+- đồng hồ hiện `--:--`
+- `date` và `hwclock` cùng trả về năm cũ như `2000`
+
+Lệnh chẩn đoán tối thiểu:
+
+```bash
+dmesg | grep -Ei 'rtc|ds3231|ds1307|i2c'
+find /sys/firmware/devicetree/base -name 'rtc@68' 2>/dev/null
+ls -l /dev/rtc*
+date
+hwclock -f /dev/rtc0 -r
+```
+
+Cách đọc kết quả:
+
+- nếu `find ... rtc@68` không ra node nào, board không boot product image có
+  `RTC_DS3231` hoặc device tree chưa mang feature RTC
+- nếu `dmesg` không có dòng kiểu `rtc-ds1307 2-0068: registered as rtc0`, kernel
+  chưa bind được DS3231
+- nếu có `/dev/rtc0` và `hwclock -f /dev/rtc0 -r` đọc được nhưng năm nhỏ hơn
+  `2024`, DS3231 đang hoạt động nhưng giữ thời gian rác; dashboard sẽ tự coi đó
+  là fault
+- nếu thiếu `/dev/i2c/2`, không coi đó là nguyên nhân gốc. Product image hiện
+  vẫn có thể bind DS3231 qua kernel mà không expose thiết bị scan I2C cho
+  userspace
+
+Khôi phục khi RTC đang giữ thời gian sai:
+
+```bash
+date -s '2026-06-28 14:00:00'
+hwclock -f /dev/rtc0 -w
+hwclock -f /dev/rtc0 -r
+reboot
+date
+```
+
+Ghi chú operator:
+
+- `date -s ...` sửa system clock hiện tại
+- `hwclock -f /dev/rtc0 -w` ghi system clock xuống DS3231
+- binary `/sbin/rtcsync` chỉ đồng bộ theo chiều `RTC -> system clock` lúc boot;
+  nó không tự sửa RTC nếu chip đang giữ giờ sai
+
+Nếu đã `hwclock -w` thành công nhưng cắt nguồn rồi board vẫn quay về năm cũ,
+hãy nghi phần cứng backup của RTC:
+
+- pin coin cell hết hoặc chưa gắn
+- đường `VBAT` không có nguồn giữ
+- module DS3231 lỗi phần cứng
+
 ### Thông điệp boot đã biết
 
 **"Kernel memory protection not selected by kernel config."**

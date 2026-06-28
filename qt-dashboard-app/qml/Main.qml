@@ -4,496 +4,456 @@ import QtQuick.Layouts
 
 Window {
     id: root
-    width: 1920
-    height: 1080
+    visibility: Window.FullScreen
+    flags: Qt.FramelessWindowHint
+    width: Screen.width
+    height: Screen.height
     visible: true
     color: bgColor
-    title: "BeagleBone Optimal Dashboard"
+    title: "Environment Monitoring"
 
-    // ---------- Theme Configurations (Smooth transition) ----------
-    readonly property bool isDark: sensorBackend.nightMode === 1
-    readonly property color bgColor: isDark ? "#0F172A" : "#F8FAFC"
-    readonly property color cardBg: isDark ? "#1E293B" : "#FFFFFF"
-    readonly property color cardBorderColor: isDark ? "#334155" : "#E2E8F0"
-    readonly property color textMainColor: isDark ? "#F8FAFC" : "#0F172A"
-    readonly property color textMutedColor: isDark ? "#94A3B8" : "#475569"
+    // ---------- Theme (Editorial palette) ----------
+    readonly property bool  isDark: sensorBackend.nightMode === 1
+
+    readonly property color bgColor:   isDark ? "#16150F" : "#F3EFE6"   // warm paper / warm charcoal
+    readonly property color inkColor:  isDark ? "#F1EDE2" : "#191814"   // primary ink
+    readonly property color accent:    isDark ? "#F0563A" : "#DC4226"   // vermillion signature
+    readonly property color mutedColor:isDark ? "#857F6E" : "#A39C8C"   // labels / date
+    readonly property color hairColor: isDark ? "#34312A" : "#CFC8B8"   // rules & dividers
+    readonly property color unitColor: isDark ? "#7C776A" : "#8C8678"   // units
+    readonly property color statColor: isDark ? "#9A9381" : "#7D7768"   // status line
 
     Behavior on color { ColorAnimation { duration: 400 } }
 
-    // ---------- Real Sensor Data Bindings ----------
-    property real temperature: parseNumber(sensorBackend.temperature)
-    property real humidity:    parseNumber(sensorBackend.humidity)
-    property real light:       parseNumber(sensorBackend.light)
+    // ---------- Fonts ----------
+    // A Helvetica-class grotesk carries the editorial look. Set this to
+    // "Helvetica Neue" / "Arial" / "Inter" if available on the BeagleBone;
+    // falls back to the app default (DejaVu Sans) otherwise.
+    readonly property string fontFamily: "Inter, Arial, Helvetica, DejaVu Sans, sans-serif"
 
-    // ---------- Clock Options ----------
-    property bool use24h:      true
-    property bool showSeconds:  true       // Toggle seconds progress circle
+    // ---------- Clock options ----------
+    property bool use24h: true
 
-    // ---------- Font Configurations ----------
-    // Note: Default app font is DejaVu Sans, initialized in main.cpp.
-    readonly property string fontFamily: "DejaVu Sans"
-
-    // Helper functions for parsing sensor strings from C++ backend
+    // ===================== Helpers (unchanged) =====================
     function parseNumber(str) {
         if (!str || str === "--") return 0.0;
         var num = parseFloat(str.replace(/[^0-9.-]/g, ""));
         return isNaN(num) ? 0.0 : num;
     }
 
-    // Helper to calculate clean tick intervals for charts
-    function getCleanTicks(minVal, maxVal) {
-        var range = maxVal - minVal;
-        if (range <= 0) range = 1.0;
-
-        // Subtract/add a margin to prevent points hugging the very top/bottom edges
-        var adjustedMin = minVal - range * 0.15;
-        var adjustedMax = maxVal + range * 0.15;
-        var adjRange = adjustedMax - adjustedMin;
-
-        var rawStep = adjRange / 3.0; // Target ~3 intervals
-        var magnitude = Math.pow(10, Math.floor(Math.log(rawStep) / Math.LN10));
-        if (isNaN(magnitude) || magnitude <= 0) magnitude = 1.0;
-        var normalized = rawStep / magnitude;
-
-        var step;
-        if (normalized < 1.5) step = 1 * magnitude;
-        else if (normalized < 3.0) step = 2 * magnitude;
-        else if (normalized < 7.0) step = 5 * magnitude;
-        else step = 10 * magnitude;
-
-        var tickMin = Math.floor(adjustedMin / step) * step;
-        var tickMax = Math.ceil(adjustedMax / step) * step;
-
-        var ticks = [];
-        // Prevent floating point rounding accumulation issues in loop
-        for (var v = tickMin; v <= tickMax + (step * 0.01); v += step) {
-            ticks.push(v);
-        }
-
-        return { "ticks": ticks, "min": tickMin, "max": tickMax };
-    }
-
+    // We split values like "30.4 °C" into value ("30.4") and unit ("°C")
+    // so we can style the number huge and the unit smaller.
     function splitValueAndUnit(str, defaultUnit) {
-        if (!str || str === "--") {
-            return { value: "--", unit: defaultUnit };
-        }
+        if (!str || str === "--") return { value: "--", unit: defaultUnit };
         var match = str.match(/^([0-9.-]+)\s*(.*)$/);
-        if (match) {
-            return { value: match[1], unit: match[2] };
-        }
+        if (match) return { value: match[1], unit: match[2] };
         return { value: str, unit: defaultUnit };
     }
 
-    // ===================== Clock Logic =====================
+    function pad(n) { return n < 10 ? "0" + n : "" + n }
+
+    // ===================== Clock (unchanged logic) =====================
     property var now: new Date()
     Timer { interval: 250; running: true; repeat: true; onTriggered: root.now = new Date() }
 
-    function pad(n) { return n < 10 ? "0" + n : "" + n }
-    readonly property int    _h24:    now.getHours()
-    readonly property string hh:      use24h ? pad(_h24) : ("" + (((_h24 % 12) === 0) ? 12 : (_h24 % 12)))
-    readonly property string mm:      pad(now.getMinutes())
-    readonly property string ss:      pad(now.getSeconds())
-    readonly property string ampm:    use24h ? "" : (_h24 >= 12 ? "PM" : "AM")
-    readonly property real   secFrac: (now.getSeconds() + now.getMilliseconds() / 1000) / 60
+    readonly property int    _h24: now.getHours()
+    readonly property string hh:   sensorBackend.rtcFault ? "--" : (use24h ? pad(_h24) : ("" + (((_h24 % 12) === 0) ? 12 : (_h24 % 12))))
+    readonly property string mm:   sensorBackend.rtcFault ? "--" : pad(now.getMinutes())
+    readonly property string ss:   sensorBackend.rtcFault ? "--" : pad(now.getSeconds())
+    readonly property string ampm: sensorBackend.rtcFault ? "" : (use24h ? "" : (_h24 >= 12 ? "PM" : "AM"))
+    readonly property bool clockFault: sensorBackend.rtcFault
 
     readonly property var _days:   ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"]
     readonly property var _months: ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-    readonly property string dateLine: _days[now.getDay()] + "  ·  " + now.getDate()
-                                       + " " + _months[now.getMonth()] + " " + now.getFullYear()
+    readonly property string dateLine: sensorBackend.rtcFault ? "RTC FAULT"
+        : (_days[now.getDay()] + "  ·  " + now.getDate() + " " + _months[now.getMonth()] + " " + now.getFullYear())
 
-    // ===================== Responsive Scaling =====================
-    readonly property real u: width / 1920
+    // ===================== Responsive scale =====================
+    readonly property real u: Math.min(width / 1920, height / 1080)
+    readonly property real heroClockSlotWidth: 920 * u
+    readonly property real heroClockSlotHeight: 340 * u
 
-    // ===================== Sensor Model (With Alerts and History) =====================
+    // ===================== Sensor model =====================
+    // Editorial principle: monochrome by default, vermillion ONLY on alarm.
     readonly property var sensors: [
         {
-            "label": "Temp",
+            "label": "TEMPERATURE",
             "value": splitValueAndUnit(sensorBackend.temperature, "°C").value,
             "unit": "°C",
-            "alert": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit,
-            "alertColor": "#EF4444",
-            "accent": "#EF4444",
-            "labelColor": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit ? "#EF4444" : (isDark ? "#F87171" : "#F97316"),
-            "valueColor": parseNumber(sensorBackend.temperature) >= sensorBackend.tempAlarmLimit ? "#EF4444" : root.textMainColor,
+            "alert": (sensorBackend.alarmState & 1) !== 0,
             "history": sensorBackend.tempHistory
         },
         {
-            "label": "Humidity",
+            "label": "HUMIDITY",
             "value": splitValueAndUnit(sensorBackend.humidity, "%").value,
-            "unit": "%",
-            "alert": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit,
-            "alertColor": "#3B82F6",
-            "accent": "#3B82F6",
-            "labelColor": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit ? "#3B82F6" : (isDark ? "#60A5FA" : "#3B82F6"),
-            "valueColor": parseNumber(sensorBackend.humidity) >= sensorBackend.humidAlarmLimit ? "#3B82F6" : root.textMainColor,
+            "unit": "%RH",
+            "alert": (sensorBackend.alarmState & 2) !== 0,
             "history": sensorBackend.humidityHistory
         },
         {
-            "label": "Light",
+            "label": "ILLUMINANCE",
             "value": splitValueAndUnit(sensorBackend.light, "lx").value,
             "unit": "lx",
             "alert": false,
-            "alertColor": "transparent",
-            "accent": "#EAB308",
-            "labelColor": isDark ? "#FDE047" : "#D97706",
-            "valueColor": root.textMainColor,
             "history": sensorBackend.lightHistory
         }
     ]
 
-    // ===================== Main Panel =====================
+    // ===================== Layout (Pure Anchors for Absolute Stability) =====================
     Item {
         id: mainContainer
-        anchors.fill: parent
-        anchors.leftMargin:   115 * u
-        anchors.rightMargin:  115 * u
-        anchors.topMargin:     76 * u
-        anchors.bottomMargin:  76 * u
+        x: 92 * u
+        y: 80 * u
+        width: root.width - (184 * u)
+        height: root.height - (160 * u)
 
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.leftMargin:   64 * u
-            anchors.rightMargin:  64 * u
-            anchors.topMargin:    32 * u
-            anchors.bottomMargin: 32 * u
+        // ---------- Top row: title (left) · date (right) ----------
+        RowLayout {
+            id: headerRow
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 30 * u
+
+            Text {
+                text: "ENVIRONMENT MONITORING"
+                color: root.inkColor
+                font.family: root.fontFamily
+                font.pixelSize: 15 * u
+                font.weight: Font.Bold
+                font.letterSpacing: 2.7 * u
+                Behavior on color { ColorAnimation { duration: 400 } }
+            }
+            Item { Layout.fillWidth: true }
+            Text {
+                text: root.dateLine
+                color: root.mutedColor
+                font.family: root.fontFamily
+                font.pixelSize: 15 * u
+                font.weight: Font.Bold
+                font.letterSpacing: 2.7 * u
+                Behavior on color { ColorAnimation { duration: 400 } }
+            }
+        }
+
+        // ---------- Thick rule ----------
+        Rectangle {
+            id: headerDivider
+            anchors.top: headerRow.bottom
+            anchors.topMargin: 20 * u
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 2 * u
+            color: root.inkColor
+            Behavior on color { ColorAnimation { duration: 400 } }
+        }
+
+        // ---------- Bottom: 3-column grid (Locked to bottom) ----------
+        RowLayout {
+            id: bottomGrid
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 320 * u
             spacing: 0
 
-            // ---------- Top Row: Date & Seconds ----------
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 0
-
-                // Date on Left
-                Text {
+            Repeater {
+                model: root.sensors
+                delegate: RowLayout {
+                    id: colWrap
+                    required property int index
+                    required property var modelData
                     Layout.fillWidth: true
-                    text: root.dateLine
-                    color: root.textMutedColor
-                    font.family: root.fontFamily
-                    font.pixelSize: 22 * u
-                    font.weight: Font.DemiBold
-                    font.letterSpacing: 4 * u
-                    Behavior on color { ColorAnimation { duration: 400 } }
-                }
+                    Layout.fillHeight: true
+                    spacing: 0
 
-                // Seconds Ring on Right
-                Item {
-                    visible: root.showSeconds
-                    Layout.preferredWidth:  72 * u
-                    Layout.preferredHeight: 72 * u
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Canvas {
-                        id: ring
-                        anchors.fill: parent
-                        property real frac: root.secFrac
-                        property bool darkTheme: root.isDark
-                        onFracChanged: requestPaint()
-                        onWidthChanged: requestPaint()
-                        onDarkThemeChanged: requestPaint()
-                        onPaint: {
-                            var ctx = getContext("2d")
-                            ctx.reset()
-                            var w = width
-                            var cx = w / 2, cy = w / 2
-                            var lw = w * 2.5 / 44
-                            var r  = w / 2 * (18 / 22) - lw / 2
-
-                            // Track
-                            ctx.beginPath()
-                            ctx.arc(cx, cy, r, 0, 2 * Math.PI)
-                            ctx.lineWidth = lw
-                            ctx.strokeStyle = darkTheme ? "#334155" : "#E2E8F0"
-                            ctx.stroke()
-
-                            // Progress arc (clockwise from top)
-                            ctx.beginPath()
-                            ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * frac)
-                            ctx.lineWidth = lw
-                            ctx.lineCap = "round"
-                            ctx.strokeStyle = "#3B82F6"
-                            ctx.stroke()
-                        }
+                    // Vertical hairline divider (not before first column)
+                    Rectangle {
+                        visible: colWrap.index !== 0
+                        Layout.fillHeight: true
+                        Layout.topMargin: 34 * u
+                        Layout.bottomMargin: 6 * u
+                        width: 1 * u
+                        color: root.hairColor
+                        Behavior on color { ColorAnimation { duration: 400 } }
                     }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.ss
-                        color: root.textMutedColor
-                        font.family: root.fontFamily
-                        font.pixelSize: 20 * u
-                        font.weight: Font.DemiBold
-                        Behavior on color { ColorAnimation { duration: 400 } }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.leftMargin:  colWrap.index === 0 ? 0 : 40 * u
+                        Layout.rightMargin: colWrap.index === root.sensors.length - 1 ? 0 : 40 * u
+                        Layout.topMargin: 34 * u
+                        spacing: 0
+
+                        // Column label
+                        Text {
+                            text: colWrap.modelData.label
+                            color: root.inkColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 14 * u
+                            font.weight: Font.Bold
+                            font.letterSpacing: 2.2 * u
+                            Behavior on color { ColorAnimation { duration: 400 } }
+                        }
+
+                        // Big number + unit container (using baseline anchoring for perfect alignment)
+                        Item {
+                            Layout.topMargin: 20 * u
+                            Layout.preferredHeight: 140 * u
+                            Layout.minimumHeight: 140 * u
+                            Layout.maximumHeight: 140 * u
+                            Layout.fillWidth: true
+                            height: 140 * u
+                            implicitHeight: 140 * u
+
+                            Text {
+                                id: valText
+                                text: colWrap.modelData.value
+                                color: colWrap.modelData.alert ? root.accent : root.inkColor
+                                font.family: root.fontFamily
+                                font.pixelSize: 118 * u
+                                font.weight: Font.Bold
+                                font.letterSpacing: -3.5 * u
+                                anchors.bottom: parent.bottom
+                                anchors.left: parent.left
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+
+                            Text {
+                                text: colWrap.modelData.unit
+                                color: root.unitColor
+                                font.family: root.fontFamily
+                                font.pixelSize: 34 * u
+                                font.weight: Font.Medium
+                                anchors.baseline: valText.baseline
+                                anchors.left: valText.right
+                                anchors.leftMargin: 8 * u
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                        }
+
+                        // Minimal sparkline (Always occupies 70px)
+                        Canvas {
+                            id: spark
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 70 * u
+                            Layout.minimumHeight: 70 * u
+                            Layout.maximumHeight: 70 * u
+                            Layout.topMargin: 14 * u
+                            height: 70 * u
+                            implicitHeight: 70 * u
+                            property var history: colWrap.modelData.history
+                            property bool alert: colWrap.modelData.alert
+                            property color lineColor: alert ? root.accent : root.inkColor
+                            onHistoryChanged: requestPaint()
+                            onLineColorChanged: requestPaint()
+                            onWidthChanged: requestPaint()
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.reset()
+                                if (!history || history.length < 2) return
+                                var w = width, h = height, pad = 7 * u
+                                var mn = history[0], mx = history[0]
+                                for (var i = 1; i < history.length; i++) {
+                                    if (history[i] < mn) mn = history[i]
+                                    if (history[i] > mx) mx = history[i]
+                                }
+                                var r = (mx - mn) || 1
+                                var stepX = w / (history.length - 1)
+                                ctx.strokeStyle = lineColor
+                                ctx.lineWidth = 2.5 * u
+                                ctx.lineCap = "round"
+                                ctx.lineJoin = "round"
+                                ctx.beginPath()
+                                for (var j = 0; j < history.length; j++) {
+                                    var x = j * stepX
+                                    var y = h - pad - ((history[j] - mn) / r) * (h - 2 * pad)
+                                    if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+                                }
+                                ctx.stroke()
+                            }
+                        }
+
+                        Item { Layout.fillHeight: true }
+
+                        // Status line
+                        RowLayout {
+                            visible: colWrap.modelData.label !== "ILLUMINANCE"
+                            Layout.topMargin: 14 * u
+                            spacing: 10 * u
+                            Rectangle {
+                                width: 8 * u; height: 8 * u; radius: 4 * u
+                                Layout.alignment: Qt.AlignVCenter
+                                color: colWrap.modelData.alert ? root.accent : root.statColor
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                            Text {
+                                text: {
+                                    if (colWrap.modelData.alert) {
+                                        if (colWrap.modelData.label === "TEMPERATURE") {
+                                            var diff = (parseNumber(sensorBackend.temperature) - sensorBackend.tempAlarmLimit);
+                                            return "ELEVATED · +" + diff.toFixed(1) + " OVER SET";
+                                        }
+                                        return "ALERT · OUT OF BAND";
+                                    }
+                                    return "NOMINAL · WITHIN BAND";
+                                }
+                                color: colWrap.modelData.alert ? root.accent : root.statColor
+                                font.family: root.fontFamily
+                                font.pixelSize: 14 * u
+                                font.weight: Font.Bold
+                                font.letterSpacing: 2.2 * u
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                        }
                     }
                 }
             }
+        }
 
-            // ---------- Middle Row: Clock Panel ----------
+        // ---------- Hero: clock (left) · seconds meta (right) (Anchored to remaining space) ----------
+        RowLayout {
+            id: clockArea
+            anchors.top: headerDivider.bottom
+            anchors.bottom: bottomGrid.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: 0
+
             Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.alignment: Qt.AlignVCenter
+                width: root.clockFault ? (598 * u) : normalClock.width
+                height: root.clockFault ? (176 * u) : normalClock.height
+                implicitWidth: width
+                implicitHeight: height
 
                 Row {
-                    anchors.centerIn: parent
-
+                    id: normalClock
+                    visible: !root.clockFault
+                    spacing: 0
                     Text {
                         text: root.hh
-                        color: root.textMainColor
+                        color: root.inkColor
                         font.family: root.fontFamily
-                        font.pixelSize: 250 * u
+                        font.pixelSize: 336 * u
                         font.weight: Font.Bold
-                        font.letterSpacing: -2 * u
+                        font.letterSpacing: -8 * u
+                        renderType: Text.NativeRendering
                         Behavior on color { ColorAnimation { duration: 400 } }
                     }
                     Text {
-                        id: colon
                         text: ":"
-                        color: "#3B82F6"
+                        color: root.accent
                         font.family: root.fontFamily
-                        font.pixelSize: 250 * u
+                        font.pixelSize: 336 * u
                         font.weight: Font.Bold
+                        renderType: Text.NativeRendering
                     }
                     Text {
                         text: root.mm
-                        color: root.textMainColor
+                        color: root.inkColor
                         font.family: root.fontFamily
-                        font.pixelSize: 250 * u
+                        font.pixelSize: 336 * u
                         font.weight: Font.Bold
-                        font.letterSpacing: -2 * u
+                        font.letterSpacing: -8 * u
+                        renderType: Text.NativeRendering
                         Behavior on color { ColorAnimation { duration: 400 } }
                     }
-                    Text {
-                        text: root.ampm
-                        visible: root.ampm !== ""
-                        color: root.textMutedColor
-                        leftPadding: 16 * u
-                        anchors.top: parent.top
-                        topPadding: 32 * u
-                        font.family: root.fontFamily
-                        font.pixelSize: 64 * u
-                        font.weight: Font.Bold
-                        Behavior on color { ColorAnimation { duration: 400 } }
+                }
+
+                // The RTC fault placeholder stays as "--:--", but uses fixed
+                // geometry instead of giant hyphen glyphs so it remains centered.
+                RowLayout {
+                    visible: root.clockFault
+                    anchors.centerIn: parent
+                    spacing: 44 * u
+
+                    Item {
+                        implicitWidth: 240 * u
+                        implicitHeight: 88 * u
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 24 * u
+                            Repeater {
+                                model: 2
+                                delegate: Rectangle {
+                                    width: 108 * u
+                                    height: 18 * u
+                                    radius: 2 * u
+                                    color: root.inkColor
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        implicitWidth: 30 * u
+                        implicitHeight: 88 * u
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 28 * u
+                            Repeater {
+                                model: 2
+                                delegate: Rectangle {
+                                    width: 30 * u
+                                    height: 30 * u
+                                    color: root.accent
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        implicitWidth: 240 * u
+                        implicitHeight: 88 * u
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 24 * u
+                            Repeater {
+                                model: 2
+                                delegate: Rectangle {
+                                    width: 108 * u
+                                    height: 18 * u
+                                    radius: 2 * u
+                                    color: root.inkColor
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            // ---------- Bottom Row: Sensor Cards ----------
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 32 * u
+            Item { Layout.fillWidth: true }
 
-                Repeater {
-                    model: root.sensors
-                    delegate: Rectangle {
-                        id: cardRect
-                        required property var modelData
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.preferredHeight: 370 * u
-                        radius: 16 * u
-                        color: root.cardBg
-
-                        Behavior on color { ColorAnimation { duration: 400 } }
-
-                        // Alert animators
-                        property bool alertActive: modelData.alert
-                        property color alertColor: modelData.alertColor
-                        property color animatedColor: root.cardBorderColor
-
-                        SequentialAnimation {
-                            running: cardRect.alertActive
-                            loops: Animation.Infinite
-                            ColorAnimation { target: cardRect; property: "animatedColor"; from: cardRect.alertColor; to: root.cardBorderColor; duration: 500; easing.type: Easing.InOutQuad }
-                            ColorAnimation { target: cardRect; property: "animatedColor"; from: root.cardBorderColor; to: cardRect.alertColor; duration: 500; easing.type: Easing.InOutQuad }
-                        }
-
-                        border.color: cardRect.alertActive ? cardRect.animatedColor : root.cardBorderColor
-                        border.width: cardRect.alertActive ? 2.5 * u : 1 * u
-
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: 28 * u
-                            spacing: 0
-
-                            // Top row: Label and Alert bubble
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                Text {
-                                    text: modelData.label
-                                    color: modelData.labelColor
-                                    font.family: root.fontFamily
-                                    font.pixelSize: 20 * u
-                                    font.weight: Font.Bold
-                                    font.letterSpacing: 1.5 * u
-                                    Behavior on color { ColorAnimation { duration: 400 } }
-                                }
-
-                                Item { Layout.fillWidth: true } // spacer
-
-                                // Alert Pill
-                                Rectangle {
-                                    visible: modelData.alert
-                                    color: modelData.alertColor
-                                    radius: 20 * u
-                                    implicitWidth: 82 * u
-                                    implicitHeight: 28 * u
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "ALERT"
-                                        color: "#FFFFFF"
-                                        font.family: root.fontFamily
-                                        font.pixelSize: 12 * u
-                                        font.weight: Font.Bold
-                                    }
-                                }
-                            }
-
-                            // Middle: Value display
-                            RowLayout {
-                                spacing: 4 * u
-                                Text {
-                                    text: modelData.value
-                                    color: modelData.valueColor
-                                    font.family: root.fontFamily
-                                    font.pixelSize: 48 * u
-                                    font.weight: Font.Bold
-                                    Behavior on color { ColorAnimation { duration: 400 } }
-                                }
-                                Text {
-                                    text: modelData.unit
-                                    color: root.textMutedColor
-                                    Layout.alignment: Qt.AlignBottom
-                                    Layout.bottomMargin: 8 * u
-                                    font.family: root.fontFamily
-                                    font.pixelSize: 22 * u
-                                    font.weight: Font.Medium
-                                    Behavior on color { ColorAnimation { duration: 400 } }
-                                }
-                                Item { Layout.fillWidth: true } // spacer
-                            }
-
-                            Item { Layout.fillHeight: true } // spacer to push chart down
-
-                            // Historical Line Chart with Axis and Labels
-                            Canvas {
-                                id: chartCanvas
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 160 * u
-                                property var history: modelData.history
-                                property color cardColor: cardRect.color
-                                onHistoryChanged: requestPaint()
-                                onWidthChanged: requestPaint()
-                                onCardColorChanged: requestPaint()
-                                onPaint: {
-                                    var ctx = getContext("2d")
-                                    ctx.reset()
-                                    if (!history || history.length === 0) return
-
-                                    var w = width
-                                    var h = height
-
-                                    // Reserved margins
-                                    var marginLeft = 45 * u
-                                    var marginRight = 10 * u
-                                    var marginTop = 15 * u
-                                    var marginBottom = 20 * u
-
-                                    var pw = w - marginLeft - marginRight
-                                    var ph = h - marginTop - marginBottom
-
-                                    // Find min and max
-                                    var rawMin = history[0]
-                                    var rawMax = history[0]
-                                    for (var i = 1; i < history.length; i++) {
-                                        if (history[i] < rawMin) rawMin = history[i]
-                                        if (history[i] > rawMax) rawMax = history[i]
-                                    }
-
-                                    // Get clean rounded ticks
-                                    var scale = root.getCleanTicks(rawMin, rawMax)
-                                    var minVal = scale.min
-                                    var maxVal = scale.max
-                                    var ticks = scale.ticks
-
-                                    var valRange = maxVal - minVal
-                                    if (valRange <= 0) valRange = 1.0
-
-                                    // 1. Draw Grid Lines and Y-Axis Labels
-                                    ctx.font = "11px " + root.fontFamily
-                                    ctx.fillStyle = root.textMutedColor
-                                    ctx.textAlign = "right"
-                                    ctx.textBaseline = "middle"
-                                    ctx.lineWidth = 1 * u
-
-                                    for (var t = 0; t < ticks.length; t++) {
-                                        var tickVal = ticks[t]
-                                        var tickY = marginTop + ph - ((tickVal - minVal) / valRange) * ph
-
-                                        // Horizontal grid line
-                                        ctx.strokeStyle = root.isDark ? "rgba(71, 85, 105, 0.3)" : "rgba(226, 232, 240, 0.5)"
-                                        ctx.beginPath()
-                                        ctx.moveTo(marginLeft, tickY)
-                                        ctx.lineTo(w - marginRight, tickY)
-                                        ctx.stroke()
-
-                                        // Left-side label text
-                                        var precision = (valRange < 3) ? 1 : 0
-                                        var labelStr = tickVal.toFixed(precision)
-                                        ctx.fillText(labelStr, marginLeft - 8 * u, tickY)
-                                    }
-
-                                    // 2. Draw Y-Axis (Vertical) & X-Axis (Horizontal) Lines
-                                    ctx.strokeStyle = root.isDark ? "#475569" : "#CBD5E1"
-                                    ctx.lineWidth = 1.5 * u
-                                    ctx.beginPath()
-                                    // Y-axis
-                                    ctx.moveTo(marginLeft, marginTop)
-                                    ctx.lineTo(marginLeft, h - marginBottom)
-                                    // X-axis
-                                    ctx.moveTo(marginLeft, h - marginBottom)
-                                    ctx.lineTo(w - marginRight, h - marginBottom)
-                                    ctx.stroke()
-
-                                    // 3. Draw Connecting Line for data points
-                                    ctx.strokeStyle = modelData.accent
-                                    ctx.lineWidth = 3 * u
-                                    ctx.lineCap = "round"
-                                    ctx.lineJoin = "round"
-                                    ctx.beginPath()
-
-                                    var stepX = pw / (history.length - 1)
-                                    for (var j = 0; j < history.length; j++) {
-                                        var val = history[j]
-                                        var x = marginLeft + j * stepX
-                                        var y = marginTop + ph - ((val - minVal) / valRange) * ph
-                                        if (j === 0) {
-                                            ctx.moveTo(x, y)
-                                        } else {
-                                            ctx.lineTo(x, y)
-                                        }
-                                    }
-                                    ctx.stroke()
-
-                                    // 4. Draw Data Point Dots
-                                    ctx.fillStyle = modelData.accent
-                                    for (var k = 0; k < history.length; k++) {
-                                        var valK = history[k]
-                                        var xK = marginLeft + k * stepX
-                                        var yK = marginTop + ph - ((valK - minVal) / valRange) * ph
-                                        ctx.beginPath()
-                                        ctx.arc(xK, yK, 6 * u, 0, 2 * Math.PI)
-                                        ctx.fill()
-
-                                        // Outer ring to separate dots from background
-                                        ctx.strokeStyle = cardColor
-                                        ctx.lineWidth = 2 * u
-                                        ctx.stroke()
-                                    }
-                                }
-                            }
-                        }
-                    }
+            // Seconds meta (right, baseline-aligned low)
+            ColumnLayout {
+                Layout.alignment: Qt.AlignBottom
+                Layout.bottomMargin: 30 * u
+                spacing: 8 * u
+                Text {
+                    Layout.alignment: Qt.AlignRight
+                    text: root.clockFault ? "--\u2033"
+                                          : (root.ampm !== "" ? root.ampm + "  " : "") + root.ss + "\u2033"
+                    color: root.inkColor
+                    font.family: root.fontFamily
+                    font.pixelSize: 44 * u
+                    font.weight: Font.DemiBold
+                    renderType: Text.NativeRendering
+                    Behavior on color { ColorAnimation { duration: 400 } }
+                }
+                Text {
+                    Layout.alignment: Qt.AlignRight
+                    text: root.use24h ? "SECONDS · 24H" : "SECONDS · 12H"
+                    color: root.mutedColor
+                    font.family: root.fontFamily
+                    font.pixelSize: 14 * u
+                    font.weight: Font.Bold
+                    font.letterSpacing: 2.8 * u
+                    Behavior on color { ColorAnimation { duration: 400 } }
                 }
             }
         }

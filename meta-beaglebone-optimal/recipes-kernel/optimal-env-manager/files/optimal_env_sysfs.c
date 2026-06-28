@@ -278,7 +278,7 @@ int optimal_env_sysfs_init(struct optimal_env_priv *priv)
 
 	/* Register hwmon, passing 'priv' as the drvdata */
 	priv->hwmon_dev = devm_hwmon_device_register_with_info(
-		priv->dev, "sht3x", priv, &optimal_hwmon_chip_info, NULL);
+		priv->dev, "optimal_env", priv, &optimal_hwmon_chip_info, NULL);
 	if (IS_ERR(priv->hwmon_dev)) {
 		ret = PTR_ERR(priv->hwmon_dev);
 		dev_err(priv->dev, "Failed to register hwmon device: %d\n",

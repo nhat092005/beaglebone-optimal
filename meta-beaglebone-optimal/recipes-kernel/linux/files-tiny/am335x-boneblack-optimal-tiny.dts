@@ -81,7 +81,7 @@
 	};
 };
 
-/include/ "../../tps65217.dtsi"
+#include "../../tps65217.dtsi"
 
 &usb0_phy {
 	status = "disabled";
@@ -191,9 +191,3 @@
 	status = "disabled";
 };
 
-&tps {
-	backlight {
-		compatible = "ti,tps65217-bl";
-		status = "disabled";
-	};
-};

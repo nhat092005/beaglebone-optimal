@@ -494,6 +494,67 @@ Required operator observation:
 If `/dev/fb0` is missing on the product image, treat that as a product-path
 display gap and pause before expanding into kernel or device tree work.
 
+## DS3231 RTC: diagnosis and recovery
+
+This section applies to the `beaglebone-black-optimal-qt-dashboard` product
+image. In the current contract, the `RTC_DS3231` feature is enabled only for
+that product machine and is not enabled by default for the baseline or tiny
+images.
+
+Common board-side symptoms:
+
+- the dashboard shows `RTC FAULT`
+- the clock shows `--:--`
+- `date` and `hwclock` both report an old year such as `2000`
+
+Minimum diagnosis commands:
+
+```bash
+dmesg | grep -Ei 'rtc|ds3231|ds1307|i2c'
+find /sys/firmware/devicetree/base -name 'rtc@68' 2>/dev/null
+ls -l /dev/rtc*
+date
+hwclock -f /dev/rtc0 -r
+```
+
+How to interpret the results:
+
+- if `find ... rtc@68` returns no node, the board is not booting a product
+  image with `RTC_DS3231` or the active device tree does not include the RTC
+  feature
+- if `dmesg` does not contain a line such as
+  `rtc-ds1307 2-0068: registered as rtc0`, the kernel has not bound the DS3231
+- if `/dev/rtc0` exists and `hwclock -f /dev/rtc0 -r` works but the year is
+  less than `2024`, the DS3231 is responding but holding invalid time data; the
+  dashboard intentionally treats that as a fault
+- if `/dev/i2c/2` is missing, do not treat that as the root cause. The current
+  product image can still bind the DS3231 in-kernel without exposing a
+  userspace I2C scan device
+
+Recovery when the RTC holds the wrong time:
+
+```bash
+date -s '2026-06-28 14:00:00'
+hwclock -f /dev/rtc0 -w
+hwclock -f /dev/rtc0 -r
+reboot
+date
+```
+
+Operator notes:
+
+- `date -s ...` fixes the current system clock
+- `hwclock -f /dev/rtc0 -w` writes the system clock back into the DS3231
+- `/sbin/rtcsync` only syncs `RTC -> system clock` during boot; it does not fix
+  the RTC if the chip is already holding bad time
+
+If `hwclock -w` succeeds but the board still falls back to an old year after a
+full power loss, suspect the RTC backup hardware:
+
+- missing or empty coin-cell battery
+- no hold-up supply on `VBAT`
+- faulty DS3231 module hardware
+
 ### Known boot messages
 
 **"Kernel memory protection not selected by kernel config."**

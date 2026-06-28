@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 LOCAL_UID="${DOCKER_USER%%:*}"
 LOCAL_GID="${DOCKER_USER#*:}"
