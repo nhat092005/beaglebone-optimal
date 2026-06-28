@@ -7,8 +7,6 @@
 
 class SensorBackend : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(QString time READ time NOTIFY timeChanged)
-	Q_PROPERTY(QString date READ date NOTIFY dateChanged)
 	Q_PROPERTY(
 		QString temperature READ temperature NOTIFY temperatureChanged)
 	Q_PROPERTY(QString humidity READ humidity NOTIFY humidityChanged)
@@ -23,7 +21,7 @@ class SensorBackend : public QObject {
 	Q_PROPERTY(int nightMode READ nightMode NOTIFY nightModeChanged)
 	Q_PROPERTY(int alarmState READ alarmState NOTIFY alarmStateChanged)
 	Q_PROPERTY(int sensorStatus READ sensorStatus NOTIFY sensorStatusChanged)
-	Q_PROPERTY(bool rtcFault READ rtcFault NOTIFY rtcFaultChanged)
+	Q_PROPERTY(bool rtcFault READ rtcFault CONSTANT)
 
 	Q_PROPERTY(
 		QVariantList tempHistory READ tempHistory NOTIFY historyChanged)
@@ -35,14 +33,6 @@ class SensorBackend : public QObject {
     public:
 	explicit SensorBackend(QObject *parent = nullptr);
 
-	QString time() const
-	{
-		return m_time;
-	}
-	QString date() const
-	{
-		return m_date;
-	}
 	QString temperature() const
 	{
 		return m_temperature;
@@ -99,8 +89,6 @@ class SensorBackend : public QObject {
 	}
 
     signals:
-	void timeChanged();
-	void dateChanged();
 	void temperatureChanged();
 	void humidityChanged();
 	void lightChanged();
@@ -111,18 +99,14 @@ class SensorBackend : public QObject {
 	void nightModeChanged();
 	void alarmStateChanged();
 	void sensorStatusChanged();
-	void rtcFaultChanged();
 	void historyChanged();
 
     private slots:
-	void updateTime();
 	void updateSensors();
 
     private:
 	static QString readSysfs(const QString &path);
 
-	QString m_time{ QStringLiteral("--:--:--") };
-	QString m_date{ QStringLiteral("--") };
 	QString m_temperature{ QStringLiteral("--") };
 	QString m_humidity{ QStringLiteral("--") };
 	QString m_light{ QStringLiteral("--") };
@@ -139,6 +123,5 @@ class SensorBackend : public QObject {
 	QVariantList m_humidityHistory;
 	QVariantList m_lightHistory;
 
-	QTimer m_timeTimer;
 	QTimer m_sensorTimer;
 };

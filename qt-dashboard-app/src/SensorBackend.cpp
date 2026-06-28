@@ -1,6 +1,5 @@
 #include "SensorBackend.h"
 
-#include <QtCore/qdatetime.h>
 #include <QtCore/qdir.h>
 #include <QtCore/qfile.h>
 #include <QtCore/qtextstream.h>
@@ -19,22 +18,12 @@ struct EnvRecord {
 	int32_t lux;
 } __attribute__((packed));
 
-static const char *const kDayNames[] = { "MONDAY",   "TUESDAY", "WEDNESDAY",
-					 "THURSDAY", "FRIDAY",	"SATURDAY",
-					 "SUNDAY" };
-static const char *const kMonthNames[] = { "JAN", "FEB", "MAR", "APR",
-					   "MAY", "JUN", "JUL", "AUG",
-					   "SEP", "OCT", "NOV", "DEC" };
-
 SensorBackend::SensorBackend(QObject *parent)
 	: QObject(parent)
 {
-	connect(&m_timeTimer, &QTimer::timeout, this,
-		&SensorBackend::updateTime);
 	connect(&m_sensorTimer, &QTimer::timeout, this,
 		&SensorBackend::updateSensors);
 
-	m_timeTimer.start(1000);
 	m_sensorTimer.start(1000);
 
 	// One-time DS3231 RTC health check (Rule 12)
@@ -52,31 +41,7 @@ SensorBackend::SensorBackend(QObject *parent)
 		}
 	}
 
-	updateTime();
 	updateSensors();
-}
-
-void SensorBackend::updateTime()
-{
-	const QDateTime now = QDateTime::currentDateTime();
-	const QDate d = now.date();
-	const QTime t = now.time();
-
-	const QString newTime = t.toString(QStringLiteral("hh:mm:ss"));
-	const QString newDate = QString::fromLatin1("%1 \xc2\xb7 %2 %3 %4")
-					.arg(kDayNames[d.dayOfWeek() - 1])
-					.arg(d.day())
-					.arg(kMonthNames[d.month() - 1])
-					.arg(d.year());
-
-	if (newTime != m_time) {
-		m_time = newTime;
-		emit timeChanged();
-	}
-	if (newDate != m_date) {
-		m_date = newDate;
-		emit dateChanged();
-	}
 }
 
 void SensorBackend::updateSensors()
@@ -122,6 +87,14 @@ void SensorBackend::updateSensors()
 			if (m_light != kDash) {
 				m_light = kDash;
 				emit lightChanged();
+			}
+			if (!m_tempHistory.isEmpty() ||
+			    !m_humidityHistory.isEmpty() ||
+			    !m_lightHistory.isEmpty()) {
+				m_tempHistory.clear();
+				m_humidityHistory.clear();
+				m_lightHistory.clear();
+				emit historyChanged();
 			}
 		} else {
 			const QString tempStr =
