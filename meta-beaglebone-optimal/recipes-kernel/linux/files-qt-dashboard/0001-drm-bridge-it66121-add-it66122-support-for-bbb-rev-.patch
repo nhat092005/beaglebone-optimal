@@ -1,7 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 08:46:04 +0000
+Subject: [PATCH 1/7] drm/bridge: it66121: add IT66122 support for BBB Rev D
+
+The BeagleBone Black Rev D Qt dashboard carries an IT66122 HDMI
+transmitter instead of the IT66121 the upstream driver targets. The two
+chips share the same register map and AFE configuration path; the
+IT66122 only needs its own chip-id/vendor-id/product-id entry and to be
+treated as an IT66121 for AFE power-cycling purposes.
+
+Add ID_IT66122 to enum chip_id, replace the direct
+`ctx->info->id == ID_IT66121` checks with an it66121_is_66xx() helper
+that also matches IT66122, and replace the old single
+it66121_chip_info/it6610_chip_info static structs (selected via the
+i2c_device_id driver_data pointer) with an it66xx_chip_info[] table
+looked up by probed vendor/device id, since the i2c_device_id table no
+longer carries a chip-specific pointer once a third variant is added.
+
+Also make the vrf12 supply optional (some Rev D boards do not wire it)
+via devm_regulator_get_enable_optional(), and add "ite,it66122" to both
+the i2c_device_id and of_device_id match tables.
+
 Upstream-Status: Inappropriate [product-specific BBB Rev D enablement for current Yocto kernel baseline]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ drivers/gpu/drm/bridge/ite-it66121.c | 77 ++++++++++++++++++----------
+ 1 file changed, 51 insertions(+), 26 deletions(-)
 
 diff --git a/drivers/gpu/drm/bridge/ite-it66121.c b/drivers/gpu/drm/bridge/ite-it66121.c
-index 8f5846b..36025d1 100644
+index 2381cd1cba87..813ccc80348b 100644
 --- a/drivers/gpu/drm/bridge/ite-it66121.c
 +++ b/drivers/gpu/drm/bridge/ite-it66121.c
 @@ -287,6 +287,7 @@
@@ -69,7 +96,7 @@ index 8f5846b..36025d1 100644
  	    regmap_write_bits(ctx->regmap, IT66121_CLK_BANK_REG,
  			      IT66121_CLK_BANK_PWROFF_TXCLK, 0)) {
  		goto unlock;
-@@ -1500,14 +1506,35 @@ static int it66121_audio_codec_init(struct it66121_ctx *ctx, struct device *dev)
+@@ -1502,14 +1508,35 @@ static int it66121_audio_codec_init(struct it66121_ctx *ctx, struct device *dev)
  }
  
  static const char * const it66121_supplies[] = {
@@ -107,7 +134,7 @@ index 8f5846b..36025d1 100644
  	int ret;
  	struct it66121_ctx *ctx;
  	struct device *dev = &client->dev;
-@@ -1527,7 +1554,6 @@ static int it66121_probe(struct i2c_client *client)
+@@ -1529,7 +1556,6 @@ static int it66121_probe(struct i2c_client *client)
  
  	ctx->dev = dev;
  	ctx->client = client;
@@ -115,7 +142,7 @@ index 8f5846b..36025d1 100644
  
  	of_property_read_u32(ep, "bus-width", &ctx->bus_width);
  	of_node_put(ep);
-@@ -1563,6 +1589,9 @@ static int it66121_probe(struct i2c_client *client)
+@@ -1565,6 +1591,9 @@ static int it66121_probe(struct i2c_client *client)
  		dev_err(dev, "Failed to enable power supplies\n");
  		return ret;
  	}
@@ -125,7 +152,7 @@ index 8f5846b..36025d1 100644
  
  	it66121_hw_reset(ctx);
  
-@@ -1579,10 +1608,16 @@ static int it66121_probe(struct i2c_client *client)
+@@ -1581,10 +1610,16 @@ static int it66121_probe(struct i2c_client *client)
  	revision_id = FIELD_GET(IT66121_REVISION_MASK, device_ids[1]);
  	device_ids[1] &= IT66121_DEVICE_ID1_MASK;
  
@@ -145,7 +172,7 @@ index 8f5846b..36025d1 100644
  
  	ctx->bridge.funcs = &it66121_bridge_funcs;
  	ctx->bridge.of_node = dev->of_node;
-@@ -1600,7 +1635,7 @@ static int it66121_probe(struct i2c_client *client)
+@@ -1602,7 +1637,7 @@ static int it66121_probe(struct i2c_client *client)
  
  	drm_bridge_add(&ctx->bridge);
  
@@ -154,7 +181,7 @@ index 8f5846b..36025d1 100644
  
  	return 0;
  }
-@@ -1616,25 +1651,15 @@ static void it66121_remove(struct i2c_client *client)
+@@ -1618,25 +1653,15 @@ static void it66121_remove(struct i2c_client *client)
  static const struct of_device_id it66121_dt_match[] = {
  	{ .compatible = "ite,it66121" },
  	{ .compatible = "ite,it6610" },
@@ -184,3 +211,6 @@ index 8f5846b..36025d1 100644
  	{ }
  };
  MODULE_DEVICE_TABLE(i2c, it66121_id);
+-- 
+2.34.1
+

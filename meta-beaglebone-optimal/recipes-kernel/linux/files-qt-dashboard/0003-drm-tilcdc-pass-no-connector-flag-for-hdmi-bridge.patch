@@ -1,7 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 08:46:04 +0000
+Subject: [PATCH 3/7] drm/tilcdc: pass no-connector flag for HDMI bridge attach
+
+Pass DRM_BRIDGE_ATTACH_NO_CONNECTOR to drm_bridge_attach() for the
+external HDMI bridge so the bridge no longer creates its own connector.
+The next change creates a drm_bridge_connector explicitly instead, which
+drm_bridge_attach() would otherwise conflict with.
+
 Upstream-Status: Inappropriate [product-specific HDMI bridge attach fix for BeagleBone Black Rev D Qt dashboard]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ drivers/gpu/drm/tilcdc/tilcdc_external.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/tilcdc/tilcdc_external.c b/drivers/gpu/drm/tilcdc/tilcdc_external.c
-index 3b86d00..90aa482 100644
+index 3b86d002ef62..90aa482cfca9 100644
 --- a/drivers/gpu/drm/tilcdc/tilcdc_external.c
 +++ b/drivers/gpu/drm/tilcdc/tilcdc_external.c
 @@ -94,7 +94,8 @@ int tilcdc_attach_bridge(struct drm_device *ddev, struct drm_bridge *bridge)
@@ -14,3 +28,6 @@ index 3b86d00..90aa482 100644
  	if (ret)
  		return ret;
  
+-- 
+2.34.1
+

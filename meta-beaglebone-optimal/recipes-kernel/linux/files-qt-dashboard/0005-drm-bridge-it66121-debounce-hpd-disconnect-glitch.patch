@@ -1,33 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 08:46:04 +0000
+Subject: [PATCH 5/7] drm/bridge: it66121: debounce HPD disconnect glitch
+
+The IT66122 briefly drops the TV HPD signal during HDMI link
+re-negotiation approximately 7 seconds into boot. The IRQ handler reads
+HPD at the instant of the interrupt and sees "disconnected".
+drm_bridge_hpd_notify() propagates this to drm_bridge_connector_hpd_cb(),
+which compares old_status (connected) with new_status (disconnected),
+detects a change, and fires drm_kms_helper_connector_hotplug_event() ->
+drm_fb_helper_restore_fbdev_mode_unlocked() -> CRTC reprogram. The TV
+briefly loses sync and re-applies its overscan calibration, visible as a
+sudden zoom-in on screen.
+
+Since it66121_irq_threaded_handler() runs in a kernel thread
+(IRQF_ONESHOT), sleeping is allowed. When a disconnect event is
+detected, sleep 200 ms and re-read the actual HPD state. The IT66122
+reconnect completes within ~50-100 ms, so the re-read returns
+"connected". drm_bridge_connector_hpd_cb() then sees old_status ==
+new_status and returns early, suppressing the re-modeset and zoom.
+
+For a genuine cable-unplug, HPD remains low after 200 ms and the
+disconnect is correctly forwarded to the DRM framework.
+
 Upstream-Status: Inappropriate [product-specific BBB Rev D HDMI fix: debounce HPD disconnect glitch]
-
-The IT66122 briefly drops the TV HPD signal during HDMI link re-negotiation
-approximately 7 seconds into boot.  The IRQ handler reads HPD at the instant of
-the interrupt and sees "disconnected".  drm_bridge_hpd_notify() propagates this
-to drm_bridge_connector_hpd_cb(), which compares old_status (connected) with
-new_status (disconnected), detects a change, and fires
-drm_kms_helper_connector_hotplug_event() -> drm_fb_helper_restore_fbdev_mode_unlocked()
--> CRTC reprogram.  The TV briefly loses sync and re-applies its overscan
-calibration, visible as a sudden zoom-in on screen.
-
-Since it66121_irq_threaded_handler() runs in a kernel thread (IRQF_ONESHOT),
-sleeping is allowed.  When a disconnect event is detected, sleep 200 ms and
-re-read the actual HPD state.  The IT66122 reconnect completes within ~50-100 ms,
-so the re-read returns "connected".  drm_bridge_connector_hpd_cb() then sees
-old_status == new_status and returns early, suppressing the re-modeset and zoom.
-
-For a genuine cable-unplug, HPD remains low after 200 ms and the disconnect is
-correctly forwarded to the DRM framework.
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ drivers/gpu/drm/bridge/ite-it66121.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/gpu/drm/bridge/ite-it66121.c b/drivers/gpu/drm/bridge/ite-it66121.c
-index 0000000..0000000 100644
+index 1ff39eddf003..a007b5cbb576 100644
 --- a/drivers/gpu/drm/bridge/ite-it66121.c
 +++ b/drivers/gpu/drm/bridge/ite-it66121.c
-@@ -975,8 +975,18 @@ unlock:
+@@ -975,8 +975,18 @@ static irqreturn_t it66121_irq_threaded_handler(int irq, void *dev_id)
  unlock:
  	mutex_unlock(&ctx->lock);
  
 -	if (event)
--		drm_bridge_hpd_notify(&ctx->bridge, status);
 +	if (event) {
 +		if (status == connector_status_disconnected) {
 +			/* Debounce transient HPD disconnect from IT66122 HDMI re-negotiation at boot. */
@@ -38,8 +48,11 @@ index 0000000..0000000 100644
 +				connector_status_disconnected;
 +			mutex_unlock(&ctx->lock);
 +		}
-+		drm_bridge_hpd_notify(&ctx->bridge, status);
+ 		drm_bridge_hpd_notify(&ctx->bridge, status);
 +	}
  
  	return IRQ_HANDLED;
  }
+-- 
+2.34.1
+

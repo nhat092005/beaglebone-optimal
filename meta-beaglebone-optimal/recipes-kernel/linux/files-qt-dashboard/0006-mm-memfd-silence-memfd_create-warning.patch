@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 08:46:04 +0000
+Subject: [PATCH 6/7] mm/memfd: silence memfd_create missing exec flags warning
+
+Silence the deprecation warning logged when memfd_create() is called
+without MFD_EXEC or MFD_NOEXEC_SEAL set, to stop it polluting the boot
+log from Qt/QML applications on this embedded kiosk image.
+
+Upstream-Status: Inappropriate [embedded kiosk customization]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ mm/memfd.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/mm/memfd.c b/mm/memfd.c
+index 187265dc68f5..e33ca18c8af2 100644
+--- a/mm/memfd.c
++++ b/mm/memfd.c
+@@ -316,9 +316,6 @@ SYSCALL_DEFINE2(memfd_create,
+ 		return -EINVAL;
+ 
+ 	if (!(flags & (MFD_EXEC | MFD_NOEXEC_SEAL))) {
+-		pr_warn_once(
+-			"%s[%d]: memfd_create() called without MFD_EXEC or MFD_NOEXEC_SEAL set\n",
+-			current->comm, task_pid_nr(current));
+ 	}
+ 
+ 	error = check_sysctl_memfd_noexec(&flags);
+-- 
+2.34.1
+
