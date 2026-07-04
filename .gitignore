@@ -11,6 +11,11 @@
 # temporary files
 tmp/
 
+# agent scratch scripts/output (one-off helpers, never meant to be committed)
+/.tmp-*
+/.patch-regen-out*
+/.qt-patch-regen-out*
+
 # BitBake externalsrc build symlinks (created by bitbake when using externalsrc class)
 qt-dashboard-app/oe-logs
 qt-dashboard-app/oe-workdir

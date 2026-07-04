@@ -74,6 +74,7 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        SDCARD CMD BOOT_SERIAL_DEVICE BOOT_SERIAL_BAUD BOOT_CAPTURE_LOG
 
 .PHONY: help yocto-list docker-build docker-shell docker-run doctor boot-capture
+.PHONY: patch-check patch-apply patch-reword patch-finalize patch-abort
 .PHONY: yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake
 .PHONY: sd-flash sd-flash-tiny format format-check lint check
 
@@ -85,6 +86,19 @@ help:
 		'  make docker-build                 Build builder image with Docker Compose.' \
 		'  make docker-shell                 Start interactive shell inside builder container.' \
 		'  make docker-run CMD='\''uname -a'\''    Run command inside builder container.' \
+		'' \
+		'BSP patch regeneration:' \
+		'  make patch-check TREE=<path> DIFF=<file>' \
+		'                                    Dry-run check that a diff still applies to a real source tree.' \
+		'  make patch-apply TREE=<path> DIFF=<file> MESSAGE=<file> AUTHOR='\''Name <email>'\''' \
+		'                                    Apply one diff and commit it for real; repeat per patch in a series.' \
+		'  make patch-reword TREE=<path> COMMIT=<sha> MESSAGE=<file> [BASE=<ref>]' \
+		'                                    Rebuild an existing commit with a corrected message, same tree, no diff/apply.' \
+		'                                    BASE is required on the first call of a series; never touches TREE'\''s real HEAD.' \
+		'  make patch-finalize TREE=<path> OUT=<dir> NAMES='\''0001-a.patch 0002-b.patch'\'' [BASE=<ref>]' \
+		'                                    Emit the committed series as patch files, then reset TREE back to its base.' \
+		'                                    BASE defaults to the patch-apply marker; pass BASE=HEAD~N if you committed by hand.' \
+		'  make patch-abort TREE=<path>      Discard an in-progress apply series and reset TREE back to its base.' \
 		'' \
 		'Environment check:' \
 		'  make doctor                       Validate Docker phase 1 setup.' \
@@ -180,6 +194,21 @@ docker-shell:
 
 docker-run:
 	@bash -lc 'source scripts/docker/lib.sh && require_cmd && preflight_run_target && docker compose run --rm builder bash -lc "$$CMD"'
+
+patch-check:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && docker compose run --rm builder bash -lc "/workspace/scripts/patch/patch-tool.sh check --tree \"$$TREE\" --diff \"$$DIFF\""'
+
+patch-apply:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && docker compose run --rm builder bash -lc "/workspace/scripts/patch/patch-tool.sh apply --tree \"$$TREE\" --diff \"$$DIFF\" --message \"$$MESSAGE\" --author \"$$AUTHOR\""'
+
+patch-reword:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && docker compose run --rm builder bash -lc "/workspace/scripts/patch/patch-tool.sh reword --tree \"$$TREE\" --commit \"$$COMMIT\" --message \"$$MESSAGE\" --base \"$$BASE\""'
+
+patch-finalize:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && docker compose run --rm builder bash -lc "/workspace/scripts/patch/patch-tool.sh finalize --tree \"$$TREE\" --out \"$$OUT\" --names \"$$NAMES\" --base \"$$BASE\""'
+
+patch-abort:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && docker compose run --rm builder bash -lc "/workspace/scripts/patch/patch-tool.sh abort --tree \"$$TREE\""'
 
 doctor:
 	@bash scripts/docker/doctor.sh
