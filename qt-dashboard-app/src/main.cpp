@@ -4,7 +4,30 @@
 #include <QtCore/qlogging.h>
 #include <QtQml/qqmlapplicationengine.h>
 #include <QtQml/qqmlcontext.h>
+#include <QtQuick/qquickwindow.h>
 #include "SensorBackend.h"
+
+#include <cstdio>
+#include <fcntl.h>
+#include <unistd.h>
+
+namespace {
+
+// qt-dashboard's stdio is redirected to /dev/null (see inittab), so this
+// writes to /dev/kmsg instead -- it lands on the same serial console that
+// boot-capture reads. Priority 3 (KERN_ERR) because the kernel cmdline sets
+// console_loglevel=4 via "quiet", and only priority < console_loglevel is
+// printed.
+void logToKmsg(const char *msg)
+{
+	int fd = open("/dev/kmsg", O_WRONLY);
+	if (fd < 0)
+		return;
+	dprintf(fd, "<3>%s\n", msg);
+	close(fd);
+}
+
+} // namespace
 
 int main(int argc, char *argv[])
 {
@@ -32,6 +55,18 @@ int main(int argc, char *argv[])
 		Qt::QueuedConnection);
 
 	engine.load(QUrl(QStringLiteral("qrc:/QtDashboard/qml/Main.qml")));
+
+	if (!engine.rootObjects().isEmpty()) {
+		if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst())) {
+			QObject::connect(window, &QQuickWindow::frameSwapped, window, []() {
+				static bool logged = false;
+				if (logged)
+					return;
+				logged = true;
+				logToKmsg("qt-dashboard: first frame rendered");
+			});
+		}
+	}
 
 	return QGuiApplication::exec();
 }
