@@ -33,7 +33,7 @@ print_summary() {
     note
     note "boot-capture: log saved to $BOOT_CAPTURE_LOG"
     note "Next:"
-    printf '  rg -n "Starting kernel|console \\[ttyS0\\] enabled|TSHELL" %s\n' "$BOOT_CAPTURE_LOG"
+    printf '  rg -n "Starting kernel|console \\[ttyS0\\] enabled" %s\n' "$BOOT_CAPTURE_LOG"
 }
 
 # shellcheck disable=SC2317

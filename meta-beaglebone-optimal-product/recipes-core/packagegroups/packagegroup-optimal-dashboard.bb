@@ -7,7 +7,6 @@ inherit packagegroup
 
 RDEPENDS:${PN} = " \
 	qt-dashboard \
-	qt-splash \
 	rtcsync \
 	optimal-env-manager \
 "
