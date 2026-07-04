@@ -8,47 +8,44 @@ inherit linux-yocto-tiny-feature-dts
 LINUX_YOCTO_TINY_FEATURE_ROOT := "${THISDIR}/${PN}/features"
 LINUX_YOCTO_TINY_FEATURE_KEYS = "GPIO_LEDS I2C2_BUS RTC_DS3231 SHT3X BH1750"
 
-# GPIO LEDS feature catalog entry. Product paths may override ENABLED to "1"
-# when they explicitly need the BBB USR0 heartbeat slice.
+# Feature catalog, shared across machines; ENABLED is opt-in per machine below.
+
+# GPIO_LEDS: BBB USR0 heartbeat LED.
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DIR = "gpio-leds"
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_DTS = "gpio-leds.dtsi"
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_CFG = "leds.cfg"
 LINUX_YOCTO_TINY_FEATURE_GPIO_LEDS_SCC = "gpio-leds.scc"
 
-# I2C2 shared bus feature catalog entry. Product paths may override ENABLED to
-# "1" alongside i2c2 devices that need bus bring-up and pinmux.
+# I2C2_BUS: bus bring-up + pinmux for i2c2 devices below.
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_DIR = "i2c2-bus"
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_DTS = "i2c2-bus.dtsi"
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_CFG = ""
 LINUX_YOCTO_TINY_FEATURE_I2C2_BUS_SCC = ""
 
-# RTC DS3231 feature catalog entry. Product paths may override ENABLED to "1"
-# with I2C2_BUS to include DS3231 RTC support over i2c2.
+# RTC_DS3231: DS3231 RTC over i2c2 (needs I2C2_BUS).
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DIR = "rtc-ds3231"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_DTS = "rtc-ds3231.dtsi"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_CFG = "rtc.cfg"
 LINUX_YOCTO_TINY_FEATURE_RTC_DS3231_SCC = "rtc-ds3231.scc"
 
-# SHT3X feature catalog entry. Product paths may override ENABLED to "1" with
-# I2C2_BUS to include SHT3X hwmon support over i2c2 at 0x44.
+# SHT3X: hwmon over i2c2 at 0x44 (needs I2C2_BUS).
 LINUX_YOCTO_TINY_FEATURE_SHT3X_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_DIR = "sht3x"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_DTS = "sht3x.dtsi"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_CFG = "sht3x.cfg"
 LINUX_YOCTO_TINY_FEATURE_SHT3X_SCC = "sht3x.scc"
 
-# BH1750 feature catalog entry. Product paths may override ENABLED to "1" with
-# I2C2_BUS to include BH1750 IIO support over i2c2 at 0x23.
+# BH1750: IIO light sensor over i2c2 at 0x23 (needs I2C2_BUS).
 LINUX_YOCTO_TINY_FEATURE_BH1750_ENABLED = "0"
 LINUX_YOCTO_TINY_FEATURE_BH1750_DIR = "bh1750"
 LINUX_YOCTO_TINY_FEATURE_BH1750_DTS = "bh1750.dtsi"
 LINUX_YOCTO_TINY_FEATURE_BH1750_CFG = "bh1750.cfg"
 LINUX_YOCTO_TINY_FEATURE_BH1750_SCC = "bh1750.scc"
 
-# --- Tiny Machine Defaults ---
+# Tiny machine defaults
 COMPATIBLE_MACHINE:beaglebone-black-optimal-tiny = "beaglebone-black-optimal-tiny"
 KMACHINE:beaglebone-black-optimal-tiny ?= "beaglebone"
 LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-tiny = "am335x-boneblack-optimal-tiny.dts"
@@ -68,7 +65,7 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
 "
 
-# --- Product Machine Defaults ---
+# Qt dashboard machine defaults
 COMPATIBLE_MACHINE:beaglebone-black-optimal-qt-dashboard = "beaglebone-black-optimal-qt-dashboard"
 KMACHINE:beaglebone-black-optimal-qt-dashboard ?= "beaglebone"
 LINUX_YOCTO_TINY_FEATURE_BASE_DTS:beaglebone-black-optimal-qt-dashboard = "am335x-boneblack-optimal-qt-dashboard.dts"
