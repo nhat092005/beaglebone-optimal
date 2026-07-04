@@ -1,7 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: nhat092005 <minhnhat092005@gmail.com>
-Date: Fri, 27 Jun 2026 00:00:00 +0700
-Subject: [PATCH] configs: am335x_evm: drop finduuid from extra env settings
+Date: Sat, 4 Jul 2026 07:57:34 +0000
+Subject: [PATCH 1/2] configs: am335x_evm: drop finduuid from extra env
+ settings
 
 finduuid runs "part uuid mmc 0:2 uuid" to resolve a GPT partition UUID
 for root= on the kernel cmdline.  The Optimal Tiny boot contract uses
@@ -13,7 +14,13 @@ instead of the findfdt env; sysboot ignores ${fdtfile} when the config
 file carries an explicit fdt line.
 
 Upstream-Status: Inappropriate [project-specific BeagleBone Optimal boot contract]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ include/configs/am335x_evm.h | 1 -
+ 1 file changed, 1 deletion(-)
 
+diff --git a/include/configs/am335x_evm.h b/include/configs/am335x_evm.h
+index 67f46562539..cc28e6ce7ea 100644
 --- a/include/configs/am335x_evm.h
 +++ b/include/configs/am335x_evm.h
 @@ -81,7 +81,6 @@
@@ -24,3 +31,6 @@ Upstream-Status: Inappropriate [project-specific BeagleBone Optimal boot contrac
  	"console=ttyO0,115200n8\0" \
  	"partitions=" \
  		"uuid_disk=${uuid_gpt_disk};" \
+-- 
+2.34.1
+

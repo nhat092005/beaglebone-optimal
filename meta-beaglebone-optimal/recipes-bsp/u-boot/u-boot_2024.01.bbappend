@@ -1,8 +1,7 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-# Common tiny-derived configurations (deterministic config, MAC setup guard,
-# finduuid removal) apply to both machines because beaglebone-black-optimal-qt-dashboard
-# prepends "beaglebone-black-optimal-tiny" into MACHINEOVERRIDES.
+# Applies to both machines: qt-dashboard prepends "beaglebone-black-optimal-tiny"
+# into MACHINEOVERRIDES.
 SRC_URI:append:beaglebone-black-optimal-tiny = " \
 	file://0001-am335x-evm-drop-finduuid.patch \
 	file://0002-am335x-guard-board-mac-setup-when-net-is-disabled.patch \
