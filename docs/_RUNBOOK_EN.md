@@ -359,8 +359,8 @@ Public contract files:
 - `docs/boot-contract.md`
 - `yocto/conf/local.conf.tiny.example`
 - `yocto/conf/bblayers.conf.tiny.example`
-- `yocto/boot/extlinux.tiny.conf`
-- `yocto/boot/uEnv.tiny.txt`
+- `yocto/boot/extlinux.conf.tiny.example`
+- `yocto/boot/uEnv.txt.tiny.example`
 
 Manual tiny config apply flow:
 

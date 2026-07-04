@@ -10,7 +10,7 @@ SHELLCHECK   ?= shellcheck
 
 # Quality tool file lists
 C_FORMAT_FILES := $(shell $(GIT) ls-files -- '*.c' '*.cc' '*.cpp' '*.h' '*.hh' '*.hpp')
-SHELL_FILES    := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash scripts/sd-flash-tiny))
+SHELL_FILES    := $(sort $(shell $(GIT) ls-files -- '*.sh') $(wildcard scripts/sd-flash/*))
 
 # Input configuration (from local.mk or overridable)
 WORKSPACE_NAME ?= default
@@ -31,8 +31,8 @@ YOCTO_TINY_IMAGE                   ?= core-image-optimal-tiny-initramfs
 YOCTO_TINY_DTB                     ?= am335x-boneblack-optimal-tiny.dtb
 YOCTO_TINY_BBLAYERS_TEMPLATE       ?= $(CURDIR)/yocto/conf/bblayers.conf.tiny.example
 YOCTO_TINY_LOCALCONF_TEMPLATE      ?= $(CURDIR)/yocto/conf/local.conf.tiny.example
-YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.tiny.conf
-YOCTO_TINY_BOOT_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.tiny.txt
+YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE  ?= $(CURDIR)/yocto/boot/extlinux.conf.tiny.example
+YOCTO_TINY_BOOT_UENV_TEMPLATE      ?= $(CURDIR)/yocto/boot/uEnv.txt.tiny.example
 
 # Yocto Qt dashboard
 YOCTO_QT_DASHBOARD_MACHINE             ?= beaglebone-black-optimal-qt-dashboard
@@ -41,19 +41,24 @@ YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE   ?= $(CURDIR)/yocto/conf/bblayers.conf.qt-
 YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE  ?= $(CURDIR)/yocto/conf/local.conf.qt-dashboard.example
 
 # Derived paths
-YOCTO_ROOT          ?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
-YOCTO_SOURCES_DIR   ?= $(YOCTO_ROOT)/sources
-YOCTO_POKY_DIR      ?= $(YOCTO_SOURCES_DIR)/poky
-YOCTO_BUILD_DIR     ?= $(YOCTO_ROOT)/build
-YOCTO_DOWNLOADS_DIR ?= $(PROJECT_STORAGE_ROOT)/shared/downloads
-YOCTO_SSTATE_DIR    ?= $(PROJECT_STORAGE_ROOT)/shared/sstate
-IMAGE               ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_MACHINE)/$(YOCTO_IMAGE)-$(YOCTO_MACHINE).wic
-YOCTO_TINY_DEPLOY_DIR ?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
+YOCTO_ROOT          	?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
+YOCTO_SOURCES_DIR   	?= $(YOCTO_ROOT)/sources
+YOCTO_POKY_DIR      	?= $(YOCTO_SOURCES_DIR)/poky
+YOCTO_BUILD_DIR     	?= $(YOCTO_ROOT)/build
+YOCTO_DOWNLOADS_DIR 	?= $(PROJECT_STORAGE_ROOT)/shared/downloads
+YOCTO_SSTATE_DIR    	?= $(PROJECT_STORAGE_ROOT)/shared/sstate
+IMAGE               	?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_MACHINE)/$(YOCTO_IMAGE)-$(YOCTO_MACHINE).wic
+YOCTO_TINY_DEPLOY_DIR	?= $(YOCTO_BUILD_DIR)/tmp/deploy/images/$(YOCTO_TINY_MACHINE)
 
 # Runtime arguments
 SDCARD         ?=
 BITBAKE_RECIPE ?=
 BITBAKE_TASK   ?=
+
+# Boot capture arguments
+BOOT_SERIAL_DEVICE ?= /dev/ttyUSB0
+BOOT_SERIAL_BAUD   ?= 115200
+BOOT_CAPTURE_LOG   ?= $(CURDIR)/tmp/boot-captures/latest.log
 
 # Exported environment
 export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
@@ -66,9 +71,11 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        YOCTO_TINY_DEPLOY_DIR YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE YOCTO_TINY_BOOT_UENV_TEMPLATE \
        YOCTO_QT_DASHBOARD_MACHINE YOCTO_QT_DASHBOARD_IMAGE YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE \
        YOCTO_IMAGE IMAGE \
-       SDCARD CMD
+       SDCARD CMD BOOT_SERIAL_DEVICE BOOT_SERIAL_BAUD BOOT_CAPTURE_LOG
 
-.PHONY: help yocto-list docker-build docker-shell docker-run doctor yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake sd-flash sd-flash-tiny format format-check lint check
+.PHONY: help yocto-list docker-build docker-shell docker-run doctor boot-capture
+.PHONY: yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake
+.PHONY: sd-flash sd-flash-tiny format format-check lint check
 
 help:
 	@printf '%s\n' \
@@ -81,6 +88,7 @@ help:
 		'' \
 		'Environment check:' \
 		'  make doctor                       Validate Docker phase 1 setup.' \
+		'  make boot-capture                Capture BBB UART boot log with host timestamps for tiny or Qt dashboard paths.' \
 		'' \
 		'Baseline path:' \
 		'  make yocto-init                   Create Yocto build dir and validate poky checkout.' \
@@ -176,6 +184,9 @@ docker-run:
 doctor:
 	@bash scripts/docker/doctor.sh
 
+boot-capture:
+	@bash scripts/boot-capture.sh
+
 yocto-init:
 	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Baseline local.conf example: /workspace/yocto/conf/local.conf.example" "Baseline bblayers example: /workspace/yocto/conf/bblayers.conf.example" "Tiny local.conf example: /workspace/yocto/conf/local.conf.tiny.example" "Tiny bblayers example: /workspace/yocto/conf/bblayers.conf.tiny.example" "Qt dashboard local.conf example: /workspace/yocto/conf/local.conf.qt-dashboard.example" "Qt dashboard bblayers example: /workspace/yocto/conf/bblayers.conf.qt-dashboard.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''
 
@@ -204,10 +215,10 @@ yocto-bitbake:
 	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$(BITBAKE_RECIPE)" $(if $(BITBAKE_TASK),-c $(BITBAKE_TASK))'\'''
 
 sd-flash:
-	@bash scripts/sd-flash.sh
+	@bash scripts/sd-flash/sd-flash.sh
 
 sd-flash-tiny:
-	@bash scripts/sd-flash-tiny.sh
+	@bash scripts/sd-flash/sd-flash-tiny.sh
 
 format:
 	@if [ -n "$(C_FORMAT_FILES)" ]; then \
