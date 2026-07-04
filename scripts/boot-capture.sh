@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 die() {
     printf 'error: %s\n' "$*" >&2
     exit 1
@@ -72,7 +74,7 @@ note "boot-capture: capturing $BOOT_SERIAL_DEVICE at ${BOOT_SERIAL_BAUD} baud"
 note "boot-capture: press Ctrl-C to stop"
 
 stdbuf -o0 cat "$BOOT_SERIAL_DEVICE" \
-    | perl -MTime::HiRes=gettimeofday -ne 'BEGIN { $| = 1 } ($s, $us) = gettimeofday(); printf "%d.%06d %s", $s, $us, $_;' \
+    | perl "$SCRIPT_DIR/boot-capture-timestamp.pl" "$BOOT_SERIAL_DEVICE" \
     | tee -a "$BOOT_CAPTURE_LOG" &
 capture_pid=$!
 
