@@ -1,9 +1,6 @@
 # Tiny path example.
 # Copy this file to conf/bblayers.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
-#
-# /workspace is the Docker builder mount point for the repo root.
-# Replace with an absolute path to meta-beaglebone-optimal if building outside Docker.
 
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
