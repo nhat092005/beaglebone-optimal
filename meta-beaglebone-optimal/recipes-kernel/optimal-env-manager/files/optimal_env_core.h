@@ -28,6 +28,9 @@
 #define RECORD_COUNT 10
 #define MAX_LEDS 2
 
+/* BH1750 H-Resolution measurement time (datasheet max: 180ms) */
+#define BH1750_MEAS_TIME_MS 180
+
 struct env_record {
 	u64 timestamp_ms;
 	s32 temperature;
@@ -91,8 +94,9 @@ void optimal_env_chardev_remove(struct optimal_env_priv *priv);
 
 int optimal_env_sensors_init(struct optimal_env_priv *priv);
 void optimal_env_sensors_cleanup(struct optimal_env_priv *priv);
-int optimal_env_sensors_measure(struct optimal_env_priv *priv, int *temp,
-				int *humid, int *lux);
+int optimal_env_sensors_trigger(struct optimal_env_priv *priv);
+int optimal_env_sensors_read(struct optimal_env_priv *priv, int trigger_fault,
+			     int *temp, int *humid, int *lux);
 
 extern const struct hwmon_chip_info optimal_hwmon_chip_info;
 

@@ -1,18 +1,13 @@
 # Qt dashboard product path — local developer overrides only.
-# Product policy (features, init, VIRTUAL-RUNTIME) lives in optimal-qt-dashboard.conf.
-# Copy relevant lines into conf/local.conf after running:
+# Append these lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
-# Absolute path to the workspace root (the directory containing
-# meta-beaglebone-optimal* and qt-dashboard-app).
-# Inside the Docker builder this is always /workspace.
 BSPDIR ??= "/workspace"
 
 MACHINE    = "beaglebone-black-optimal-qt-dashboard"
 DISTRO     = "optimal-qt-dashboard"
+
 DL_DIR    ??= "/storage/shared/downloads"
 SSTATE_DIR ??= "/storage/shared/sstate"
 
-# Dev bring-up: keep console login simple until the Qt path is proven end-to-end.
-# Remove for a locked-down product image.
 EXTRA_IMAGE_FEATURES = "debug-tweaks"

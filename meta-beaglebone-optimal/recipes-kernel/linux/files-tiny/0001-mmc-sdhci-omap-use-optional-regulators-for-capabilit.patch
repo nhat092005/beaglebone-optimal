@@ -1,10 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: nhat092005 <minhnhat092005@gmail.com>
-Date: Tue, 9 Jun 2026 00:00:00 +0000
+Date: Sat, 4 Jul 2026 07:48:06 +0000
 Subject: [PATCH] mmc: sdhci-omap: use optional regulators for capability
  probing
-
-Upstream-Status: Pending [needs review for non-AM335x OMAP SDHCI users]
 
 The OMAP SDHCI capability probe checks pbias and vqmmc regulators to
 derive voltage capability bits. Some boards, including AM335x BeagleBone
@@ -15,13 +13,14 @@ devm_regulator_get_optional(). Use regulator_get_optional() in the
 capability helper too so missing optional supplies do not take the dummy
 regulator path and emit misleading boot warnings.
 
+Upstream-Status: Pending [needs review for non-AM335x OMAP SDHCI users]
 Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
 ---
  drivers/mmc/host/sdhci-omap.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/mmc/host/sdhci-omap.c b/drivers/mmc/host/sdhci-omap.c
-index 000000000000..000000000000 100644
+index 713ac3032766..5427e987bf0b 100644
 --- a/drivers/mmc/host/sdhci-omap.c
 +++ b/drivers/mmc/host/sdhci-omap.c
 @@ -945,7 +945,7 @@ static unsigned int sdhci_omap_regulator_get_caps(struct device *dev,
@@ -34,4 +33,5 @@ index 000000000000..000000000000 100644
  		return ~0U;
  
 -- 
-2.43.0
+2.34.1
+

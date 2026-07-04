@@ -15,6 +15,13 @@ tmp/
 qt-dashboard-app/oe-logs
 qt-dashboard-app/oe-workdir
 
+# devtool workspace source symlink (points into $YOCTO_BUILD_DIR/workspace/sources)
+u-boot-src
+
+# kernel-source symlink (points into tmp/work-shared/<machine>/kernel-source; devtool
+# modify is broken for this recipe, see conversation notes - edited/patched manually)
+linux-src
+
 # Local Docker config
 local.mk
 

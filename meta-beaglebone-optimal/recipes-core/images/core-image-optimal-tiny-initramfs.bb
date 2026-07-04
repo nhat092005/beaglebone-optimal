@@ -1,5 +1,10 @@
-SUMMARY = "Canonical tiny initramfs image"
-DESCRIPTION = "Phase 1 canonical tiny initramfs image for the BeagleBone Black tiny kernel boot path."
+SUMMARY = "Tiny initramfs image"
+DESCRIPTION = "Minimal Phase 1 initramfs for the BeagleBone Black tiny kernel boot path."
+
+LICENSE = "MIT"
+
+inherit core-image
+
 TINY_INIT_SOURCE = "${THISDIR}/files/init"
 
 IMAGE_FEATURES = ""
@@ -7,16 +12,12 @@ IMAGE_LINGUAS = ""
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_FSTYPES = "${INITRAMFS_FSTYPES}"
 
-LICENSE = "MIT"
-
 PACKAGE_INSTALL = " \
 	base-files \
 	base-passwd \
 	busybox \
 "
 ROOTFS_BOOTSTRAP_INSTALL = ""
-
-inherit core-image
 
 IMAGE_ROOTFS_SIZE = "8192"
 IMAGE_ROOTFS_EXTRA_SPACE = "0"

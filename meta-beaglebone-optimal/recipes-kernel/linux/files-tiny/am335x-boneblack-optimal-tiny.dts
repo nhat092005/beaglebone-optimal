@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Strict direction B Phase 2 board-minimal BeagleBone Black DT.
+ * Board-minimal BeagleBone Black DT.
  */
 /dts-v1/;
 
@@ -37,17 +37,17 @@
 };
 
 &am33xx_pinmux {
-	i2c0_pins: i2c0-pins {
-		pinctrl-single,pins = <
-			AM33XX_PADCONF(AM335X_PIN_I2C0_SDA, PIN_INPUT_PULLUP, MUX_MODE0)
-			AM33XX_PADCONF(AM335X_PIN_I2C0_SCL, PIN_INPUT_PULLUP, MUX_MODE0)
-		>;
-	};
-
 	uart0_pins: uart0-pins {
 		pinctrl-single,pins = <
 			AM33XX_PADCONF(AM335X_PIN_UART0_RXD, PIN_INPUT_PULLUP, MUX_MODE0)
 			AM33XX_PADCONF(AM335X_PIN_UART0_TXD, PIN_OUTPUT_PULLDOWN, MUX_MODE0)
+		>;
+	};
+
+	i2c0_pins: i2c0-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_I2C0_SDA, PIN_INPUT_PULLUP, MUX_MODE0)
+			AM33XX_PADCONF(AM335X_PIN_I2C0_SCL, PIN_INPUT_PULLUP, MUX_MODE0)
 		>;
 	};
 
@@ -64,6 +64,7 @@
 	};
 };
 
+// Enabled peripherals
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_pins>;
@@ -82,30 +83,6 @@
 };
 
 #include "../../tps65217.dtsi"
-
-&usb0_phy {
-	status = "disabled";
-};
-
-&usb1_phy {
-	status = "disabled";
-};
-
-&usb0 {
-	status = "disabled";
-};
-
-&usb1 {
-	status = "disabled";
-};
-
-&cppi41dma {
-	status = "disabled";
-};
-
-&i2c2 {
-	status = "disabled";
-};
 
 &tps {
 	interrupts = <7>;
@@ -175,6 +152,31 @@
 	no-1-8-v;
 };
 
+// Disabled peripherals (not used on tiny image)
+&usb0_phy {
+	status = "disabled";
+};
+
+&usb1_phy {
+	status = "disabled";
+};
+
+&usb0 {
+	status = "disabled";
+};
+
+&usb1 {
+	status = "disabled";
+};
+
+&cppi41dma {
+	status = "disabled";
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
 &aes {
 	status = "disabled";
 };
@@ -190,4 +192,3 @@
 &wkup_m3_ipc {
 	status = "disabled";
 };
-

@@ -44,7 +44,7 @@ static int optimal_env_thread(void *data)
 {
 	struct optimal_env_priv *priv = (struct optimal_env_priv *)data;
 	int temp = 0, humid = 0, lux = 0;
-	int fault_status;
+	int fault_status, trigger_fault;
 	u64 now_ms;
 	struct timespec64 ts;
 	int temp_alarm = 0, humid_alarm = 0, alarm, night;
@@ -57,8 +57,17 @@ static int optimal_env_thread(void *data)
 			WRITE_ONCE(priv->trigger_measure, false);
 			next_sensor_read = jiffies + HZ;
 
-			fault_status = optimal_env_sensors_measure(priv, &temp,
-								   &humid, &lux);
+			trigger_fault = optimal_env_sensors_trigger(priv);
+
+			wait_event_interruptible_timeout(priv->measure_wait,
+							 kthread_should_stop(),
+							 msecs_to_jiffies(BH1750_MEAS_TIME_MS));
+
+			if (kthread_should_stop())
+				break;
+
+			fault_status = optimal_env_sensors_read(priv, trigger_fault,
+								&temp, &humid, &lux);
 
 			ktime_get_real_ts64(&ts);
 			now_ms = (u64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;

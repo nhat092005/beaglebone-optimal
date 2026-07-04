@@ -1,10 +1,6 @@
 # Qt dashboard product path example.
 # Copy this file to conf/bblayers.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
-#
-# This scaffold expects an upstream meta-qt6 checkout at:
-#   ${TOPDIR}/../sources/meta-qt6
-# Add any additional upstream layers required by that checkout before building.
 
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
@@ -13,9 +9,9 @@ BBLAYERS ?= " \
   ${TOPDIR}/../sources/poky/meta \
   ${TOPDIR}/../sources/poky/meta-poky \
   ${TOPDIR}/../sources/poky/meta-yocto-bsp \
-  /workspace/meta-beaglebone-optimal \
-  /workspace/meta-beaglebone-optimal-product \
   ${TOPDIR}/../sources/meta-openembedded/meta-oe \
   ${TOPDIR}/../sources/meta-openembedded/meta-python \
   ${TOPDIR}/../sources/meta-qt6 \
+  /workspace/meta-beaglebone-optimal \
+  /workspace/meta-beaglebone-optimal-product \
 "

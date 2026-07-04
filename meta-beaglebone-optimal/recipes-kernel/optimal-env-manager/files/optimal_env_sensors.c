@@ -1,15 +1,27 @@
 #include "optimal_env_core.h"
 
+/* SHT3x protocol constants (Sensirion SHT3x datasheet, Table 8 / Section 4.3) */
+#define SHT3X_CMD_SINGLE_HIGH_MSB	0x24	/* Single Shot, High Repeatability */
+#define SHT3X_CMD_SINGLE_HIGH_LSB	0x00
+#define SHT3X_RESP_LEN			6	/* [T_MSB, T_LSB, T_CRC, H_MSB, H_LSB, H_CRC] */
+#define SHT3X_HUMID_OFFSET		3	/* byte offset of humidity block in response */
+#define SHT3X_CRC8_POLY			0x31	/* CRC-8/NRSC-5: x^8 + x^5 + x^4 + 1 */
+#define SHT3X_CRC8_INIT			0xFF
+
+/* BH1750 protocol constants (ROHM BH1750 datasheet, Table 4) */
+#define BH1750_CMD_ONETIME_H_RES	0x20	/* One Time H-Resolution Mode */
+#define BH1750_RESP_LEN			2
+
 static u8 sht3x_crc8(const u8 *data, size_t len)
 {
-	u8 crc = 0xFF;
+	u8 crc = SHT3X_CRC8_INIT;
 	size_t i, j;
 
 	for (i = 0; i < len; i++) {
 		crc ^= data[i];
 		for (j = 0; j < 8; j++) {
 			if (crc & 0x80)
-				crc = (crc << 1) ^ 0x31;
+				crc = (crc << 1) ^ SHT3X_CRC8_POLY;
 			else
 				crc <<= 1;
 		}
@@ -19,48 +31,88 @@ static u8 sht3x_crc8(const u8 *data, size_t len)
 
 static int sht3x_trigger(struct i2c_client *client)
 {
-	u8 cmd[2] = { 0x24, 0x00 };
-	int ret = i2c_master_send(client, cmd, 2);
+	u8 cmd[2] = { SHT3X_CMD_SINGLE_HIGH_MSB, SHT3X_CMD_SINGLE_HIGH_LSB };
+	struct i2c_msg msg = {
+		.addr  = client->addr,
+		.flags = client->flags & I2C_M_TEN,
+		.len   = sizeof(cmd),
+		.buf   = cmd,
+	};
+	int ret = i2c_transfer(client->adapter, &msg, 1);
 
+	if (ret == -ETIMEDOUT) {
+		dev_err(&client->dev, "SHT3x trigger timeout\n");
+		ret = i2c_recover_bus(client->adapter);
+		if (ret)
+			dev_err(&client->dev, "I2C bus recovery failed (%d)\n", ret);
+		return -ETIMEDOUT;
+	}
 	if (ret < 0)
 		return ret;
-	return (ret != 2) ? -EIO : 0;
+	return (ret != 1) ? -EIO : 0;
 }
 
 static int sht3x_read_result(struct i2c_client *client, int *temp, int *humid)
 {
-	u8 buf[6];
+	u8 buf[SHT3X_RESP_LEN];
 	int ret;
 	u16 raw_temp, raw_humid;
+	struct i2c_msg msg = {
+		.addr  = client->addr,
+		.flags = (client->flags & I2C_M_TEN) | I2C_M_RD,
+		.len   = sizeof(buf),
+		.buf   = buf,
+	};
 
-	ret = i2c_master_recv(client, buf, 6);
+	ret = i2c_transfer(client->adapter, &msg, 1);
+	if (ret == -ETIMEDOUT) {
+		dev_err(&client->dev, "SHT3x read timeout\n");
+		ret = i2c_recover_bus(client->adapter);
+		if (ret)
+			dev_err(&client->dev, "I2C bus recovery failed (%d)\n", ret);
+		return -ETIMEDOUT;
+	}
 	if (ret < 0)
 		return ret;
-	if (ret != 6)
+	if (ret != 1)
 		return -EIO;
 
 	if (sht3x_crc8(buf, 2) != buf[2]) {
 		dev_err(&client->dev, "SHT3x temp CRC mismatch\n");
 		return -EBADMSG;
 	}
-	if (sht3x_crc8(buf + 3, 2) != buf[5]) {
+	if (sht3x_crc8(buf + SHT3X_HUMID_OFFSET, 2) != buf[SHT3X_HUMID_OFFSET + 2]) {
 		dev_err(&client->dev, "SHT3x humid CRC mismatch\n");
 		return -EBADMSG;
 	}
 
-	raw_temp = (buf[0] << 8) | buf[1];
-	raw_humid = (buf[3] << 8) | buf[4];
-	*temp = ((21875 * (int)raw_temp) >> 13) - 45000;
+	raw_temp  = (buf[0] << 8) | buf[1];
+	raw_humid = (buf[SHT3X_HUMID_OFFSET] << 8) | buf[SHT3X_HUMID_OFFSET + 1];
+	/* T [mdegC] = -45000 + 175000 * raw / 65535 ≈ (21875 * raw >> 13) - 45000 */
+	*temp  = ((21875 * (int)raw_temp) >> 13) - 45000;
+	/* RH [m%] = 100000 * raw / 65535 ≈ (12500 * raw) >> 13 */
 	*humid = (12500 * (u32)raw_humid) >> 13;
 	return 0;
 }
 
 static int bh1750_trigger(struct i2c_client *client)
 {
-	/* One Time H-Resolution Mode: 1 lx resolution, ~120ms measurement */
-	u8 cmd = 0x20;
-	int ret = i2c_master_send(client, &cmd, 1);
+	u8 cmd = BH1750_CMD_ONETIME_H_RES;
+	struct i2c_msg msg = {
+		.addr  = client->addr,
+		.flags = client->flags & I2C_M_TEN,
+		.len   = 1,
+		.buf   = &cmd,
+	};
+	int ret = i2c_transfer(client->adapter, &msg, 1);
 
+	if (ret == -ETIMEDOUT) {
+		dev_err(&client->dev, "BH1750 trigger timeout\n");
+		ret = i2c_recover_bus(client->adapter);
+		if (ret)
+			dev_err(&client->dev, "I2C bus recovery failed (%d)\n", ret);
+		return -ETIMEDOUT;
+	}
 	if (ret < 0)
 		return ret;
 	return (ret != 1) ? -EIO : 0;
@@ -68,13 +120,26 @@ static int bh1750_trigger(struct i2c_client *client)
 
 static int bh1750_read_result(struct i2c_client *client, int *lux)
 {
-	u8 buf[2];
+	u8 buf[BH1750_RESP_LEN];
 	int ret;
+	struct i2c_msg msg = {
+		.addr  = client->addr,
+		.flags = (client->flags & I2C_M_TEN) | I2C_M_RD,
+		.len   = sizeof(buf),
+		.buf   = buf,
+	};
 
-	ret = i2c_master_recv(client, buf, 2);
+	ret = i2c_transfer(client->adapter, &msg, 1);
+	if (ret == -ETIMEDOUT) {
+		dev_err(&client->dev, "BH1750 read timeout\n");
+		ret = i2c_recover_bus(client->adapter);
+		if (ret)
+			dev_err(&client->dev, "I2C bus recovery failed (%d)\n", ret);
+		return -ETIMEDOUT;
+	}
 	if (ret < 0)
 		return ret;
-	if (ret != 2)
+	if (ret != 1)
 		return -EIO;
 
 	/* H-Resolution mode: lux = raw * 10 / 12 (0.83 lx/count) */
@@ -83,34 +148,38 @@ static int bh1750_read_result(struct i2c_client *client, int *lux)
 }
 
 /*
- * Triggers both sensors, waits 180ms for both to complete (SHT3x needs ~15ms,
- * BH1750 needs up to 180ms (datasheet max)), then reads both results.
- * Returns fault bitmask: bit 0 = SHT3x fault, bit 1 = BH1750 fault.
- * Output values are 0 for any faulted sensor.
+ * Fire both sensors. Returns fault bitmask: bit 0 = SHT3x, bit 1 = BH1750.
+ * Caller must wait >= 180ms before calling optimal_env_sensors_read().
  */
-int optimal_env_sensors_measure(struct optimal_env_priv *priv, int *temp,
-				int *humid, int *lux)
+int optimal_env_sensors_trigger(struct optimal_env_priv *priv)
 {
 	int fault = 0;
-	int t = 0, h = 0, l = 0;
-	int sht_ok = 0, bh_ok = 0;
 
-	if (priv->sht3x_client && sht3x_trigger(priv->sht3x_client) == 0)
-		sht_ok = 1;
-	else
+	if (priv->sht3x_client && sht3x_trigger(priv->sht3x_client) != 0)
 		fault |= 1;
 
-	if (priv->bh1750_client && bh1750_trigger(priv->bh1750_client) == 0)
-		bh_ok = 1;
-	else
+	if (priv->bh1750_client && bh1750_trigger(priv->bh1750_client) != 0)
 		fault |= 2;
 
-	msleep(180);
+	return fault;
+}
 
-	if (sht_ok && sht3x_read_result(priv->sht3x_client, &t, &h) < 0)
+/*
+ * Read results from sensors that were successfully triggered.
+ * trigger_fault: bitmask from optimal_env_sensors_trigger() indicating which
+ * sensors failed to trigger and should be skipped.
+ * Returns fault bitmask (union of trigger and read failures).
+ */
+int optimal_env_sensors_read(struct optimal_env_priv *priv, int trigger_fault,
+			     int *temp, int *humid, int *lux)
+{
+	int fault = trigger_fault;
+	int t = 0, h = 0, l = 0;
+
+	if (!(fault & 1) && sht3x_read_result(priv->sht3x_client, &t, &h) < 0)
 		fault |= 1;
 
-	if (bh_ok && bh1750_read_result(priv->bh1750_client, &l) < 0)
+	if (!(fault & 2) && bh1750_read_result(priv->bh1750_client, &l) < 0)
 		fault |= 2;
 
 	*temp = t;

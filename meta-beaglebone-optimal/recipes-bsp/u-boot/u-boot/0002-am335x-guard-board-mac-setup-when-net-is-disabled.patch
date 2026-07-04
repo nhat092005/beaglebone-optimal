@@ -1,12 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 07:57:34 +0000
+Subject: [PATCH 2/2] am335x: guard board MAC setup when net is disabled
+
+The tiny BeagleBone Optimal boot contract disables U-Boot networking. Keep
+the AM335x board late init path available, but skip the Ethernet MAC
+environment setup when the network stack is not built.
+
 Upstream-Status: Inappropriate [project-specific BeagleBone Optimal Tiny boot contract]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ board/ti/am335x/board.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-The tiny BeagleBone Optimal boot contract disables U-Boot networking. Keep the
-AM335x board late init path available, but skip the Ethernet MAC environment
-setup when the network stack is not built.
-
+diff --git a/board/ti/am335x/board.c b/board/ti/am335x/board.c
+index 34f987c2b72..656fc58fd8d 100644
 --- a/board/ti/am335x/board.c
 +++ b/board/ti/am335x/board.c
-@@ -799,7 +799,7 @@
+@@ -799,7 +799,7 @@ int board_init(void)
  int board_late_init(void)
  {
  	struct udevice *dev;
@@ -15,7 +26,7 @@ setup when the network stack is not built.
  	uint8_t mac_addr[6];
  	uint32_t mac_hi, mac_lo;
  #endif
-@@ -848,7 +848,7 @@
+@@ -848,7 +848,7 @@ int board_late_init(void)
  		env_set("boot_fit", "1");
  #endif
  
@@ -24,3 +35,6 @@ setup when the network stack is not built.
  	/* try reading mac address from efuse */
  	mac_lo = readl(&cdev->macid0l);
  	mac_hi = readl(&cdev->macid0h);
+-- 
+2.34.1
+

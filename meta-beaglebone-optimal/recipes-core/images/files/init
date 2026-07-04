@@ -9,6 +9,10 @@ mount -t devtmpfs devtmpfs /dev
 mkdir -p /dev/pts
 mount -t devpts devpts /dev/pts
 
+trap 'reboot -f'   TERM
+trap 'halt -f'     USR1
+trap 'poweroff -f' USR2
+
 while true; do
 	setsid cttyhack sh
 	echo "Console sh exited with $?, respawning..."
