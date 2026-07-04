@@ -16,6 +16,7 @@ python __anonymous() {
     filespath_entries = []
     src_uri_entries = []
     enabled_dts_files = []
+    seen_dts_files = set()
     for feature_key in feature_keys:
         prefix = "LINUX_YOCTO_TINY_FEATURE_%s" % feature_key
         enabled = d.getVar(prefix + "_ENABLED")
@@ -30,6 +31,9 @@ python __anonymous() {
             bb.fatal("%s_DIR must be set" % prefix)
         if not dts_file:
             bb.fatal("%s_DTS must be set" % prefix)
+        # CFG/SCC may legitimately be empty (feature needs no kernel config
+        # fragment), but must still be declared so a missing catalog entry
+        # fails loudly instead of silently acting as "no fragment".
         if cfg_file is None:
             bb.fatal("%s_CFG must be set explicitly, even if empty" % prefix)
         if scc_file is None:
@@ -52,9 +56,12 @@ python __anonymous() {
             if not os.path.exists(scc_path):
                 bb.fatal("Missing declared SCC file: %s" % scc_path)
 
-        filespath_entries.extend([dts_dir, cfg_dir])
-
         if enabled == "1":
+            if dts_file in seen_dts_files:
+                bb.fatal("Duplicate DTS file %s declared by feature %s" % (dts_file, feature_key))
+            seen_dts_files.add(dts_file)
+
+            filespath_entries.extend([dts_dir, cfg_dir])
             src_uri_entries.append(" file://%s" % dts_file)
             enabled_dts_files.append(dts_file)
             if cfg_file:

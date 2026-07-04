@@ -1,9 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: nhat092005 <minhnhat092005@gmail.com>
-Date: Wed, 10 Jun 2026 09:35:00 +0700
+Date: Sat, 4 Jul 2026 07:48:06 +0000
 Subject: [PATCH] driver core: demote fw_devlink sync-state link failures
-
-Upstream-Status: Pending [needs review for generic fw_devlink users]
 
 fw_devlink can create inferred SYNC_STATE_ONLY links to keep supplier
 sync_state() callbacks ordered with consumers that may appear later. These
@@ -17,16 +15,17 @@ dev_err(), even though the attempted link only affects sync_state() behavior.
 Demote failures for SYNC_STATE_ONLY links to dev_dbg() while preserving the
 existing dev_err() for real device-link failures.
 
+Upstream-Status: Pending [needs review for generic fw_devlink users]
 Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
 ---
  drivers/base/core.c | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/base/core.c b/drivers/base/core.c
-index 000000000000..000000000000 100644
+index a192ce5bb8f9..2aea409f6698 100644
 --- a/drivers/base/core.c
 +++ b/drivers/base/core.c
-@@ -2120,7 +2120,12 @@ static int fw_devlink_create_devlink(struct device *con,
+@@ -2121,7 +2121,12 @@ static int fw_devlink_create_devlink(struct device *con,
  		}
  
  		if (con != sup_dev && !device_link_add(con, sup_dev, flags)) {
@@ -41,4 +40,5 @@ index 000000000000..000000000000 100644
  			ret = -EINVAL;
  		}
 -- 
-2.43.0
+2.34.1
+
