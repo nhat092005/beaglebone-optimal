@@ -12,9 +12,6 @@
 #define BH1750_CMD_ONETIME_H_RES	0x20	/* One Time H-Resolution Mode */
 #define BH1750_RESP_LEN			2
 
-/* I2C per-transaction timeout */
-#define SENSOR_I2C_TIMEOUT_MS		200
-
 static u8 sht3x_crc8(const u8 *data, size_t len)
 {
 	u8 crc = SHT3X_CRC8_INIT;
@@ -41,8 +38,7 @@ static int sht3x_trigger(struct i2c_client *client)
 		.len   = sizeof(cmd),
 		.buf   = cmd,
 	};
-	int ret = i2c_transfer_timeout(client->adapter, &msg, 1,
-				       msecs_to_jiffies(SENSOR_I2C_TIMEOUT_MS));
+	int ret = i2c_transfer(client->adapter, &msg, 1);
 
 	if (ret == -ETIMEDOUT) {
 		dev_err(&client->dev, "SHT3x trigger timeout\n");
@@ -68,8 +64,7 @@ static int sht3x_read_result(struct i2c_client *client, int *temp, int *humid)
 		.buf   = buf,
 	};
 
-	ret = i2c_transfer_timeout(client->adapter, &msg, 1,
-				   msecs_to_jiffies(SENSOR_I2C_TIMEOUT_MS));
+	ret = i2c_transfer(client->adapter, &msg, 1);
 	if (ret == -ETIMEDOUT) {
 		dev_err(&client->dev, "SHT3x read timeout\n");
 		ret = i2c_recover_bus(client->adapter);
@@ -109,8 +104,7 @@ static int bh1750_trigger(struct i2c_client *client)
 		.len   = 1,
 		.buf   = &cmd,
 	};
-	int ret = i2c_transfer_timeout(client->adapter, &msg, 1,
-				       msecs_to_jiffies(SENSOR_I2C_TIMEOUT_MS));
+	int ret = i2c_transfer(client->adapter, &msg, 1);
 
 	if (ret == -ETIMEDOUT) {
 		dev_err(&client->dev, "BH1750 trigger timeout\n");
@@ -135,8 +129,7 @@ static int bh1750_read_result(struct i2c_client *client, int *lux)
 		.buf   = buf,
 	};
 
-	ret = i2c_transfer_timeout(client->adapter, &msg, 1,
-				   msecs_to_jiffies(SENSOR_I2C_TIMEOUT_MS));
+	ret = i2c_transfer(client->adapter, &msg, 1);
 	if (ret == -ETIMEDOUT) {
 		dev_err(&client->dev, "BH1750 read timeout\n");
 		ret = i2c_recover_bus(client->adapter);
