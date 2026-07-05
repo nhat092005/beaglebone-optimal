@@ -31,7 +31,10 @@ void logToKmsg(const char *msg)
 
 int main(int argc, char *argv[])
 {
+	logToKmsg("qt-dashboard: process start");
+
 	QGuiApplication app(argc, argv);
+	logToKmsg("qt-dashboard: QGuiApplication ready");
 
 	const int boldFontId =
 		QFontDatabase::addApplicationFont(":/fonts/DejaVuSans-Bold.ttf");
@@ -43,8 +46,10 @@ int main(int argc, char *argv[])
 		if (!families.isEmpty())
 			app.setFont(QFont(families.constFirst()));
 	}
+	logToKmsg("qt-dashboard: font loaded");
 
 	SensorBackend sensorBackend;
+	logToKmsg("qt-dashboard: sensor backend ready");
 
 	QQmlApplicationEngine engine;
 	engine.rootContext()->setContextProperty(
@@ -55,6 +60,7 @@ int main(int argc, char *argv[])
 		Qt::QueuedConnection);
 
 	engine.load(QUrl(QStringLiteral("qrc:/QtDashboard/qml/Main.qml")));
+	logToKmsg("qt-dashboard: qml engine loaded");
 
 	if (!engine.rootObjects().isEmpty()) {
 		if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst())) {
@@ -65,7 +71,11 @@ int main(int argc, char *argv[])
 				logged = true;
 				logToKmsg("qt-dashboard: first frame rendered");
 			});
+		} else {
+			logToKmsg("qt-dashboard: root object is not a QQuickWindow");
 		}
+	} else {
+		logToKmsg("qt-dashboard: no root object created");
 	}
 
 	return QGuiApplication::exec();

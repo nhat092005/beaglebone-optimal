@@ -1,6 +1,7 @@
 PACKAGECONFIG:remove:beaglebone-black-optimal-qt-dashboard = " \
 	accessibility \
 	dbus \
+	fontconfig \
 	glib \
 	icu \
 	libinput \
