@@ -590,7 +590,7 @@ Nhấn `Ctrl-C` để dừng sau khi thấy dashboard lên màn hình.
 
 ### Cách hoạt động
 
-`scripts/boot-capture.sh` chạy pipeline:
+`scripts/boot-capture/boot-capture.sh` chạy pipeline:
 
 ```text
 cat /dev/ttyUSB0 | boot-capture-timestamp.pl /dev/ttyUSB0 | tee tmp/boot-captures/latest.log

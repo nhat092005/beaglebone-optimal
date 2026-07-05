@@ -214,7 +214,7 @@ doctor:
 	@bash scripts/docker/doctor.sh
 
 boot-capture:
-	@bash scripts/boot-capture.sh
+	@bash scripts/boot-capture/boot-capture.sh
 
 yocto-init:
 	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && printf "%s\n" "yocto-init: ok" "Baseline local.conf example: /workspace/yocto/conf/local.conf.example" "Baseline bblayers example: /workspace/yocto/conf/bblayers.conf.example" "Tiny local.conf example: /workspace/yocto/conf/local.conf.tiny.example" "Tiny bblayers example: /workspace/yocto/conf/bblayers.conf.tiny.example" "Qt dashboard local.conf example: /workspace/yocto/conf/local.conf.qt-dashboard.example" "Qt dashboard bblayers example: /workspace/yocto/conf/bblayers.conf.qt-dashboard.example" "Next: manually apply the example files into $$YOCTO_BUILD_DIR/conf/ before building."'\'''

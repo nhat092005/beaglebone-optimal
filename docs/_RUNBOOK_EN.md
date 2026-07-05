@@ -592,7 +592,7 @@ Press `Ctrl-C` to stop once the dashboard appears on screen.
 
 ### How it works
 
-`scripts/boot-capture.sh` runs this pipeline:
+`scripts/boot-capture/boot-capture.sh` runs this pipeline:
 
 ```text
 cat /dev/ttyUSB0 | boot-capture-timestamp.pl /dev/ttyUSB0 | tee tmp/boot-captures/latest.log
