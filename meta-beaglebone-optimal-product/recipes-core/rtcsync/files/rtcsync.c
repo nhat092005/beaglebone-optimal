@@ -1,11 +1,6 @@
 /*
- * rtcsync — set system clock from RTC at boot, bypassing musl's settimeofday()
- * wrapper which routes through clock_settime() requiring CONFIG_POSIX_TIMERS.
- * This calls sys_settimeofday directly via syscall(2), which the kernel exposes
- * unconditionally on ARM32 (syscall #78, kernel/time/time.c).
+ * rtcsync — set system clock from RTC at boot.
  */
-#include <asm/unistd.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <linux/rtc.h>
 #include <stdio.h>
@@ -14,14 +9,22 @@
 #include <time.h>
 #include <unistd.h>
 
-/* musl does not expose SYS_settimeofday; use the kernel ABI name instead */
-#ifndef SYS_settimeofday
-#define SYS_settimeofday __NR_settimeofday
-#endif
+/* /dev/rtc0 may not be ready yet if I2C probe is deferred past sysinit;
+ * retry for up to 5s before giving up. */
+#define RTC_OPEN_RETRIES 50
+#define RTC_OPEN_RETRY_INTERVAL_NS (100L * 1000 * 1000)
 
 int main(void)
 {
-	int fd = open("/dev/rtc0", O_RDONLY);
+	int fd = -1;
+
+	for (int i = 0; i < RTC_OPEN_RETRIES; i++) {
+		fd = open("/dev/rtc0", O_RDONLY);
+		if (fd >= 0)
+			break;
+		struct timespec wait = { 0, RTC_OPEN_RETRY_INTERVAL_NS };
+		nanosleep(&wait, NULL);
+	}
 	if (fd < 0) {
 		perror("rtcsync: open /dev/rtc0");
 		return 1;
@@ -62,9 +65,7 @@ int main(void)
 	}
 
 	struct timeval tv = { t, 0 };
-	long ret = syscall(SYS_settimeofday, &tv, NULL);
-	if (ret < 0) {
-		errno = -ret;
+	if (settimeofday(&tv, NULL) < 0) {
 		perror("rtcsync: settimeofday");
 		return 1;
 	}

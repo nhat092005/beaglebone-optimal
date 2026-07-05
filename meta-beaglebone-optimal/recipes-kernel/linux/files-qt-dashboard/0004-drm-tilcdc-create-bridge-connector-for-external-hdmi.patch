@@ -1,7 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nhat092005 <minhnhat092005@gmail.com>
+Date: Sat, 4 Jul 2026 08:46:04 +0000
+Subject: [PATCH 4/7] drm/tilcdc: create bridge connector for external HDMI
+ bridge
+
+Now that the bridge is attached with DRM_BRIDGE_ATTACH_NO_CONNECTOR, it
+no longer creates its own connector, so tilcdc_encoder_find_connector()
+can no longer find one. Create a drm_connector explicitly via
+drm_bridge_connector_init() and attach it to the external encoder
+instead.
+
 Upstream-Status: Inappropriate [product-specific bridge connector creation fix for BeagleBone Black Rev D Qt dashboard]
+Signed-off-by: nhat092005 <minhnhat092005@gmail.com>
+---
+ drivers/gpu/drm/tilcdc/tilcdc_external.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/gpu/drm/tilcdc/tilcdc_external.c b/drivers/gpu/drm/tilcdc/tilcdc_external.c
-index 90aa482..a22d00b 100644
+index 90aa482cfca9..a22d00b93278 100644
 --- a/drivers/gpu/drm/tilcdc/tilcdc_external.c
 +++ b/drivers/gpu/drm/tilcdc/tilcdc_external.c
 @@ -9,6 +9,7 @@
@@ -37,3 +53,6 @@ index 90aa482..a22d00b 100644
  
  	return 0;
  }
+-- 
+2.34.1
+

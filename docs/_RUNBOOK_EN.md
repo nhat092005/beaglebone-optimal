@@ -573,6 +573,89 @@ Safety:
 
 This is an intentional configuration choice for the tiny profile, not a defect.
 
+## Boot timing capture (`make boot-capture`)
+
+Applies to the `beaglebone-black-optimal-qt-dashboard` product path. This
+tool measures real boot timing (U-Boot → kernel → init → HDMI content on
+screen) by capturing the serial log with accurate host-side timestamps,
+instead of eyeballing minicom.
+
+### Run
+
+```bash
+make boot-capture
+# defaults: BOOT_SERIAL_DEVICE=/dev/ttyUSB0, BOOT_SERIAL_BAUD=115200
+# log saved to: tmp/boot-captures/latest.log
+```
+
+Press `Ctrl-C` to stop once the dashboard appears on screen.
+
+### How it works
+
+`scripts/boot-capture/boot-capture.sh` runs this pipeline:
+
+```text
+cat /dev/ttyUSB0 | boot-capture-timestamp.pl /dev/ttyUSB0 | tee tmp/boot-captures/latest.log
+```
+
+`boot-capture-timestamp.pl` stamps `epoch.microsecond` at the start of every
+line, including lines with no trailing `\n` (e.g. a shell prompt) — using a
+buffer plus a 100ms idle-timeout flush, always stamped with the time the
+last byte actually arrived, never the time the idle timeout fired.
+
+The script also answers the `ESC[6n` (cursor-position query) that
+`/etc/profile`'s `resize()` sends on the first serial login — without an
+answer, `read -t 2` has to wait out the full 2s timeout, artificially
+inflating the measurement by ~2-3s versus real interactive use (a real
+terminal such as minicom answers instantly, so this delay never happens
+there).
+
+### IMPORTANT: always read the log file, never the live screen
+
+`resize()` sends a cursor-move escape (`ESC[999;999H`) straight to serial.
+If you watch or copy directly from the terminal running `make boot-capture`,
+your terminal emulator may execute that escape and answer it itself,
+scrambling the display (text glued together, stray sequences like
+`^[[36;153R`). This is not a tool bug — always verify with:
+
+```bash
+cat -v tmp/boot-captures/latest.log | tail -20
+```
+
+### "HDMI has content" marker
+
+`qt-dashboard-app/src/main.cpp` hooks `QQuickWindow::frameSwapped` (first
+frame only) and writes one line through `/dev/kmsg` (qt-dashboard's stdio is
+null per `inittab`) at priority `<3>` (KERN_ERR — required, since `quiet` in
+`extlinux.conf` sets `console_loglevel=4` and priority `4` would be silently
+dropped). The kernel prefixes it with `[  N.NNNNNN]` automatically (thanks to
+`CONFIG_PRINTK_TIME=y`), so no userspace clock read is needed. The line
+looks like:
+
+```text
+[    4.689948] qt-dashboard: first frame rendered
+```
+
+This is the most accurate software-only marker achievable without extra
+measurement hardware. The remaining gap (~16-30ms, from the HDMI scan-out
+cycle plus physical panel latency) can only be measured with a
+camera/photodiode — software cannot close it.
+
+### Reading the result
+
+Grep the key lines (`cat -v ... | grep -E "Starting kernel|sh -l|first frame"`),
+take each line's epoch timestamp, and subtract:
+
+| Phase | Sample measurement |
+|---|---|
+| SPL start → `Starting kernel...` (U-Boot) | ~1.05s |
+| `Starting kernel...` → shell prompt (kernel + init) | ~1.33s |
+| Shell prompt → `first frame rendered` (Qt app) | ~3.90s |
+
+In this sample run, **the Qt app accounted for ~62% of total boot time** —
+that is where to optimize first if screen-on time needs to shrink, not
+U-Boot/kernel.
+
 ## Runtime contract
 
 The current Compose service name is `builder`.

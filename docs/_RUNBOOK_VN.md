@@ -571,6 +571,87 @@ An toàn:
 
 Đây là lựa chọn cấu hình cố ý cho tiny profile, không phải lỗi.
 
+## Đo thời gian boot (`make boot-capture`)
+
+Áp dụng cho product path `beaglebone-black-optimal-qt-dashboard`. Công cụ này
+đo thời gian boot thật (U-Boot → kernel → init → màn hình HDMI có nội dung)
+bằng cách bắt log serial với timestamp chính xác gắn ở host, không phải đọc
+bằng mắt trên minicom.
+
+### Chạy
+
+```bash
+make boot-capture
+# mặc định: BOOT_SERIAL_DEVICE=/dev/ttyUSB0, BOOT_SERIAL_BAUD=115200
+# log lưu tại: tmp/boot-captures/latest.log
+```
+
+Nhấn `Ctrl-C` để dừng sau khi thấy dashboard lên màn hình.
+
+### Cách hoạt động
+
+`scripts/boot-capture/boot-capture.sh` chạy pipeline:
+
+```text
+cat /dev/ttyUSB0 | boot-capture-timestamp.pl /dev/ttyUSB0 | tee tmp/boot-captures/latest.log
+```
+
+`boot-capture-timestamp.pl` gắn timestamp `epoch.microsecond` vào **đầu mỗi
+dòng**, kể cả dòng không kết thúc bằng `\n` (ví dụ shell prompt) — dùng
+buffer + idle-timeout 100ms, và luôn stamp bằng **thời điểm byte cuối cùng
+thực sự tới**, không phải lúc timeout hết hạn.
+
+Script còn tự trả lời câu hỏi `ESC[6n` (cursor-position query) mà
+`/etc/profile`'s `resize()` gửi ra lúc login lần đầu trên serial console —
+nếu không trả lời, `read -t 2` phải chờ hết 2 giây timeout, làm số đo bị
+thổi phồng giả tạo ~2-3s so với trải nghiệm thật (dùng terminal thật như
+minicom thì không có delay này vì terminal tự trả lời tức thì).
+
+### QUAN TRỌNG: luôn đọc file log, không đọc màn hình live
+
+`resize()` gửi lệnh di chuyển con trỏ (`ESC[999;999H`) ra thẳng serial.
+Nếu bạn nhìn/copy trực tiếp trên terminal đang chạy `make boot-capture`,
+terminal của bạn có thể tự thực thi lệnh đó và tự trả lời, làm màn hình
+hiển thị bị rối (chữ dính vào nhau, ký tự lạ như `^[[36;153R`). Đây không
+phải lỗi của tool — luôn kiểm tra bằng:
+
+```bash
+cat -v tmp/boot-captures/latest.log | tail -20
+```
+
+### Mốc "màn hình HDMI có nội dung"
+
+`qt-dashboard-app/src/main.cpp` hook vào `QQuickWindow::frameSwapped` (frame
+đầu tiên), ghi một dòng qua `/dev/kmsg` (vì stdio của `qt-dashboard` bị null
+theo `inittab`) với priority `<3>` (KERN_ERR — bắt buộc, vì cờ `quiet` trong
+`extlinux.conf` set `console_loglevel=4`, priority `4` sẽ bị nuốt câm lặng).
+Kernel tự gắn tiền tố `[  N.NNNNNN]` (nhờ `CONFIG_PRINTK_TIME=y`) nên không
+cần code tự đọc đồng hồ. Dòng log sẽ là:
+
+```text
+[    4.689948] qt-dashboard: first frame rendered
+```
+
+Đây là marker phần mềm chính xác nhất có thể đạt được mà không cần thêm
+phần cứng đo — sai số còn lại (~16-30ms, từ chu kỳ scan-out HDMI + độ trễ
+màn hình vật lý) chỉ đo được bằng camera/photodiode, không thể khắc phục
+bằng phần mềm.
+
+### Đọc kết quả
+
+Grep các mốc chính trong log (`cat -v ... | grep -E "Starting kernel|sh -l|first frame"`),
+lấy timestamp epoch của từng dòng rồi trừ cho nhau:
+
+| Giai đoạn | Ví dụ đo được |
+|---|---|
+| SPL start → `Starting kernel...` (U-Boot) | ~1.05s |
+| `Starting kernel...` → shell prompt (kernel + init) | ~1.33s |
+| Shell prompt → `first frame rendered` (Qt app) | ~3.90s |
+
+Trong lần đo mẫu này, **Qt app chiếm ~62% tổng thời gian boot** — đây là nơi
+nên tối ưu trước nếu cần giảm thời gian tới lúc màn hình sáng, không phải
+U-Boot/kernel.
+
 ## Runtime contract
 
 Compose service hiện tại tên là `builder`.

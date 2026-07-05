@@ -33,6 +33,9 @@
 		led-names = "alarm0", "alarm1";
 		status = "okay";
 	};
+
+	/* Delete standard board LEDs to allow clean custom GPIO_LEDS feature overlay */
+	/delete-node/ leds;
 };
 
 &am33xx_pinmux {
@@ -42,9 +45,9 @@
 			AM33XX_PADCONF(AM335X_PIN_UART0_RTSN, PIN_OUTPUT_PULLUP, MUX_MODE7)
 		>;
 	};
-
 };
 
+/* HDMI display pipeline: TFP410 off, ITE IT66122 bridge on */
 &tda19988 {
 	status = "disabled";
 };
@@ -98,6 +101,12 @@
 	};
 };
 
+/* HDMI Audio codec mapping for Rev D (ITE IT66122 transmitter) */
+&{/sound/simple-audio-card,codec} {
+	sound-dai = <&it66122>;
+};
+
+/* Disable unused peripherals for boot optimization */
 &tps {
 	backlight {
 		compatible = "ti,tps65217-bl";
@@ -105,12 +114,6 @@
 	};
 };
 
-/* HDMI Audio codec mapping for Rev D (ITE IT66122 transmitter) */
-&{/sound/simple-audio-card,codec} {
-	sound-dai = <&it66122>;
-};
-
-/* Disable unused peripherals for boot optimization */
 &{/sound} {
 	status = "disabled";
 };
@@ -135,16 +138,6 @@
 	status = "disabled"; /* sham (SHA crypt engine) */
 };
 
-/* Delete standard board LEDs to allow clean custom GPIO_LEDS feature overlay */
-/ {
-	/delete-node/ leds;
-};
-
 &mmc1 {
 	cd-debounce-delay-ms = <0>;
 };
-
-
-
-
-

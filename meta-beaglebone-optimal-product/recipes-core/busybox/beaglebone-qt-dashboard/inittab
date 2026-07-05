@@ -9,7 +9,7 @@
 ::sysinit:/sbin/rtcsync
 
 # Spawn login shell on the debug serial console
-ttyS0::respawn:/usr/bin/shell-timing.sh
+ttyS0::respawn:/bin/sh -l
 
 # Spawn Qt Dashboard kiosk app on /dev/null to avoid serial port conflict
 null::respawn:/usr/bin/qt-dashboard.sh
