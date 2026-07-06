@@ -123,19 +123,20 @@ make doctor
 #### Option B: Tiny Path (core-image-optimal-tiny-initramfs)
 
 1. Follow the baseline clone steps above to fetch `poky`.
-2. Initialize and apply the tiny configuration:
+2. Add an upstream `meta-swupdate` checkout beside `poky` under `"$YOCTO_SOURCES_DIR"`.
+3. Initialize and apply the tiny configuration:
    ```bash
    make yocto-init
    cp yocto/conf/bblayers.conf.tiny.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
    cat yocto/conf/local.conf.tiny.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
    ```
-3. Build the tiny image:
+4. Build the tiny image:
    ```bash
    make yocto-parse
    make yocto-dry-run YOCTO_IMAGE=core-image-optimal-tiny-initramfs
    make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
    ```
-4. Flash the single FAT boot partition:
+5. Flash the single FAT boot partition:
    ```bash
    make sd-flash-tiny SDCARD=/dev/sdX
    ```
@@ -143,7 +144,7 @@ make doctor
 #### Option C: Qt Dashboard Product Path
 
 1. Keep the existing baseline and tiny BSP flow intact.
-2. Add an upstream `meta-qt6` checkout beside `poky` under `"$YOCTO_SOURCES_DIR"`.
+2. Add upstream `meta-openembedded`, `meta-qt6`, and `meta-swupdate` checkouts beside `poky` under `"$YOCTO_SOURCES_DIR"`.
 3. Initialize the build directory and apply the product path examples:
    ```bash
    make yocto-init

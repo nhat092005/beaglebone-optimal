@@ -119,6 +119,8 @@ Ghi chú:
 
 ## Flow Tiny
 
+Trước khi build, thêm `meta-swupdate` ngang cấp với `poky` trong `"$YOCTO_SOURCES_DIR"`.
+
 Áp file mẫu tiny:
 
 ```bash
@@ -145,8 +147,8 @@ Ghi chú:
 
 ## Flow Qt Dashboard
 
-Trước khi build, thêm `meta-qt6` ngang cấp với `poky` trong
-`"$YOCTO_SOURCES_DIR"`.
+Trước khi build, thêm `meta-openembedded`, `meta-qt6`, và `meta-swupdate`
+ngang cấp với `poky` trong `"$YOCTO_SOURCES_DIR"`.
 
 Áp file mẫu Qt dashboard:
 
@@ -206,6 +208,9 @@ cat yocto/conf/local.conf.qt-dashboard-dev.example >> "$YOCTO_BUILD_DIR/conf/loc
 make yocto-build YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev YOCTO_IMAGE=core-image-optimal-qt-dashboard
 make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev SDCARD=/dev/sdX
 ```
+
+Flow dev này dùng cùng `bblayers.conf.qt-dashboard.example`, nên cũng cần
+`meta-openembedded`, `meta-qt6`, và `meta-swupdate` nằm ngang cấp với `poky`.
 
 Vòng lặp dev:
 

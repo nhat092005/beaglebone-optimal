@@ -119,6 +119,8 @@ Notes:
 
 ## Tiny Flow
 
+Add `meta-swupdate` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
+
 Apply the tiny examples:
 
 ```bash
@@ -145,7 +147,7 @@ Notes:
 
 ## Qt Dashboard Flow
 
-Add `meta-qt6` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
+Add `meta-openembedded`, `meta-qt6`, and `meta-swupdate` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
 
 Apply the Qt dashboard examples:
 
@@ -206,6 +208,8 @@ cat yocto/conf/local.conf.qt-dashboard-dev.example >> "$YOCTO_BUILD_DIR/conf/loc
 make yocto-build YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev YOCTO_IMAGE=core-image-optimal-qt-dashboard
 make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev SDCARD=/dev/sdX
 ```
+
+This dev flow uses the same `bblayers.conf.qt-dashboard.example`, so it also requires `meta-openembedded`, `meta-qt6`, and `meta-swupdate` beside `poky`.
 
 Dev loop:
 
