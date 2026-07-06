@@ -1,0 +1,30 @@
+software =
+{
+	version = "@@PV@@";
+	description = "rootfs A/B update bundle";
+
+	hardware-compatibility: [ "1.0" ];
+
+	stable = {
+		part2: {
+			images: (
+				{
+					filename = "@@ROOTFS_IMG@@";
+					device = "/dev/mmcblk0p2";
+					type = "raw";
+					sha256 = "$swupdate_get_sha256(@@ROOTFS_IMG@@)";
+				}
+			);
+		};
+		part3: {
+			images: (
+				{
+					filename = "@@ROOTFS_IMG@@";
+					device = "/dev/mmcblk0p3";
+					type = "raw";
+					sha256 = "$swupdate_get_sha256(@@ROOTFS_IMG@@)";
+				}
+			);
+		};
+	};
+};

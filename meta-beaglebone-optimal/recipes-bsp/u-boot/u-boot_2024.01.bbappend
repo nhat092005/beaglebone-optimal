@@ -18,3 +18,14 @@ SRC_URI:append:beaglebone-black-optimal-qt-dashboard-dev = " file://dev-netboot.
 do_configure:append:beaglebone-black-optimal-qt-dashboard-dev() {
     ${S}/scripts/kconfig/merge_config.sh -m ${B}/.config ${WORKDIR}/dev-netboot.cfg ${WORKDIR}/usb-gadget.cfg
 }
+
+# A/B repartition + bootcount failsafe, qt-dashboard product machine only.
+SRC_URI:append:beaglebone-black-optimal-qt-dashboard = " \
+	file://bootcount.cfg \
+	file://bootcount.env \
+"
+
+do_configure:append:beaglebone-black-optimal-qt-dashboard() {
+    install -m 0644 ${WORKDIR}/bootcount.env ${S}/board/ti/am335x/bootcount.env
+    ${S}/scripts/kconfig/merge_config.sh -m ${B}/.config ${WORKDIR}/bootcount.cfg
+}
