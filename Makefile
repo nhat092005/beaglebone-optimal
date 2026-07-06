@@ -77,6 +77,9 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
 .PHONY: patch-check patch-apply patch-reword patch-finalize patch-abort
 .PHONY: yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake
 .PHONY: sd-flash sd-flash-tiny format format-check lint check
+.PHONY: netboot-host-setup netboot-sync-app netboot-sync-kernel netboot-seed-rootfs
+.PHONY: netboot-nm-unmanage netboot-nm-manage
+.PHONY: netboot-usb-static-ip netboot-usb-static-ip-off
 
 help:
 	@printf '%s\n' \
@@ -122,6 +125,16 @@ help:
 		'' \
 		'Qt dashboard path:' \
 		'  make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)'  Dry-run the Qt dashboard image dependency graph.' \
+		'' \
+		'Qt dashboard dev netboot path (DEV ONLY):' \
+		'  make netboot-host-setup NETBOOT_IFACE=<iface>  One-time/per-reboot host TFTP+NFS setup.' \
+		'  make netboot-seed-rootfs           Seed the NFS export with a full rootfs (run once, or after rebuilding the image).' \
+		'  make netboot-sync-app              Sync qt-dashboard install output into the NFS export.' \
+		'  make netboot-sync-kernel           Sync zImage+dtb into the TFTP dir.' \
+		'  make netboot-nm-unmanage           Stop NetworkManager from fighting the USB gadget IP (run once per host).' \
+		'  make netboot-nm-manage             Revert: let NetworkManager manage enx* interfaces again.' \
+		'  make netboot-usb-static-ip         Auto re-apply the gadget static IP on every (re)connect (run once per host).' \
+		'  make netboot-usb-static-ip-off     Revert: no automatic IP re-apply on reconnect.' \
 		'' \
 		'Quality:' \
 		'  make format                       Format tracked shell and C/C++ files.' \
@@ -248,6 +261,42 @@ sd-flash:
 
 sd-flash-tiny:
 	@bash scripts/sd-flash/sd-flash-tiny.sh
+
+netboot-host-setup:
+	@bash scripts/netboot/host-setup.sh
+
+netboot-sync-app:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && \
+	  d_container=$$(docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake-getvar --value -r qt-dashboard D'\'' | tr -d "\r") && \
+	  [ -n "$$d_container" ] || die "could not resolve D for qt-dashboard" && \
+	  d_host=$${d_container/#\/storage/$$PROJECT_STORAGE_ROOT} && \
+	  bash scripts/netboot/sync-app.sh "$$d_host"'
+
+netboot-sync-kernel:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && \
+	  deploy_container=$$(docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake-getvar --value -r virtual/kernel DEPLOY_DIR_IMAGE'\'' | tr -d "\r") && \
+	  [ -n "$$deploy_container" ] || die "could not resolve DEPLOY_DIR_IMAGE for virtual/kernel" && \
+	  deploy_host=$${deploy_container/#\/storage/$$PROJECT_STORAGE_ROOT} && \
+	  bash scripts/netboot/sync-kernel.sh "$$deploy_host"'
+
+netboot-seed-rootfs:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && \
+	  deploy_container=$$(docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake-getvar --value -r core-image-optimal-qt-dashboard DEPLOY_DIR_IMAGE'\'' | tr -d "\r") && \
+	  [ -n "$$deploy_container" ] || die "could not resolve DEPLOY_DIR_IMAGE for core-image-optimal-qt-dashboard" && \
+	  deploy_host=$${deploy_container/#\/storage/$$PROJECT_STORAGE_ROOT} && \
+	  bash scripts/netboot/seed-rootfs.sh "$$deploy_host"'
+
+netboot-nm-unmanage:
+	@bash scripts/netboot/nm-unmanage.sh on
+
+netboot-nm-manage:
+	@bash scripts/netboot/nm-unmanage.sh off
+
+netboot-usb-static-ip:
+	@bash scripts/netboot/usb-gadget-static-ip.sh on
+
+netboot-usb-static-ip-off:
+	@bash scripts/netboot/usb-gadget-static-ip.sh off
 
 format:
 	@if [ -n "$(C_FORMAT_FILES)" ]; then \

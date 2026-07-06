@@ -11,3 +11,10 @@ SRC_URI:append:beaglebone-black-optimal-tiny = " \
 do_configure:append:beaglebone-black-optimal-tiny() {
     ${S}/scripts/kconfig/merge_config.sh -m ${B}/.config ${WORKDIR}/tiny-deterministic.cfg
 }
+
+# DEV-ONLY: re-enables net/hush/bootdelay/bootcmd + USB gadget for TFTP/NFS netboot.
+SRC_URI:append:beaglebone-black-optimal-qt-dashboard-dev = " file://dev-netboot.cfg file://usb-gadget.cfg"
+
+do_configure:append:beaglebone-black-optimal-qt-dashboard-dev() {
+    ${S}/scripts/kconfig/merge_config.sh -m ${B}/.config ${WORKDIR}/dev-netboot.cfg ${WORKDIR}/usb-gadget.cfg
+}

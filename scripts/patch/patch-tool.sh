@@ -78,7 +78,9 @@ cmd_check() {
         esac
     done
     require_tree "$tree"
-    [ -n "$diff" ] && [ -f "$diff" ] || die "--diff <file> is required"
+    if [ -z "$diff" ] || [ ! -f "$diff" ]; then
+        die "--diff <file> is required"
+    fi
 
     if git -C "$tree" apply --check "$diff"; then
         note "check: OK - $diff applies cleanly to $tree"
@@ -111,8 +113,12 @@ cmd_apply() {
         esac
     done
     require_tree "$tree"
-    [ -n "$diff" ] && [ -f "$diff" ] || die "--diff <file> is required"
-    [ -n "$message" ] && [ -f "$message" ] || die "--message <file> is required"
+    if [ -z "$diff" ] || [ ! -f "$diff" ]; then
+        die "--diff <file> is required"
+    fi
+    if [ -z "$message" ] || [ ! -f "$message" ]; then
+        die "--message <file> is required"
+    fi
     [ -n "$author" ] || die '--author "Name <email>" is required'
     [ -f "$(tip_marker_path "$tree")" ] &&
         die "a 'reword' series is already in progress for $tree; finish it or run patch-abort first"
@@ -121,8 +127,9 @@ cmd_apply() {
     name="${author%% <*}"
     email="${author#*<}"
     email="${email%>*}"
-    [ -n "$name" ] && [ -n "$email" ] && [ "$email" != "$author" ] ||
+    if [ -z "$name" ] || [ -z "$email" ] || [ "$email" = "$author" ]; then
         die 'author must look like "Name <email>"'
+    fi
 
     git -C "$tree" config user.name "$name"
     git -C "$tree" config user.email "$email"
@@ -164,7 +171,9 @@ cmd_reword() {
     done
     require_tree "$tree"
     [ -n "$commit" ] || die "--commit <sha> is required"
-    [ -n "$message" ] && [ -f "$message" ] || die "--message <file> is required"
+    if [ -z "$message" ] || [ ! -f "$message" ]; then
+        die "--message <file> is required"
+    fi
 
     local base_marker tip_marker parent src_tree new_sha
     base_marker="$(base_marker_path "$tree")"

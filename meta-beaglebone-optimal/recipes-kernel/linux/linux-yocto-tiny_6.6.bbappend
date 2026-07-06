@@ -91,3 +91,13 @@ SRC_URI:append:beaglebone-black-optimal-qt-dashboard = " \
 	file://beaglebone-qt-dashboard-hdmi.scc \
 	${LINUX_YOCTO_TINY_FEATURE_SRC_URI} \
 "
+
+# DEV-ONLY: NFS-root + USB gadget, rest inherited via MACHINEOVERRIDES.
+FILESEXTRAPATHS:prepend:beaglebone-black-optimal-qt-dashboard-dev := "${THISDIR}/files-qt-dashboard-dev:"
+
+KERNEL_FEATURES:append:beaglebone-black-optimal-qt-dashboard-dev = " beaglebone-qt-dashboard-dev-netboot.scc"
+
+SRC_URI:append:beaglebone-black-optimal-qt-dashboard-dev = " \
+	file://beaglebone-qt-dashboard-dev-netboot.cfg \
+	file://beaglebone-qt-dashboard-dev-netboot.scc \
+"

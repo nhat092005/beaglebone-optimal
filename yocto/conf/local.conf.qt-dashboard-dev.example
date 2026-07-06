@@ -1,0 +1,14 @@
+# Qt dashboard DEV netboot path — DEV ONLY, local developer overrides.
+#
+# Append these lines into conf/local.conf after running:
+#   source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+BSPDIR ??= "/workspace"
+
+MACHINE    = "beaglebone-black-optimal-qt-dashboard-dev"
+DISTRO     = "optimal-qt-dashboard"
+
+DL_DIR    ??= "/storage/shared/downloads"
+SSTATE_DIR ??= "/storage/shared/sstate"
+
+EXTRA_IMAGE_FEATURES = "debug-tweaks"

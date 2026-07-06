@@ -19,6 +19,7 @@ Quick overview — see each subsection below for details.
 | [Distro catalog](#multi-target-boot--distro-catalog) | Baseline / Tiny / Qt product images from one repo |
 | [Env sensor driver](#custom-environment-platform-driver-optimal-env-manager) | SHT3x + BH1750 kernel module with sysfs + chardev + IOCTL API |
 | [Qt kiosk dashboard](#responsive-qt6-kiosk-dashboard) | Fullscreen QML UI on raw framebuffer, ambient theme, live charts |
+| [Dev netboot](#qt-dashboard-dev-netboot-tftpnfs) | TFTP kernel/dtb + NFS rootfs over USB gadget — iterate without reflashing the SD card |
 
 ### Docker-Isolated Build Host
 
@@ -38,6 +39,7 @@ Quick overview — see each subsection below for details.
 - **Baseline Path** — standard BeagleBone Black SD card boot (`core-image-minimal`), built via Yocto and flashed as a full-disk `.wic` image.
 - **Tiny Path** — initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for minimal footprint and fast boot, flashed onto a single FAT partition.
 - **Product Qt Path** — dedicated product layer (`meta-beaglebone-optimal-product`) targeting BeagleBone Black explicitly, stripping unused desktop/audio/network services for a secure, local-only fullscreen dashboard appliance.
+- **Dev Netboot Path** (`beaglebone-black-optimal-qt-dashboard-dev`, DEV ONLY) — same Qt product image, but boots the kernel/dtb via TFTP and mounts the rootfs via NFS over USB gadget instead of an SD card, for fast local iteration. See [Qt Dashboard Dev Netboot](#qt-dashboard-dev-netboot-tftpnfs).
 
 ### Custom Environment Platform Driver (`optimal-env-manager`)
 
@@ -53,6 +55,12 @@ Quick overview — see each subsection below for details.
 - **Real-time historical charts** for temperature, humidity, and ambient light, rendered with HTML5 Canvas from `/dev/optimal_env` logs.
 - **Visual alert indicators** — pulsing border animations and warning badges when thresholds are breached.
 - **System clock & seconds progress ring**, synchronized on startup from the high-accuracy DS3231 RTC.
+
+### Qt Dashboard Dev Netboot (TFTP/NFS)
+
+- A dev-only machine (`beaglebone-black-optimal-qt-dashboard-dev`) built for fast iteration: U-Boot TFTP-boots the kernel/dtb and mounts the rootfs over NFS, so a code change only needs a rebuild + sync, not a full SD card reflash.
+- Transport is **USB gadget** (RNDIS/CDC-ECM), not wired Ethernet — the board's own onboard CPSW RJ45 port has no software workaround available on this hardware.
+- Host-side setup (`make netboot-host-setup`, `netboot-seed-rootfs`, `netboot-sync-app`, `netboot-sync-kernel`) and full operational details, including known USB gadget quirks and their fixes, are documented in the [Run Book](docs/_RUNBOOK_EN.md#qt-dashboard-dev-netboot-flow-dev-only).
 
 ---
 
