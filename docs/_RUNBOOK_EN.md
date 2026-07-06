@@ -2,81 +2,52 @@
 
 Vietnamese version: [`_RUNBOOK_VN.md`](./_RUNBOOK_VN.md)
 
-## Purpose
+## Scope
 
-This runbook explains how to operate the Docker phase 1 builder workflow for
-the `beaglebone-optimal` repository.
+This file is the shortest operator path for the current repo contract.
 
-Current contract:
+Source of truth:
 
-- runtime truth lives in `compose.yaml`
-- image build lives in `docker/Dockerfile`
-- public interface lives in `Makefile`
-- local machine override lives in `local.mk`
+- runtime: `compose.yaml`
+- builder image: `docker/Dockerfile`
+- public commands: `Makefile`
+- local override: `local.mk`
 
-This builder is an ad-hoc build environment. It is not a long-running service
-container.
+## Host Setup
 
-## Relevant structure
-
-```text
-.
-├── Makefile
-├── compose.yaml
-├── docker/
-│   └── Dockerfile
-├── local.mk.example
-└── scripts/docker/
-    ├── doctor.sh
-    └── lib.sh
-```
-
-## Prerequisites
-
-The local machine must have:
+Prerequisites:
 
 - Docker Engine
-- Docker Compose plugin, used through `docker compose`
-- permission to run Docker from the current user
+- Docker Compose plugin
+- permission to run Docker as the current user
 
-This runbook assumes the machine's Docker daemon is already healthy.
-
-## Local setup
-
-1. Create the local config file:
+Create local config:
 
 ```bash
 cp local.mk.example local.mk
 ```
 
-2. Edit `local.mk` and set `PROJECT_STORAGE_ROOT` to an absolute path.
-
-Example:
+Set an absolute storage root:
 
 ```make
 PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
 WORKSPACE_NAME := default
-
-# Optional override. By default Make auto-detects the current host uid:gid.
 # DOCKER_USER := 1000:1000
 ```
 
-Important rules:
+Validate the setup:
 
-- `PROJECT_STORAGE_ROOT` must be an absolute path
-- `DOCKER_USER` is an optional override and must match `uid:gid` if set
+```bash
+make doctor
+```
+
+Rules:
+
 - do not commit `local.mk`
-- large build data must live under `PROJECT_STORAGE_ROOT`, not in the source
-  tree
+- large build data lives under `PROJECT_STORAGE_ROOT`
+- `sd-flash` and `sd-flash-tiny` are destructive host-side commands
 
-## Storage model
-
-Container mounts:
-
-- repo root -> `/workspace`
-- host storage root -> `/storage`
-
-Inside the host storage root, the repo creates this standard layout:
+## Important Paths
 
 ```text
 ${PROJECT_STORAGE_ROOT}/
@@ -84,755 +55,196 @@ ${PROJECT_STORAGE_ROOT}/
 │   ├── downloads/
 │   └── sstate/
 └── workspaces/
-    └── ${WORKSPACE_NAME}/
-        ├── logs/
-        ├── out/
-        ├── tmp/
-        └── yocto/
-            ├── sources/
-            └── build/
+    └── ${WORKSPACE_NAME}/yocto/
+        ├── sources/
+        └── build/
 ```
 
-Meaning:
-
-- `shared/` stores reusable caches
-- `workspaces/<name>/` stores outputs and state for the current workspace
-- `yocto/sources/` stores pinned Yocto checkouts and layers for the workspace
-- `yocto/build/` stores the active Yocto Build Directory
-
-Derived host paths exported by `Makefile`:
+Derived paths:
 
 - `YOCTO_SOURCES_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/sources`
+- `YOCTO_POKY_DIR=${YOCTO_SOURCES_DIR}/poky`
 - `YOCTO_BUILD_DIR=${PROJECT_STORAGE_ROOT}/workspaces/${WORKSPACE_NAME}/yocto/build`
-- `YOCTO_DOWNLOADS_DIR=${PROJECT_STORAGE_ROOT}/shared/downloads`
-- `YOCTO_SSTATE_DIR=${PROJECT_STORAGE_ROOT}/shared/sstate`
 
-## Standard public commands
-
-Show help:
-
-```bash
-make help
-```
-
-Build the image:
-
-```bash
-make docker-build
-```
-
-Validate the environment:
-
-```bash
-make doctor
-```
-
-Open a shell inside the builder container:
-
-```bash
-make docker-shell
-```
-
-Run any command inside the builder container:
-
-```bash
-make docker-run CMD='uname -a'
-```
-
-Initialize the Yocto build directory:
-
-```bash
-make yocto-init
-```
-
-Build the default Yocto image:
-
-```bash
-make yocto-build
-```
-
-Parse the active Yocto metadata:
-
-```bash
-make yocto-parse
-```
-
-Dry-run the current image dependency graph:
-
-```bash
-make yocto-dry-run
-```
-
-Flash the default Yocto image to an SD card on the host:
-
-```bash
-make sd-flash SDCARD=/dev/sdX
-```
-
-## Behavior of each command
-
-### `make docker-build`
-
-Behavior:
-
-- runs `docker compose build builder`
-- does not require `PROJECT_STORAGE_ROOT`
-- uses Docker build cache when available
-
-Use it when:
-
-- building the image for the first time
-- rebuilding after editing `docker/Dockerfile`
-
-### `make doctor`
-
-Behavior:
-
-- checks `docker compose version`
-- checks `PROJECT_STORAGE_ROOT`
-- creates the required directory tree under the storage root
-- renders `docker compose config`
-- auto-builds the image if it does not exist
-- runs a container and performs a real write test to `/storage`
-
-Successful output:
-
-```text
-doctor: ok
-```
-
-Use it when:
-
-- cloning the repo on a new machine
-- changing `local.mk`
-- debugging mount or permission problems
-
-### `make docker-shell`
-
-Behavior:
-
-- runs a light preflight
-- requires a valid `PROJECT_STORAGE_ROOT`
-- creates storage directories if missing
-- auto-builds the image if it does not exist
-- opens a shell in `/workspace`
-
-### `make docker-run CMD='...'`
-
-Behavior:
-
-- runs the same light preflight as `docker-shell`
-- fails immediately if `CMD` is empty
-- runs the command with this pattern:
-
-```bash
-docker compose run --rm builder bash -lc "$CMD"
-```
-
-Examples:
-
-```bash
-make docker-run CMD='pwd'
-make docker-run CMD='ls -la /storage'
-make docker-run CMD='env | sort'
-```
-
-### `make yocto-init`
-
-Behavior:
-
-- runs the same preflight as `docker-shell`
-- requires a valid `poky` checkout at `YOCTO_POKY_DIR`
-- creates the Yocto Build Directory by sourcing `oe-init-build-env`
-- does not edit files under `conf/`
-- prints the project `local.conf` and `bblayers.conf` example paths and the next manual step
-
-Use it when:
-
-- `poky` is already cloned under `YOCTO_SOURCES_DIR`
-- you want `conf/` generated under the storage-backed build dir
-
-### `make yocto-build`
-
-Behavior:
-
-- runs the same preflight as `docker-shell`
-- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
-- sources `oe-init-build-env` for the storage-backed build dir
-- runs `bitbake ${YOCTO_IMAGE}`
-
-Use it when:
-
-- `make yocto-init` already created the build dir
-- `conf/local.conf` already includes the project settings you want
-
-### `make yocto-parse`
-
-Behavior:
-
-- runs the same preflight as `docker-shell`
-- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
-- sources `oe-init-build-env` for the storage-backed build dir
-- runs `bitbake -p`
-
-Use it when:
-
-- you want to confirm the active metadata parses before a real build
-- you changed `bblayers.conf`, recipes, or layer composition
-
-### `make yocto-dry-run`
-
-Behavior:
-
-- runs the same preflight as `docker-shell`
-- requires the `poky` checkout and `YOCTO_BUILD_DIR/conf/local.conf`
-- requires a non-empty `YOCTO_IMAGE`
-- sources `oe-init-build-env` for the storage-backed build dir
-- runs `bitbake ${YOCTO_IMAGE} -n`
-
-Use it when:
-
-- you want to confirm the current image dependency graph before a real build
-- you changed image, packagegroup, or recipe contracts
-
-### `make sd-flash SDCARD='/dev/sdX'`
-
-Behavior:
-
-- runs on the host, not in the builder container
-- requires an explicit whole-disk block device through `SDCARD`
-- uses `IMAGE` if provided, otherwise flashes the default `.wic` under `YOCTO_BUILD_DIR`
-- unmounts mounted child partitions of the selected device before writing
-- prefers `bmaptool` with `${IMAGE}.bmap` when both exist
-- falls back to `dd` when `bmaptool` or the `.bmap` file is missing
-
-Use it when:
-
-- `make yocto-build` already produced the `.wic` artifact
-- you have identified the correct SD card device on the host
-- you want a repeatable host-side flash command for Phase 2 bring-up
-
-## Yocto storage convention
-
-The repo keeps Yocto's heavy data under the same host storage root as Docker:
-
-- `/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
-- `/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
-- `/storage/shared/downloads`
-- `/storage/shared/sstate`
-
-Recommended workflow inside the builder container:
+## Command Surface
+
+| Command | Purpose | Important note |
+| --- | --- | --- |
+| `make doctor` | Validate Docker and storage setup | Auto-builds the builder image if missing |
+| `make docker-build` | Build the builder image | Does not require `PROJECT_STORAGE_ROOT` |
+| `make docker-shell` | Open a shell in the builder container | Runs preflight first |
+| `make docker-run CMD='...'` | Run one command in the builder container | `CMD` is required |
+| `make yocto-init` | Create the Yocto build dir | Does not edit `conf/` |
+| `make yocto-parse` | Parse active Yocto metadata | Requires `YOCTO_BUILD_DIR/conf/local.conf` |
+| `make yocto-dry-run YOCTO_IMAGE=<image>` | Dry-run image dependencies | Requires a non-empty `YOCTO_IMAGE` |
+| `make yocto-qt-profile` | Show effective `qtbase` profile | Use after Qt config is applied |
+| `make yocto-build [YOCTO_IMAGE=<image>]` | Build the selected image | Default `YOCTO_IMAGE=core-image-minimal` |
+| `make sd-flash SDCARD=/dev/sdX` | Flash a `.wic` image to SD | Requires a whole-disk device |
+| `make sd-flash-tiny SDCARD=/dev/sdX` | Create tiny boot media | Partitions and formats the card |
+| `make netboot-host-setup NETBOOT_IFACE=<iface>` | Idempotent host TFTP+NFS setup | DEV ONLY, requires `NETBOOT_IFACE` |
+| `make netboot-sync-app` | Sync `qt-dashboard` install output to NFS export | DEV ONLY |
+| `make netboot-sync-kernel` | Sync `zImage`+dtb to TFTP dir | DEV ONLY |
+
+## Baseline Flow
+
+Clone `poky` first:
 
 ```bash
 mkdir -p "$YOCTO_SOURCES_DIR"
 cd "$YOCTO_SOURCES_DIR"
 git clone -b scarthgap https://git.yoctoproject.org/poky
-cd poky
-
-source oe-init-build-env "$YOCTO_BUILD_DIR"
-
-cat /workspace/yocto/conf/local.conf.example
-cat /workspace/yocto/conf/bblayers.conf.example
 ```
 
-This keeps source checkouts, build output, downloads, and sstate off the source
-tree and under the same host-managed storage root.
-
-Manual update flow for `conf/local.conf`:
+Initialize and apply the baseline examples:
 
 ```bash
 make yocto-init
-
-cd "$YOCTO_POKY_DIR"
-source oe-init-build-env "$YOCTO_BUILD_DIR"
-
-cp /workspace/yocto/conf/bblayers.conf.example conf/bblayers.conf
-cat /workspace/yocto/conf/local.conf.example >> conf/local.conf
+cp yocto/conf/bblayers.conf.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
 ```
 
-## Tiny path workflow
+Build and flash:
 
-The tiny path is Phase 1 initramfs-only bring-up for BeagleBone Black.
+```bash
+make yocto-parse
+make yocto-build
+make sd-flash SDCARD=/dev/sdX
+```
 
-Public contract files:
+Notes:
 
-- `docs/boot-contract.md`
-- `yocto/conf/local.conf.tiny.example`
-- `yocto/conf/bblayers.conf.tiny.example`
-- `yocto/boot/extlinux.conf.tiny.example`
-- `yocto/boot/uEnv.txt.tiny.example`
+- default baseline image: `core-image-minimal`
+- default baseline machine: `beaglebone-yocto`
+- `sd-flash` uses `IMAGE` if set; otherwise it uses the default `.wic` for the current `YOCTO_IMAGE` and `YOCTO_MACHINE`
 
-Manual tiny config apply flow:
+## Tiny Flow
+
+Apply the tiny examples:
 
 ```bash
 make yocto-init
-
-cd "$YOCTO_POKY_DIR"
-source oe-init-build-env "$YOCTO_BUILD_DIR"
-
-cp /workspace/yocto/conf/bblayers.conf.tiny.example conf/bblayers.conf
-cat /workspace/yocto/conf/local.conf.tiny.example >> conf/local.conf
+cp yocto/conf/bblayers.conf.tiny.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.tiny.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
 ```
 
-Build the tiny image:
+Build and flash:
 
 ```bash
 make yocto-parse
 make yocto-dry-run YOCTO_IMAGE=core-image-optimal-tiny-initramfs
 make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs
-```
-
-Create tiny SD boot media on the host:
-
-```bash
 make sd-flash-tiny SDCARD=/dev/sdX
 ```
 
-Tiny path operator notes:
+Notes:
 
-- `sd-flash-tiny` creates a single FAT boot partition
-- tiny boot media carries stable names:
-  - `MLO`
-  - `u-boot.img`
-  - `zImage`
-  - `am335x-boneblack-optimal-tiny.dtb`
-  - `extlinux/extlinux.conf`
-  - optional `uEnv.txt`
-- tiny path does not use `.wic` or a separate ext4 rootfs partition
-- tiny path still expects proof on hardware through UART boot logs
+- tiny image: `core-image-optimal-tiny-initramfs`
+- tiny machine: `beaglebone-black-optimal-tiny`
+- when `YOCTO_IMAGE=core-image-optimal-tiny-initramfs`, `make yocto-build` also builds `virtual/kernel` and `u-boot`
+- `sd-flash-tiny` creates one FAT32 boot partition and copies `MLO`, `u-boot.img`, `zImage`, the tiny DTB, `extlinux.conf`, and `uEnv.txt`
 
-## Qt dashboard product path
+## Qt Dashboard Flow
 
-The Qt dashboard path is a separate product-side product contract. It does not
-redefine the tiny path contract.
+Add `meta-qt6` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
 
-Public contract files:
-
-- `yocto/conf/bblayers.conf.qt-dashboard.example`
-- `yocto/conf/local.conf.qt-dashboard.example`
-- `meta-beaglebone-optimal/conf/machine/beaglebone-black-optimal-qt-dashboard.conf`
-- `meta-beaglebone-optimal/recipes-kernel/linux/files-qt-dashboard/`
-- `meta-beaglebone-optimal-product/conf/layer.conf`
-- `meta-beaglebone-optimal-product/recipes-core/images/core-image-optimal-qt-dashboard.bb`
-- `meta-beaglebone-optimal-product/recipes-core/packagegroups/packagegroup-optimal-dashboard.bb`
-- `meta-beaglebone-optimal-product/recipes-qt/qt6/qtbase_%.bbappend`
-- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/qt-dashboard.bb`
-- `meta-beaglebone-optimal-product/recipes-qt/qt-dashboard/files/qt-dashboard.sh`
-- `qt-dashboard-app/`
-
-Expected upstream layer path:
-
-- `${YOCTO_SOURCES_DIR}/meta-qt6`
-
-Manual product config apply flow:
+Apply the Qt dashboard examples:
 
 ```bash
 make yocto-init
-
-cd "$YOCTO_POKY_DIR"
-source oe-init-build-env "$YOCTO_BUILD_DIR"
-
-cp /workspace/yocto/conf/bblayers.conf.qt-dashboard.example conf/bblayers.conf
-cat /workspace/yocto/conf/local.conf.qt-dashboard.example >> conf/local.conf
+cp yocto/conf/bblayers.conf.qt-dashboard.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.qt-dashboard.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
 ```
 
-Build the product image:
+Build and flash:
 
 ```bash
 make yocto-parse
 make yocto-qt-profile
 make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
 make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
-```
-
-Flash the BeagleBone Black product image:
-
-```bash
 make sd-flash \
   YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard \
   YOCTO_IMAGE=core-image-optimal-qt-dashboard \
   SDCARD=/dev/sdX
 ```
 
-Operator notes:
+Notes:
 
-- the product path keeps the current BSP layer at `/workspace/meta-beaglebone-optimal`
-- the product path adds `/workspace/meta-beaglebone-optimal-product` as a separate layer
-- the product path expects `meta-qt6` to exist beside `poky`
-- tiny stays headless; it must not become the owner of HDMI/display behavior
-- the BSP layer (`meta-beaglebone-optimal`) contains the machine definition and hardware enablement (DTS, kernel config, and patches) for the HDMI display, while the product layer (`meta-beaglebone-optimal-product`) owns the application software and Distro configuration.
-- the product path targets BeagleBone Black explicitly via `beaglebone-black-optimal-qt-dashboard` instead of the generic `beaglebone-yocto` machine
-- runtime display defaults live in `qt-dashboard.sh`
-- build-time feature trimming lives in `local.conf.qt-dashboard.example` and `qtbase_%.bbappend`
-- product policy drops desktop, audio, wifi, and zeroconf stacks that are not
-  part of the local-only fullscreen appliance path
-- the launcher contract is a single fullscreen Qt Quick app on LinuxFB with software rendering
+- Qt dashboard image: `core-image-optimal-qt-dashboard`
+- Qt dashboard machine: `beaglebone-black-optimal-qt-dashboard`
 
-Build-side proof checklist:
+## Qt Dashboard Dev Netboot Flow (DEV ONLY)
 
-```bash
-make yocto-parse
-make yocto-qt-profile
-make yocto-dry-run YOCTO_IMAGE=core-image-optimal-qt-dashboard
-make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc-source-13.4.0'
-make docker-run WORKSPACE_NAME=qt-dashboard CMD='cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" && bitbake gcc'
-make yocto-build WORKSPACE_NAME=qt-dashboard YOCTO_IMAGE=core-image-optimal-qt-dashboard
-```
+Dev-only, not a production contract. Machine `beaglebone-black-optimal-qt-dashboard-dev`.
+Transport is **USB gadget** (RJ45 CPSW confirmed hardware-dead on this board,
+see bd `beaglebone-optimal-24b`), not an Ethernet cable. Static point-to-point:
+host `192.168.7.1`, board `192.168.7.2`.
 
-Board-side HDMI proof checklist:
+**Required order: power the board via USB cable FIRST, then run
+`netboot-host-setup`** — unlike a physical NIC (always present), the USB
+gadget interface only appears once U-Boot has brought up `usb_ether`.
+
+Plug the USB cable into the board, power it on, then see which new interface
+appeared:
 
 ```bash
-ls -l /dev/fb0
-systemctl status qt-dashboard
-journalctl -u qt-dashboard -b --no-pager
+ip link show   # look for the new enx... interface after powering the board
 ```
 
-Required operator observation:
-
-- the HDMI-attached screen shows the fullscreen dashboard
-
-If `/dev/fb0` is missing on the product image, treat that as a product-path
-display gap and pause before expanding into kernel or device tree work.
-
-## DS3231 RTC: diagnosis and recovery
-
-This section applies to the `beaglebone-black-optimal-qt-dashboard` product
-image. In the current contract, the `RTC_DS3231` feature is enabled only for
-that product machine and is not enabled by default for the baseline or tiny
-images.
-
-Common board-side symptoms:
-
-- the dashboard shows `RTC FAULT`
-- the clock shows `--:--`
-- `date` and `hwclock` both report an old year such as `2000`
-
-Minimum diagnosis commands:
+Host setup (each host reboot, after the board is already powered):
 
 ```bash
-dmesg | grep -Ei 'rtc|ds3231|ds1307|i2c'
-find /sys/firmware/devicetree/base -name 'rtc@68' 2>/dev/null
-ls -l /dev/rtc*
-date
-hwclock -f /dev/rtc0 -r
+make netboot-host-setup NETBOOT_IFACE=<enx...>
 ```
 
-How to interpret the results:
-
-- if `find ... rtc@68` returns no node, the board is not booting a product
-  image with `RTC_DS3231` or the active device tree does not include the RTC
-  feature
-- if `dmesg` does not contain a line such as
-  `rtc-ds1307 2-0068: registered as rtc0`, the kernel has not bound the DS3231
-- if `/dev/rtc0` exists and `hwclock -f /dev/rtc0 -r` works but the year is
-  less than `2024`, the DS3231 is responding but holding invalid time data; the
-  dashboard intentionally treats that as a fault
-- if `/dev/i2c/2` is missing, do not treat that as the root cause. The current
-  product image can still bind the DS3231 in-kernel without exposing a
-  userspace I2C scan device
-
-Recovery when the RTC holds the wrong time:
+Build and flash once:
 
 ```bash
-date -s '2026-06-28 14:00:00'
-hwclock -f /dev/rtc0 -w
-hwclock -f /dev/rtc0 -r
-reboot
-date
+make yocto-init
+cp yocto/conf/bblayers.conf.qt-dashboard.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.qt-dashboard-dev.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
+make yocto-build YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev SDCARD=/dev/sdX
 ```
 
-Operator notes:
+Dev loop:
 
-- `date -s ...` fixes the current system clock
-- `hwclock -f /dev/rtc0 -w` writes the system clock back into the DS3231
-- `/sbin/rtcsync` only syncs `RTC -> system clock` during boot; it does not fix
-  the RTC if the chip is already holding bad time
+```bash
+make yocto-bitbake BITBAKE_RECIPE=qt-dashboard && make netboot-sync-app
+make yocto-bitbake BITBAKE_RECIPE=virtual/kernel && make netboot-sync-kernel
+```
 
-If `hwclock -w` succeeds but the board still falls back to an old year after a
-full power loss, suspect the RTC backup hardware:
+Power-cycle the board after each sync. No reflash.
 
-- missing or empty coin-cell battery
-- no hold-up supply on `VBAT`
-- faulty DS3231 module hardware
+Notes:
 
-### Known boot messages
+- `netboot-host-setup` requires `tftpd-hpa` and `nfs-kernel-server` installed (not auto-installed)
+- Ctrl-C during the 2s U-Boot bootdelay for a manual shell if netboot isn't ready
+- changing the host IP needs a u-boot rebuild + boot partition reflash (`CONFIG_ENV_IS_NOWHERE=y`)
+- don't use this machine to measure production boot time
 
-**"Kernel memory protection not selected by kernel config."**
+## Boot Timing Capture (`make boot-capture`)
 
-Source: `init/main.c::mark_readonly()`
+Host-side UART capture defaults:
 
-Meaning:
-- ARM architecture supports kernel memory protection (`CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y`)
-- Tiny kernel intentionally disables it (`CONFIG_STRICT_KERNEL_RWX=n`)
-- Trade-off: ~200-300 KB size savings vs. W^X kernel hardening
+- `BOOT_SERIAL_DEVICE=/dev/ttyUSB0`
+- `BOOT_SERIAL_BAUD=115200`
+- `BOOT_CAPTURE_LOG=tmp/boot-captures/latest.log`
 
-Safety:
-- Acceptable for isolated learning board (no network, no USB in Phase 1)
-- Protection prevents code injection attacks and detects memory corruption bugs early
-- If adding network stack in future phases, consider enabling via `hardening.cfg` fragment
-
-This is an intentional configuration choice for the tiny profile, not a defect.
-
-## Boot timing capture (`make boot-capture`)
-
-Applies to the `beaglebone-black-optimal-qt-dashboard` product path. This
-tool measures real boot timing (U-Boot → kernel → init → HDMI content on
-screen) by capturing the serial log with accurate host-side timestamps,
-instead of eyeballing minicom.
-
-### Run
+Run:
 
 ```bash
 make boot-capture
-# defaults: BOOT_SERIAL_DEVICE=/dev/ttyUSB0, BOOT_SERIAL_BAUD=115200
-# log saved to: tmp/boot-captures/latest.log
 ```
 
-Press `Ctrl-C` to stop once the dashboard appears on screen.
+Behavior:
 
-### How it works
+- captures the serial stream with host timestamps
+- appends output to `tmp/boot-captures/latest.log`
+- stop with `Ctrl-C`
 
-`scripts/boot-capture/boot-capture.sh` runs this pipeline:
+## References
 
-```text
-cat /dev/ttyUSB0 | boot-capture-timestamp.pl /dev/ttyUSB0 | tee tmp/boot-captures/latest.log
-```
-
-`boot-capture-timestamp.pl` stamps `epoch.microsecond` at the start of every
-line, including lines with no trailing `\n` (e.g. a shell prompt) — using a
-buffer plus a 100ms idle-timeout flush, always stamped with the time the
-last byte actually arrived, never the time the idle timeout fired.
-
-The script also answers the `ESC[6n` (cursor-position query) that
-`/etc/profile`'s `resize()` sends on the first serial login — without an
-answer, `read -t 2` has to wait out the full 2s timeout, artificially
-inflating the measurement by ~2-3s versus real interactive use (a real
-terminal such as minicom answers instantly, so this delay never happens
-there).
-
-### IMPORTANT: always read the log file, never the live screen
-
-`resize()` sends a cursor-move escape (`ESC[999;999H`) straight to serial.
-If you watch or copy directly from the terminal running `make boot-capture`,
-your terminal emulator may execute that escape and answer it itself,
-scrambling the display (text glued together, stray sequences like
-`^[[36;153R`). This is not a tool bug — always verify with:
-
-```bash
-cat -v tmp/boot-captures/latest.log | tail -20
-```
-
-### "HDMI has content" marker
-
-`qt-dashboard-app/src/main.cpp` hooks `QQuickWindow::frameSwapped` (first
-frame only) and writes one line through `/dev/kmsg` (qt-dashboard's stdio is
-null per `inittab`) at priority `<3>` (KERN_ERR — required, since `quiet` in
-`extlinux.conf` sets `console_loglevel=4` and priority `4` would be silently
-dropped). The kernel prefixes it with `[  N.NNNNNN]` automatically (thanks to
-`CONFIG_PRINTK_TIME=y`), so no userspace clock read is needed. The line
-looks like:
-
-```text
-[    4.689948] qt-dashboard: first frame rendered
-```
-
-This is the most accurate software-only marker achievable without extra
-measurement hardware. The remaining gap (~16-30ms, from the HDMI scan-out
-cycle plus physical panel latency) can only be measured with a
-camera/photodiode — software cannot close it.
-
-### Reading the result
-
-Grep the key lines (`cat -v ... | grep -E "Starting kernel|sh -l|first frame"`),
-take each line's epoch timestamp, and subtract:
-
-| Phase | Sample measurement |
-|---|---|
-| SPL start → `Starting kernel...` (U-Boot) | ~1.05s |
-| `Starting kernel...` → shell prompt (kernel + init) | ~1.33s |
-| Shell prompt → `first frame rendered` (Qt app) | ~3.90s |
-
-In this sample run, **the Qt app accounted for ~62% of total boot time** —
-that is where to optimize first if screen-on time needs to shrink, not
-U-Boot/kernel.
-
-## Runtime contract
-
-The current Compose service name is `builder`.
-
-Important runtime contract:
-
-- image: `${DOCKER_IMAGE}:${DOCKER_TAG}`
-- source bind mount: `.:/workspace`
-- storage bind mount: `${PROJECT_STORAGE_ROOT}:/storage`
-- user mapped from host: `${DOCKER_USER}`
-- env inside the container:
-  - `PROJECT_STORAGE_ROOT=/storage`
-  - `WORKSPACE_NAME=${WORKSPACE_NAME}`
-  - `YOCTO_ROOT=/storage/workspaces/${WORKSPACE_NAME}/yocto`
-  - `YOCTO_SOURCES_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources`
-  - `YOCTO_POKY_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/sources/poky`
-  - `YOCTO_BUILD_DIR=/storage/workspaces/${WORKSPACE_NAME}/yocto/build`
-  - `YOCTO_DOWNLOADS_DIR=/storage/shared/downloads`
-  - `YOCTO_SSTATE_DIR=/storage/shared/sstate`
-  - `YOCTO_IMAGE=${YOCTO_IMAGE}`
-
-## Image contract
-
-The current `docker/Dockerfile`:
-
-- uses `ubuntu@sha256:...` pinned by digest
-- installs the toolchain and build dependencies for the builder
-- uses `--no-install-recommends`
-- cleans apt lists
-- pins `dtschema==2026.4`
-- uses `WORKDIR /workspace`
-- uses `bash` as the default command
-
-It does not include:
-
-- `ENTRYPOINT`
-- `HEALTHCHECK`
-- `EXPOSE`
-- hardcoded local APT mirror settings
-- hardcoded fixed runtime user
-
-## Recommended operating flow
-
-### First time on a new machine
-
-```bash
-cp local.mk.example local.mk
-$EDITOR local.mk
-make doctor
-make docker-shell
-```
-
-### After editing the Dockerfile
-
-```bash
-make docker-build
-make doctor
-```
-
-### Quick command checks
-
-```bash
-make docker-run CMD='uname -a'
-make docker-run CMD='python3 --version'
-```
-
-## Common failures
-
-### `PROJECT_STORAGE_ROOT is required`
-
-Cause:
-
-- `local.mk` has not been created yet
-- the variable has not been exported
-
-Fix:
-
-```bash
-cp local.mk.example local.mk
-```
-
-Then set:
-
-```make
-PROJECT_STORAGE_ROOT := /absolute/path
-```
-
-### `PROJECT_STORAGE_ROOT must be an absolute path`
-
-Cause:
-
-- a relative path was used
-
-Wrong:
-
-```make
-PROJECT_STORAGE_ROOT := tmp/build
-```
-
-Correct:
-
-```make
-PROJECT_STORAGE_ROOT := /mnt/data/beaglebone-optimal
-```
-
-### `CMD is required`
-
-Cause:
-
-- `make docker-run` was called without `CMD`
-
-Correct:
-
-```bash
-make docker-run CMD='uname -a'
-```
-
-### `make doctor` fails on the `/storage` write step
-
-Common causes:
-
-- the host path is not writable
-- the current user lacks permission on that path
-- the Docker daemon is running but the bind mount target is not suitable
-
-Fix flow:
-
-1. check `PROJECT_STORAGE_ROOT` in `local.mk`
-2. check host write permission on that path
-3. rerun:
-
-```bash
-make doctor
-```
-
-### Shell shows `I have no name!`
-
-Meaning:
-
-- the container is still working correctly
-- the host-mapped UID/GID does not have a matching name entry inside the image
-
-Impact:
-
-- mostly cosmetic in the shell prompt
-- it does not block `docker-shell`, `docker-run`, or `doctor`
-
-Current status:
-
-- this is a known follow-up, not a phase 1 blocker
-
-## What not to do
-
-- do not write build artifacts into the source tree
-- do not hardcode local paths such as `/mnt/data/...` into tracked files
-- do not change runtime behavior in README only and forget to sync `Makefile`,
-  `compose.yaml`, and `scripts/docker/*.sh`
-- do not use `rtk` inside repo docs or repo scripts
-
-## When changing the contract
-
-If Docker phase 1 behavior changes, run at least:
-
-```bash
-docker compose config
-make help
-make docker-build
-make doctor
-make docker-run CMD='uname -a'
-```
-
-## Source of truth
-
-If this document conflicts with code, read in this order:
-
-1. `Makefile`
-2. `scripts/docker/lib.sh`
-3. `scripts/docker/doctor.sh`
-4. `compose.yaml`
-5. `docker/Dockerfile`
+- `make help`
+- `make yocto-list`
+- `docs/boot-contract.md`
