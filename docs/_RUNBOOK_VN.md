@@ -51,13 +51,13 @@ Rule:
 
 ```text
 ${PROJECT_STORAGE_ROOT}/
-├── shared/
-│   ├── downloads/
-│   └── sstate/
-└── workspaces/
-    └── ${WORKSPACE_NAME}/yocto/
-        ├── sources/
-        └── build/
+|- shared/
+|  |- downloads/
+|  `- sstate/
+`- workspaces/
+   `- ${WORKSPACE_NAME}/yocto/
+      |- sources/
+      `- build/
 ```
 
 Đường dẫn dẫn xuất:
@@ -184,7 +184,7 @@ xem bd `beaglebone-optimal-24b`), không phải dây Ethernet. Static point-to-p
 host `192.168.7.1`, board `192.168.7.2`.
 
 **Thứ tự bắt buộc: cắm/cấp nguồn board qua cáp USB TRƯỚC, rồi mới chạy
-`netboot-host-setup`** — khác với NIC vật lý (luôn có sẵn), interface USB
+`netboot-host-setup`** - khác với NIC vật lý (luôn có sẵn), interface USB
 gadget chỉ xuất hiện sau khi U-Boot đã khởi tạo `usb_ether`.
 
 Cắm cáp USB vào board, cấp nguồn, rồi xem interface mới xuất hiện:

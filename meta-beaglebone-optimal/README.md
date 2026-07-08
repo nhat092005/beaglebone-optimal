@@ -22,25 +22,25 @@ U-Boot recipes for the two build paths shipped by this project:
 
 ## Layer priority
 
-`8` — below the product layer (`meta-beaglebone-optimal-product`, priority 9).
+`8` - below the product layer (`meta-beaglebone-optimal-product`, priority 9).
 
 ## Contents
 
 ```
 conf/
-  distro/optimal-tiny.conf          — poky-tiny derivative, init_manager=none
+  distro/optimal-tiny.conf          - poky-tiny derivative, init_manager=none
   machine/beaglebone-black-optimal-tiny.conf
   machine/beaglebone-black-optimal-qt-dashboard.conf
 
 classes/
-  linux-yocto-tiny-feature-dts.bbclass — feature-flag DTS composition system
+  linux-yocto-tiny-feature-dts.bbclass - feature-flag DTS composition system
 
-recipes-bsp/u-boot/                 — u-boot_2024.01 bbappend + patches
-recipes-core/images/                — core-image-optimal-tiny-initramfs
-recipes-kernel/linux/               — linux-yocto-tiny_6.6 bbappend + feature catalog
-recipes-kernel/optimal-env-manager/ — out-of-tree kernel module (SHT3x/BH1750/chardev)
+recipes-bsp/u-boot/                 - u-boot_2024.01 bbappend + patches
+recipes-core/images/                - core-image-optimal-tiny-initramfs
+recipes-kernel/linux/               - linux-yocto-tiny_6.6 bbappend + feature catalog
+recipes-kernel/optimal-env-manager/ - out-of-tree kernel module (SHT3x/BH1750/chardev)
 ```
 
 ## Maintainer
 
-BeagleBone Optimal project — see repo root `docs/` for build instructions.
+BeagleBone Optimal project - see repo root `docs/` for build instructions.

@@ -18,11 +18,11 @@ for the fullscreen Qt dashboard build path.
 | `meta-oe` (meta-openembedded) | scarthgap |
 | `meta-python` (meta-openembedded) | scarthgap |
 | `meta-qt6` | scarthgap |
-| `meta-beaglebone-optimal` (this repo) | — |
+| `meta-beaglebone-optimal` (this repo) | - |
 
 ## Layer priority
 
-`9` — above the BSP layer so product recipes can override BSP defaults.
+`9` - above the BSP layer so product recipes can override BSP defaults.
 
 ## BSPDIR
 
@@ -42,18 +42,18 @@ BSPDIR = "/absolute/path/to/beaglebone-optimal"
 
 ```
 conf/
-  distro/optimal-qt-dashboard.conf  — optimal-tiny derivative with Qt DISTRO_FEATURES
+  distro/optimal-qt-dashboard.conf  - optimal-tiny derivative with Qt DISTRO_FEATURES
   layer.conf
 
 recipes-core/
-  busybox/busybox-inittab           — custom inittab for Qt auto-login
+  busybox/busybox-inittab           - custom inittab for Qt auto-login
   images/core-image-optimal-qt-dashboard.bb
   packagegroups/packagegroup-optimal-dashboard.bb
-  rtcsync/                          — userspace DS3231 → system clock sync utility
+  rtcsync/                          - userspace DS3231 to system clock sync utility
 
 recipes-qt/
-  qt6/qtbase_%.bbappend             — platform plugin / eglfs config
-  qt-dashboard/qt-dashboard.bb      — CMake Qt app built from qt-dashboard-app/
+  qt6/qtbase_%.bbappend             - platform plugin / eglfs config
+  qt-dashboard/qt-dashboard.bb      - CMake Qt app built from qt-dashboard-app/
 
 wic/
   beaglebone-qt-dashboard.wks
@@ -62,4 +62,4 @@ wic/
 
 ## Maintainer
 
-BeagleBone Optimal project — see repo root `docs/` for build instructions.
+BeagleBone Optimal project - see repo root `docs/` for build instructions.

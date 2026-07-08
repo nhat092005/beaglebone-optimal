@@ -10,42 +10,42 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 
 ## Key Features
 
-Quick overview — see each subsection below for details.
+Quick overview; see each subsection below for details.
 
 | Area | Highlight |
 |---|---|
 | [Build host](#docker-isolated-build-host) | Docker-isolated, clean git tree, automated `format`/`check` lint gates |
-| [Boot path](#optimized-fast-boot-hdmi-path) | ~1.3s kernel→shell, HDMI HPD debounce, instrumented boot-timing harness |
+| [Boot path](#optimized-fast-boot-hdmi-path) | ~1.3s kernel to shell, HDMI HPD debounce, instrumented boot-timing harness |
 | [Distro catalog](#multi-target-boot--distro-catalog) | Baseline / Tiny / Qt product images from one repo |
 | [Env sensor driver](#custom-environment-platform-driver-optimal-env-manager) | SHT3x + BH1750 kernel module with sysfs + chardev + IOCTL API |
 | [Qt kiosk dashboard](#responsive-qt6-kiosk-dashboard) | Fullscreen QML UI on raw framebuffer, ambient theme, live charts |
-| [Dev netboot](#qt-dashboard-dev-netboot-tftpnfs) | TFTP kernel/dtb + NFS rootfs over USB gadget — iterate without reflashing the SD card |
+| [Dev netboot](#qt-dashboard-dev-netboot-tftpnfs) | TFTP kernel/dtb + NFS rootfs over USB gadget - iterate without reflashing the SD card |
 
 ### Docker-Isolated Build Host
 
 - Reproducible, containerized dev environment; maps host `UID`/`GID` to avoid file permission conflicts.
-- Keeps the git repository clean — all build caches (`downloads`, `sstate-cache`), workspace files, and build directories live outside the source tree via a host-side `PROJECT_STORAGE_ROOT`.
+- Keeps the git repository clean: all build caches (`downloads`, `sstate-cache`), workspace files, and build directories live outside the source tree via a host-side `PROJECT_STORAGE_ROOT`.
 - `make format` / `make check` wire `clang-format`, `shfmt`, and `shellcheck` into standard commands.
 
 ### Optimized Fast-Boot HDMI Path
 
-- Kernel space boot to user space shell (BusyBox `sh` prompt) in **~1.3 seconds** — measured directly from `Starting kernel ...` to the login prompt, not eyeballed.
+- Kernel space boot to user space shell (BusyBox `sh` prompt) in **~1.3 seconds** - measured directly from `Starting kernel ...` to the login prompt.
 - Kernel driver patch debounces transient HDMI Hotplug (HPD) signal drops on the IT66122 transmitter.
-- Environment manager kernel module loads automatically on boot; the kiosk app runs directly via BusyBox init respawn — no systemd, Wayland, or X11 overhead.
+- Environment manager kernel module loads automatically on boot; the kiosk app runs directly via BusyBox init respawn with no systemd, Wayland, or X11 overhead.
 - Instrumented boot-timing harness (`make boot-capture`, see [Run Book](docs/_RUNBOOK_EN.md#boot-timing-capture-make-boot-capture)): timestamps every serial boot line at the host and adds a `/dev/kmsg`-based first-frame marker inside the Qt app, so kernel/init time and Qt startup time are measured and attributed separately instead of guessed from one end-to-end number.
 
 ### Multi-Target Boot & Distro Catalog
 
-- **Baseline Path** — standard BeagleBone Black SD card boot (`core-image-minimal`), built via Yocto and flashed as a full-disk `.wic` image.
-- **Tiny Path** — initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for minimal footprint and fast boot, flashed onto a single FAT partition.
-- **Product Qt Path** — dedicated product layer (`meta-beaglebone-optimal-product`) targeting BeagleBone Black explicitly, stripping unused desktop/audio/network services for a secure, local-only fullscreen dashboard appliance.
-- **Dev Netboot Path** (`beaglebone-black-optimal-qt-dashboard-dev`, DEV ONLY) — same Qt product image, but boots the kernel/dtb via TFTP and mounts the rootfs via NFS over USB gadget instead of an SD card, for fast local iteration. See [Qt Dashboard Dev Netboot](#qt-dashboard-dev-netboot-tftpnfs).
+- **Baseline Path** - standard BeagleBone Black SD card boot (`core-image-minimal`), built via Yocto and flashed as a full-disk `.wic` image.
+- **Tiny Path** - initramfs-only system (`core-image-optimal-tiny-initramfs`) using `linux-yocto-tiny` for minimal footprint and fast boot, flashed onto a single FAT partition.
+- **Product Qt Path** - dedicated product layer (`meta-beaglebone-optimal-product`) targeting BeagleBone Black explicitly, stripping unused desktop/audio/network services for a secure, local-only fullscreen dashboard appliance.
+- **Dev Netboot Path** (`beaglebone-black-optimal-qt-dashboard-dev`, DEV ONLY) - same Qt product image, but boots the kernel/dtb via TFTP and mounts the rootfs via NFS over USB gadget instead of an SD card, for fast local iteration. See [Qt Dashboard Dev Netboot](#qt-dashboard-dev-netboot-tftpnfs).
 
 ### Custom Environment Platform Driver (`optimal-env-manager`)
 
 - Aggregates real-time measurements in kernel space from SHT3x (temperature/humidity) and BH1750 (ambient light) sensors.
-- Exposes a **sysfs API** (`/sys/class/optimal-env/...`) — read-only sensor metrics, hardware health diagnostic flags (bitmask), and read-write threshold limits (`temp_alarm_limit`, `humid_alarm_limit`, `lux_alarm_limit`).
-- Publishes a packed binary 10-point measurement history via a custom character device (`/dev/optimal_env`) with custom IOCTLs (`OP_ENV_IOCTL_CLEAR_HISTORY`, `OP_ENV_IOCTL_TRIGGER_MEASURE`) — see [Kernel-Userspace Integration Details](docs/product-contract-qt-dashboard.md#kernel-userspace-integration-details).
+- Exposes a **sysfs API** (`/sys/class/optimal-env/...`) with read-only sensor metrics, hardware health diagnostic flags (bitmask), and read-write threshold limits (`temp_alarm_limit`, `humid_alarm_limit`, `lux_alarm_limit`).
+- Publishes a packed binary 10-point measurement history via a custom character device (`/dev/optimal_env`) with custom IOCTLs (`OP_ENV_IOCTL_CLEAR_HISTORY`, `OP_ENV_IOCTL_TRIGGER_MEASURE`); see [Kernel-Userspace Integration Details](docs/product-contract-qt-dashboard.md#kernel-userspace-integration-details).
 - Triggers direct GPIO alerts, pulsing the onboard `USR1` (temperature) and `USR2` (humidity) LEDs at a **50ms** flash interval on threshold violation.
 
 ### Responsive Qt6 Kiosk Dashboard
@@ -53,13 +53,13 @@ Quick overview — see each subsection below for details.
 - Lightweight fullscreen QML UI running directly on the raw framebuffer (`linuxfb`).
 - **Ambient-responsive theme switching** (slate-dark `#0F172A` vs. clean white) mapped to the kernel's `night_mode` status.
 - **Real-time historical charts** for temperature, humidity, and ambient light, rendered with HTML5 Canvas from `/dev/optimal_env` logs.
-- **Visual alert indicators** — pulsing border animations and warning badges when thresholds are breached.
+- **Visual alert indicators** - pulsing border animations and warning badges when thresholds are breached.
 - **System clock & seconds progress ring**, synchronized on startup from the high-accuracy DS3231 RTC.
 
 ### Qt Dashboard Dev Netboot (TFTP/NFS)
 
 - A dev-only machine (`beaglebone-black-optimal-qt-dashboard-dev`) built for fast iteration: U-Boot TFTP-boots the kernel/dtb and mounts the rootfs over NFS, so a code change only needs a rebuild + sync, not a full SD card reflash.
-- Transport is **USB gadget** (RNDIS/CDC-ECM), not wired Ethernet — the board's own onboard CPSW RJ45 port has no software workaround available on this hardware.
+- Transport is **USB gadget** (RNDIS/CDC-ECM), not wired Ethernet; the board's onboard CPSW RJ45 port has no software workaround on this hardware.
 - Host-side setup (`make netboot-host-setup`, `netboot-seed-rootfs`, `netboot-sync-app`, `netboot-sync-kernel`) and full operational details, including known USB gadget quirks and their fixes, are documented in the [Run Book](docs/_RUNBOOK_EN.md#qt-dashboard-dev-netboot-flow-dev-only).
 
 ---
