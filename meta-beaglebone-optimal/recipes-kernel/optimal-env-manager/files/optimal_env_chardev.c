@@ -7,6 +7,12 @@
 
 #include "optimal_env_core.h"
 
+static int optimal_env_open(struct inode *inode, struct file *file);
+static ssize_t optimal_env_read(struct file *file, char __user *buf,
+				size_t count, loff_t *ppos);
+static long optimal_env_ioctl(struct file *file, unsigned int cmd,
+			      unsigned long arg);
+
 /* Character-device operations. */
 static const struct file_operations optimal_env_fops = {
 	.owner = THIS_MODULE,
