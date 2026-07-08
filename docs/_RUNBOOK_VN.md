@@ -51,13 +51,13 @@ Rule:
 
 ```text
 ${PROJECT_STORAGE_ROOT}/
-├── shared/
-│   ├── downloads/
-│   └── sstate/
-└── workspaces/
-    └── ${WORKSPACE_NAME}/yocto/
-        ├── sources/
-        └── build/
+|- shared/
+|  |- downloads/
+|  `- sstate/
+`- workspaces/
+   `- ${WORKSPACE_NAME}/yocto/
+      |- sources/
+      `- build/
 ```
 
 Đường dẫn dẫn xuất:
@@ -119,6 +119,8 @@ Ghi chú:
 
 ## Flow Tiny
 
+Trước khi build, thêm `meta-swupdate` ngang cấp với `poky` trong `"$YOCTO_SOURCES_DIR"`.
+
 Áp file mẫu tiny:
 
 ```bash
@@ -145,8 +147,8 @@ Ghi chú:
 
 ## Flow Qt Dashboard
 
-Trước khi build, thêm `meta-qt6` ngang cấp với `poky` trong
-`"$YOCTO_SOURCES_DIR"`.
+Trước khi build, thêm `meta-openembedded`, `meta-qt6`, và `meta-swupdate`
+ngang cấp với `poky` trong `"$YOCTO_SOURCES_DIR"`.
 
 Áp file mẫu Qt dashboard:
 
@@ -182,7 +184,7 @@ xem bd `beaglebone-optimal-24b`), không phải dây Ethernet. Static point-to-p
 host `192.168.7.1`, board `192.168.7.2`.
 
 **Thứ tự bắt buộc: cắm/cấp nguồn board qua cáp USB TRƯỚC, rồi mới chạy
-`netboot-host-setup`** — khác với NIC vật lý (luôn có sẵn), interface USB
+`netboot-host-setup`** - khác với NIC vật lý (luôn có sẵn), interface USB
 gadget chỉ xuất hiện sau khi U-Boot đã khởi tạo `usb_ether`.
 
 Cắm cáp USB vào board, cấp nguồn, rồi xem interface mới xuất hiện:
@@ -206,6 +208,9 @@ cat yocto/conf/local.conf.qt-dashboard-dev.example >> "$YOCTO_BUILD_DIR/conf/loc
 make yocto-build YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev YOCTO_IMAGE=core-image-optimal-qt-dashboard
 make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev SDCARD=/dev/sdX
 ```
+
+Flow dev này dùng cùng `bblayers.conf.qt-dashboard.example`, nên cũng cần
+`meta-openembedded`, `meta-qt6`, và `meta-swupdate` nằm ngang cấp với `poky`.
 
 Vòng lặp dev:
 

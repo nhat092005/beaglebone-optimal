@@ -1,3 +1,9 @@
+/* SPDX-License-Identifier: MIT */
+/* main.cpp - Start the Qt dashboard and expose SensorBackend to QML.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include <QtGui/qguiapplication.h>
 #include <QtGui/qfont.h>
 #include <QtGui/qfontdatabase.h>
@@ -13,11 +19,7 @@
 
 namespace {
 
-// qt-dashboard's stdio is redirected to /dev/null (see inittab), so this
-// writes to /dev/kmsg instead -- it lands on the same serial console that
-// boot-capture reads. Priority 3 (KERN_ERR) because the kernel cmdline sets
-// console_loglevel=4 via "quiet", and only priority < console_loglevel is
-// printed.
+/* Stdio is /dev/null; KERN_ERR keeps startup diagnostics visible on UART. */
 void logToKmsg(const char *msg)
 {
 	int fd = open("/dev/kmsg", O_WRONLY);

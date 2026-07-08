@@ -1,4 +1,4 @@
-# Qt dashboard DEV netboot path — DEV ONLY, local developer overrides.
+# Qt dashboard DEV netboot path - DEV ONLY, local developer overrides.
 #
 # Append these lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"

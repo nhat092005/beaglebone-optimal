@@ -1,4 +1,4 @@
-# /etc/inittab — BeagleBone Optimal Qt dashboard
+# /etc/inittab - BeagleBone Optimal Qt dashboard
 # BusyBox init, minimal single-app kiosk
 
 # Mount virtual filesystems and sync clock
@@ -7,6 +7,12 @@
 ::sysinit:/sbin/modprobe optimal_env_manager
 ::sysinit:/bin/hostname qt-dashboard
 ::sysinit:/sbin/rtcsync
+
+# eMMC boot-partition (U-Boot env) is read-only by default.
+::sysinit:/bin/sh -c 'echo 0 > /sys/block/mmcblk0boot0/force_ro; echo 0 > /sys/block/mmcblk0boot1/force_ro'
+
+# Confirm boot healthy after a delay, only if the app is still alive.
+::once:/bin/sh -c 'sleep 20; pgrep -f qt-dashboard.sh >/dev/null && fw_setenv bootcount 0'
 
 # Spawn login shell on the debug serial console
 ttyS0::respawn:/bin/sh -l

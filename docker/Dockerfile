@@ -1,4 +1,5 @@
-# ubuntu:22.04 digest pinned 2026-04-18 — update with: docker pull ubuntu:22.04 && docker inspect ubuntu:22.04 --format='{{index .RepoDigests 0}}'
+# ubuntu:22.04 digest pinned 2026-04-18.
+# Refresh digest with docker pull + docker inspect.
 FROM ubuntu@sha256:962f6cadeae0ea6284001009daa4cc9a8c37e75d1f5191cf0eb83fe565b63dd7
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -44,6 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sparse \
     swig \
     texinfo \
+    tmux \
     u-boot-tools \
     unzip \
     wget \

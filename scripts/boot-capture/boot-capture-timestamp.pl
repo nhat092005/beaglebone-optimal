@@ -1,20 +1,11 @@
 #!/usr/bin/perl
-# boot-capture-timestamp.pl — prefix raw serial bytes on STDIN with the
-# wall-clock time each line actually arrived, and print to STDOUT.
+# Prefix each serial line on STDIN with the wall-clock time its last byte
+# arrived. Partial lines (for example shell prompts) are flushed after
+# IDLE_TIMEOUT and keep the time of their last byte, not the timeout fire.
 #
-# A complete line is stamped with the time its trailing '\n' was read, even
-# if the line was assembled across multiple reads. Data with no trailing
-# newline (e.g. an interactive shell prompt) is flushed after IDLE_TIMEOUT
-# seconds of silence, stamped with the time its last byte actually arrived
-# -- not the time the idle timeout fired -- so the reported time is never
-# skewed by how long we waited before giving up on a newline.
-#
-# Optional argv[0]: the serial device path, opened write-only. /etc/profile's
-# resize() sends a cursor-position query (ESC[6n) and blocks for up to 2s
-# waiting for a reply -- a real terminal (minicom) answers instantly, but a
-# passive reader never does, inflating every captured boot by ~2s for no
-# real reason. If given a device, we answer that query ourselves so the
-# captured timing matches what an interactive user actually sees.
+# Optional argv[0]: serial device opened write-only. If present, answer the
+# ESC[6n cursor-position query so /etc/profile resize() does not add ~2s to
+# every captured boot.
 use strict;
 use warnings;
 use Time::HiRes qw(gettimeofday);
@@ -39,8 +30,7 @@ my $query_pending = 0;
 sub emit {
     my ($line, $ts) = @_;
     my ($s, $us) = @$ts;
-    # idle-flushed partial data (no trailing '\n', e.g. a shell prompt) must
-    # still end its own line, or the next emitted timestamp glues onto it
+    # Partial data flushed without '\n' still needs its own line.
     $line .= "\n" unless $line =~ /\n\z/;
     printf "%d.%06d %s", $s, $us, $line;
 }

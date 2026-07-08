@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * optimal_env_sysfs.c - Sysfs attributes for sensor data and thresholds.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include "optimal_env_core.h"
 
 static ssize_t temperature_show(struct device *dev,
@@ -261,7 +268,6 @@ int optimal_env_sysfs_init(struct optimal_env_priv *priv)
 		return PTR_ERR(priv->optimal_class);
 	}
 
-	/* Pass 'priv' as the drvdata so sysfs attribute functions can retrieve it */
 	priv->optimal_device = device_create(priv->optimal_class, priv->dev,
 					     priv->dev_num, priv,
 					     "optimal_env");
@@ -276,7 +282,6 @@ int optimal_env_sysfs_init(struct optimal_env_priv *priv)
 		goto err_device_destroy;
 	}
 
-	/* Register hwmon, passing 'priv' as the drvdata */
 	priv->hwmon_dev = devm_hwmon_device_register_with_info(
 		priv->dev, "optimal_env", priv, &optimal_hwmon_chip_info, NULL);
 	if (IS_ERR(priv->hwmon_dev)) {

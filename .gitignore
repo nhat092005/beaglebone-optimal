@@ -34,6 +34,7 @@ local.mk
 .agents/
 .codex/
 .claude/
+.beads/
 CLAUDE.md
 AGENTS.md
 

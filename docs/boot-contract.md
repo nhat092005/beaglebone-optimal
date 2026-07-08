@@ -241,9 +241,9 @@ Required proof:
 - exact flash command
 - actual boot artifact names
 
-## Manual eMMC Flashing from SD Card
+## eMMC Flashing from SD Card
 
-While the workspace scripts (`sd-flash.sh` and `sd-flash-tiny.sh`) target host-side flashing of SD cards, you can manually write the Yocto product image from a running SD card system to the onboard eMMC.
+While the workspace scripts (`sd-flash.sh` and `sd-flash-tiny.sh`) target host-side flashing of SD cards, provisioning the onboard eMMC is done from a running SD-booted system using `flash-emmc.sh` (package `emmc-flash-tools`, installed on every `core-image-optimal-qt-dashboard` build).
 
 ### Prerequisites
 
@@ -251,50 +251,30 @@ While the workspace scripts (`sd-flash.sh` and `sd-flash-tiny.sh`) target host-s
 2. The board must be booted from the SD card (press and hold the `S2` Boot button during power-on).
 3. The built product image (`core-image-optimal-qt-dashboard.wic` and its `.bmap` file) must be copied to the SD card rootfs or made accessible (e.g., via a USB flash drive or NFS mount).
 
-### Step-by-Step Flashing Procedure
+### Flashing Procedure
 
 On the booted BeagleBone Black running from the SD card:
 
-1. **Identify the eMMC device**:
-   Usually, the SD card is `/dev/mmcblk0` (active boot slot) and the onboard eMMC is detected as `/dev/mmcblk1`. Verify this using `lsblk` or `dmesg`:
-   ```bash
-   lsblk
-   ```
+```bash
+flash-emmc.sh /path/to/core-image-optimal-qt-dashboard.wic
+```
 
-2. **Verify eMMC write access**:
-   Ensure the eMMC partitions are not mounted:
-   ```bash
-   sudo umount /dev/mmcblk1p* || true
-   ```
+The tool determines the running root device from `/proc/cmdline`, targets the
+one other real `mmcblkN` device present (refusing to run if that can't be
+determined unambiguously, or if it ever resolves to the running root device),
+and requires typing back the exact target device path before writing anything.
+It writes via `bmaptool` (block-verified against the `.bmap` file) when
+available, falling back to `dd` otherwise. The A/B `extlinux.conf` baked into
+the image already hardcodes `root=/dev/mmcblk0pN`, which is correct once the
+SD card is removed and the eMMC is renumbered to `/dev/mmcblk0`; no manual
+edit is needed.
 
-3. **Flash the WIC image**:
-   - **Method A: Using bmaptool (Recommended)**:
-     ```bash
-     sudo bmaptool copy core-image-optimal-qt-dashboard.wic /dev/mmcblk1
-     ```
-   - **Method B: Using dd**:
-     ```bash
-     sudo dd if=core-image-optimal-qt-dashboard.wic of=/dev/mmcblk1 bs=4M status=progress conv=fsync
-     ```
+On success the tool `sync`s and powers the board off automatically. On
+failure it stops without powering off, leaving the board running from the SD
+card so the failure can be investigated.
 
-4. **Verify eMMC Boot Configuration**:
-   The bootloader config on `/dev/mmcblk1p1` must point the kernel command line root parameter to the eMMC partition:
-   - Mount the first partition of the eMMC:
-     ```bash
-     sudo mkdir -p /mnt/emmc-boot
-     sudo mount /dev/mmcblk1p1 /mnt/emmc-boot
-     ```
-   - Edit `/mnt/emmc-boot/extlinux/extlinux.conf` and ensure it uses `root=/dev/mmcblk1p2` (or `root=/dev/mmcblk0p2` if the SD card is physically removed at boot, making the eMMC `/dev/mmcblk0` under Linux):
-     ```text
-     append root=/dev/mmcblk0p2 rootwait ...
-     ```
-   - Unmount the partition:
-     ```bash
-     sudo umount /mnt/emmc-boot
-     ```
-
-5. **Boot from eMMC**:
-   Power off the board, remove the SD card, and power it back on. The board will automatically boot from the onboard eMMC.
+**Boot from eMMC**: remove the SD card and power the board back on. It boots
+from the onboard eMMC.
 
 ## Change Policy
 

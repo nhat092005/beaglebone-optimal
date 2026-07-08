@@ -12,7 +12,7 @@ Window {
     color: bgColor
     title: "Environment Monitoring"
 
-    // ---------- Theme (Editorial palette) ----------
+    // Theme
     readonly property bool  isDark: sensorBackend.nightMode === 1
 
     readonly property color bgColor:   isDark ? "#16150F" : "#F3EFE6"   // warm paper / warm charcoal
@@ -25,16 +25,16 @@ Window {
 
     Behavior on color { ColorAnimation { duration: 400 } }
 
-    // ---------- Fonts ----------
+    // Fonts
     // A Helvetica-class grotesk carries the editorial look. Set this to
     // "Helvetica Neue" / "Arial" / "Inter" if available on the BeagleBone;
     // falls back to the app default (DejaVu Sans) otherwise.
     readonly property string fontFamily: "Inter, Arial, Helvetica, DejaVu Sans, sans-serif"
 
-    // ---------- Clock options ----------
+    // Clock options
     property bool use24h: true
 
-    // ===================== Helpers (unchanged) =====================
+    // Helpers
     function parseNumber(str) {
         if (!str || str === "--") return 0.0;
         var num = parseFloat(str.replace(/[^0-9.-]/g, ""));
@@ -52,7 +52,7 @@ Window {
 
     function pad(n) { return n < 10 ? "0" + n : "" + n }
 
-    // ===================== Clock (unchanged logic) =====================
+    // Clock
     property var now: new Date()
     Timer { interval: 250; running: true; repeat: true; onTriggered: root.now = new Date() }
 
@@ -66,14 +66,14 @@ Window {
     readonly property var _days:   ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"]
     readonly property var _months: ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     readonly property string dateLine: sensorBackend.rtcFault ? "RTC FAULT"
-        : (_days[now.getDay()] + "  ·  " + now.getDate() + " " + _months[now.getMonth()] + " " + now.getFullYear())
+        : (_days[now.getDay()] + " | " + now.getDate() + " " + _months[now.getMonth()] + " " + now.getFullYear())
 
-    // ===================== Responsive scale =====================
+    // Responsive scale
     readonly property real u: Math.min(width / 1920, height / 1080)
     readonly property real heroClockSlotWidth: 920 * u
     readonly property real heroClockSlotHeight: 340 * u
 
-    // ===================== Sensor model =====================
+    // Sensor model
     // Editorial principle: monochrome by default, vermillion ONLY on alarm.
     readonly property var sensors: [
         {
@@ -99,7 +99,7 @@ Window {
         }
     ]
 
-    // ===================== Layout (Pure Anchors for Absolute Stability) =====================
+    // Layout
     Item {
         id: mainContainer
         x: 92 * u
@@ -107,7 +107,7 @@ Window {
         width: root.width - (184 * u)
         height: root.height - (160 * u)
 
-        // ---------- Top row: title (left) · date (right) ----------
+        // Top row: title (left) | date (right)
         RowLayout {
             id: headerRow
             anchors.top: parent.top
@@ -136,7 +136,7 @@ Window {
             }
         }
 
-        // ---------- Thick rule ----------
+        // Thick rule
         Rectangle {
             id: headerDivider
             anchors.top: headerRow.bottom
@@ -148,7 +148,7 @@ Window {
             Behavior on color { ColorAnimation { duration: 400 } }
         }
 
-        // ---------- Bottom: 3-column grid (Locked to bottom) ----------
+        // Bottom grid
         RowLayout {
             id: bottomGrid
             anchors.bottom: parent.bottom
@@ -293,11 +293,11 @@ Window {
                                     if (colWrap.modelData.alert) {
                                         if (colWrap.modelData.label === "TEMPERATURE") {
                                             var diff = (parseNumber(sensorBackend.temperature) - sensorBackend.tempAlarmLimit);
-                                            return "ELEVATED · +" + diff.toFixed(1) + " OVER SET";
+                                            return "ELEVATED | +" + diff.toFixed(1) + " OVER SET";
                                         }
-                                        return "ALERT · OUT OF BAND";
+                                        return "ALERT | OUT OF BAND";
                                     }
-                                    return "NOMINAL · WITHIN BAND";
+                                    return "NOMINAL | WITHIN BAND";
                                 }
                                 color: colWrap.modelData.alert ? root.accent : root.statColor
                                 font.family: root.fontFamily
@@ -312,7 +312,7 @@ Window {
             }
         }
 
-        // ---------- Hero: clock (left) · seconds meta (right) (Anchored to remaining space) ----------
+        // Hero: clock (left) | seconds meta (right)
         RowLayout {
             id: clockArea
             anchors.top: headerDivider.bottom
@@ -447,7 +447,7 @@ Window {
                 }
                 Text {
                     Layout.alignment: Qt.AlignRight
-                    text: root.use24h ? "SECONDS · 24H" : "SECONDS · 12H"
+                    text: root.use24h ? "SECONDS | 24H" : "SECONDS | 12H"
                     color: root.mutedColor
                     font.family: root.fontFamily
                     font.pixelSize: 14 * u

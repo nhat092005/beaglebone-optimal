@@ -1,3 +1,9 @@
+/* SPDX-License-Identifier: MIT */
+/* SensorBackend.h - Expose kernel sensor state and RTC health to QML.
+
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #pragma once
 
 #include <QObject>
@@ -5,6 +11,12 @@
 #include <QTimer>
 #include <QVariantList>
 
+/**
+ * SensorBackend - Poll kernel interfaces and publish dashboard state
+ *
+ * Sensor values come from optimal_env_manager. RTC health is sampled once
+ * during construction and does not modify the hardware clock.
+ */
 class SensorBackend : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(
@@ -70,6 +82,7 @@ class SensorBackend : public QObject {
 	{
 		return m_sensorStatus;
 	}
+	/* True when RTC data is unavailable or predates 2024. */
 	bool rtcFault() const
 	{
 		return m_rtcFault;
@@ -102,9 +115,11 @@ class SensorBackend : public QObject {
 	void historyChanged();
 
     private slots:
+	/* Refresh QML state from the kernel interfaces. */
 	void updateSensors();
 
     private:
+	/* Read and trim one sysfs value; return empty on failure. */
 	static QString readSysfs(const QString &path);
 
 	QString m_temperature{ QStringLiteral("--") };

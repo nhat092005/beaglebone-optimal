@@ -31,9 +31,7 @@ python __anonymous() {
             bb.fatal("%s_DIR must be set" % prefix)
         if not dts_file:
             bb.fatal("%s_DTS must be set" % prefix)
-        # CFG/SCC may legitimately be empty (feature needs no kernel config
-        # fragment), but must still be declared so a missing catalog entry
-        # fails loudly instead of silently acting as "no fragment".
+        # Empty CFG/SCC is valid, but missing catalog keys are not.
         if cfg_file is None:
             bb.fatal("%s_CFG must be set explicitly, even if empty" % prefix)
         if scc_file is None:

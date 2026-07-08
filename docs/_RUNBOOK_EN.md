@@ -51,13 +51,13 @@ Rules:
 
 ```text
 ${PROJECT_STORAGE_ROOT}/
-├── shared/
-│   ├── downloads/
-│   └── sstate/
-└── workspaces/
-    └── ${WORKSPACE_NAME}/yocto/
-        ├── sources/
-        └── build/
+|- shared/
+|  |- downloads/
+|  `- sstate/
+`- workspaces/
+   `- ${WORKSPACE_NAME}/yocto/
+      |- sources/
+      `- build/
 ```
 
 Derived paths:
@@ -119,6 +119,8 @@ Notes:
 
 ## Tiny Flow
 
+Add `meta-swupdate` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
+
 Apply the tiny examples:
 
 ```bash
@@ -145,7 +147,7 @@ Notes:
 
 ## Qt Dashboard Flow
 
-Add `meta-qt6` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
+Add `meta-openembedded`, `meta-qt6`, and `meta-swupdate` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building.
 
 Apply the Qt dashboard examples:
 
@@ -181,7 +183,7 @@ see bd `beaglebone-optimal-24b`), not an Ethernet cable. Static point-to-point:
 host `192.168.7.1`, board `192.168.7.2`.
 
 **Required order: power the board via USB cable FIRST, then run
-`netboot-host-setup`** — unlike a physical NIC (always present), the USB
+`netboot-host-setup`** - unlike a physical NIC (always present), the USB
 gadget interface only appears once U-Boot has brought up `usb_ether`.
 
 Plug the USB cable into the board, power it on, then see which new interface
@@ -206,6 +208,8 @@ cat yocto/conf/local.conf.qt-dashboard-dev.example >> "$YOCTO_BUILD_DIR/conf/loc
 make yocto-build YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev YOCTO_IMAGE=core-image-optimal-qt-dashboard
 make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-dev SDCARD=/dev/sdX
 ```
+
+This dev flow uses the same `bblayers.conf.qt-dashboard.example`, so it also requires `meta-openembedded`, `meta-qt6`, and `meta-swupdate` beside `poky`.
 
 Dev loop:
 

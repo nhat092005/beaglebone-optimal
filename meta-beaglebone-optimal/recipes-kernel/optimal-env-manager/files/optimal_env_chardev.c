@@ -1,5 +1,33 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * optimal_env_chardev.c - Character device read/ioctl interface for history data.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include "optimal_env_core.h"
 
+static int optimal_env_open(struct inode *inode, struct file *file);
+static ssize_t optimal_env_read(struct file *file, char __user *buf,
+				size_t count, loff_t *ppos);
+static long optimal_env_ioctl(struct file *file, unsigned int cmd,
+			      unsigned long arg);
+
+/* Character-device operations. */
+static const struct file_operations optimal_env_fops = {
+	.owner = THIS_MODULE,
+	.open = optimal_env_open,
+	.read = optimal_env_read,
+	.unlocked_ioctl = optimal_env_ioctl,
+};
+
+/**
+ * optimal_env_open - Attach driver state to an open file
+ * @inode: Character-device inode
+ * @file: Open file
+ *
+ * Return: Always 0
+ */
 static int optimal_env_open(struct inode *inode, struct file *file)
 {
 	struct optimal_env_priv *priv = container_of(
@@ -8,6 +36,15 @@ static int optimal_env_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
+/**
+ * optimal_env_read - Copy environmental history to user space
+ * @file: Open file
+ * @buf: Destination buffer
+ * @count: Requested byte count
+ * @ppos: Current file position
+ *
+ * Return: Bytes copied, 0 at end of data, or a negative error code
+ */
 static ssize_t optimal_env_read(struct file *file, char __user *buf,
 				size_t count, loff_t *ppos)
 {
@@ -45,6 +82,14 @@ static ssize_t optimal_env_read(struct file *file, char __user *buf,
 	return count;
 }
 
+/**
+ * optimal_env_ioctl - Clear history or trigger a measurement
+ * @file: Open file
+ * @cmd: IOCTL command
+ * @arg: Unused command argument
+ *
+ * Return: 0 on success or a negative error code
+ */
 static long optimal_env_ioctl(struct file *file, unsigned int cmd,
 			      unsigned long arg)
 {
@@ -72,13 +117,6 @@ static long optimal_env_ioctl(struct file *file, unsigned int cmd,
 	}
 	return 0;
 }
-
-static const struct file_operations optimal_env_fops = {
-	.owner = THIS_MODULE,
-	.open = optimal_env_open,
-	.read = optimal_env_read,
-	.unlocked_ioctl = optimal_env_ioctl,
-};
 
 int optimal_env_chardev_init(struct optimal_env_priv *priv)
 {
