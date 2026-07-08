@@ -1,3 +1,9 @@
+/* SPDX-License-Identifier: MIT */
+/* SensorBackend.cpp - Read environment-manager data for the Qt dashboard.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include "SensorBackend.h"
 
 #include <QtCore/qdir.h>
@@ -26,7 +32,7 @@ SensorBackend::SensorBackend(QObject *parent)
 
 	m_sensorTimer.start(1000);
 
-	// One-time DS3231 RTC health check (Rule 12)
+	/* RTC health is sampled once; rtcsync owns boot-time clock setup. */
 	{
 		int fd = ::open("/dev/rtc0", O_RDONLY);
 		if (fd < 0) {
@@ -51,7 +57,6 @@ void SensorBackend::updateSensors()
 	if (QDir(optRoot).exists()) {
 		bool ok = false;
 
-		// Rule 10: read alarm_state from kernel
 		const QString alarmStr =
 			readSysfs(optRoot + QStringLiteral("alarm_state"));
 		if (!alarmStr.isEmpty()) {
@@ -62,7 +67,6 @@ void SensorBackend::updateSensors()
 			}
 		}
 
-		// Rule 11: read sensor_status from kernel
 		const QString statusStr =
 			readSysfs(optRoot + QStringLiteral("sensor_status"));
 		if (!statusStr.isEmpty()) {
@@ -74,7 +78,7 @@ void SensorBackend::updateSensors()
 		}
 
 		if (m_sensorStatus != 0) {
-			// Sensor fault — show "--" for all measured values
+			/* Do not display stale measurements while a sensor is faulty. */
 			static const QString kDash = QStringLiteral("--");
 			if (m_temperature != kDash) {
 				m_temperature = kDash;
@@ -147,7 +151,7 @@ void SensorBackend::updateSensors()
 				}
 			}
 
-			// Read history from /dev/optimal_env
+			/* History uses the packed kernel character-device ABI. */
 			int fd = ::open("/dev/optimal_env", O_RDONLY);
 			if (fd >= 0) {
 				EnvRecord buf[10];
@@ -172,7 +176,7 @@ void SensorBackend::updateSensors()
 			}
 		}
 
-		// Always read night_mode and alarm limits
+		/* These remain valid when current sensor measurements fail. */
 		const QString nightStr =
 			readSysfs(optRoot + QStringLiteral("night_mode"));
 		const QString tLimitStr =

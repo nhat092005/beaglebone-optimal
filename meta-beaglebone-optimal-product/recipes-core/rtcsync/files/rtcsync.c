@@ -1,5 +1,10 @@
+/* SPDX-License-Identifier: MIT */
 /*
- * rtcsync — set system clock from RTC at boot.
+ * rtcsync.c - Set the system clock from /dev/rtc0 at boot.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ *
+ * This utility never writes to the RTC.
  */
 #include <fcntl.h>
 #include <linux/rtc.h>
@@ -9,8 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 
-/* /dev/rtc0 may not be ready yet if I2C probe is deferred past sysinit;
- * retry for up to 5s before giving up. */
+/* Retry /dev/rtc0 for up to 5s if I2C probe lands after sysinit. */
 #define RTC_OPEN_RETRIES 50
 #define RTC_OPEN_RETRY_INTERVAL_NS (100L * 1000 * 1000)
 
@@ -38,17 +42,14 @@ int main(void)
 	}
 	close(fd);
 
-	/* DS3231 with a dead/absent backup battery reports an invalid year after
-	 * power loss (OSF). The kernel ds1307 driver normally returns -EINVAL on
-	 * RTC_RD_TIME above; guard explicitly so a bogus-but-parseable value never
-	 * sets a wrong system clock. */
+	/* Guard against bogus RTC values after battery-backed time loss. */
 	if (rt.tm_year + 1900 < 2024) {
 		fprintf(stderr, "rtcsync: RTC year %d invalid, not setting clock\n",
 			rt.tm_year + 1900);
 		return 1;
 	}
 
-	/* RTC stores UTC; timegm converts UTC struct tm → time_t without TZ */
+	/* RTC stores UTC; timegm converts UTC struct tm -> time_t without TZ. */
 	struct tm tm = {
 		.tm_sec = rt.tm_sec,
 		.tm_min = rt.tm_min,
