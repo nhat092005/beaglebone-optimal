@@ -1,4 +1,0 @@
-active_slot=a
-bootlimit=3
-bootcmd=setenv pxe_label_override slot_${active_slot}; sysboot mmc 0:1 any ${scriptaddr} /extlinux/extlinux.conf
-altbootcmd=if test "${active_slot}" = "a"; then setenv active_slot b; else setenv active_slot a; fi; saveenv; setenv pxe_label_override slot_${active_slot}; sysboot mmc 0:1 any ${scriptaddr} /extlinux/extlinux.conf
