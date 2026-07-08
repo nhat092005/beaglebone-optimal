@@ -1,5 +1,4 @@
-# A/B rootfs + reserved data partition. rootfs_a/rootfs_b sized from a real
-# measured baseline (65MB) plus headroom.
+# A/B rootfs plus data partition; rootfs slots include baseline headroom.
 part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4 --fixed-size 32 --sourceparams="loader=u-boot" --use-uuid
 part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs_a --align 4 --fixed-size 256 --use-uuid
 part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs_b --align 4 --fixed-size 256 --use-uuid

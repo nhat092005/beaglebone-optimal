@@ -6,9 +6,8 @@ if [ -z "$BUNDLE" ] || [ ! -f "$BUNDLE" ]; then
     echo "Usage: apply-update.sh <path-to-bundle.swu>"
     exit 1
 fi
-# Ground truth for which slot is CURRENTLY running: /proc/cmdline, NOT the
-# u-boot active_slot env var (could theoretically drift after a manual
-# serial-console override; /proc/cmdline can't lie about what's booted).
+# Use /proc/cmdline as the running-slot truth.
+# active_slot can drift after manual U-Boot overrides.
 cmdline="$(cat /proc/cmdline)"
 case "$cmdline" in
     *root=/dev/mmcblk0p2*) target=2; new_slot=b ;;

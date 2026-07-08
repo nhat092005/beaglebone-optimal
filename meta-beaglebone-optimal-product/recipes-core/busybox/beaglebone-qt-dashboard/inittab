@@ -1,4 +1,4 @@
-# /etc/inittab — BeagleBone Optimal Qt dashboard
+# /etc/inittab - BeagleBone Optimal Qt dashboard
 # BusyBox init, minimal single-app kiosk
 
 # Mount virtual filesystems and sync clock

@@ -1,4 +1,4 @@
-# Qt dashboard product path — local developer overrides only.
+# Qt dashboard product path - local developer overrides only.
 # Append these lines into conf/local.conf after running:
 #   source oe-init-build-env "$YOCTO_BUILD_DIR"
 
