@@ -23,6 +23,7 @@ DOCKER_TAG   ?= dev
 # Yocto baseline
 YOCTO_IMAGE ?= core-image-minimal
 YOCTO_MACHINE ?= beaglebone-yocto
+YOCTO_MENUCONFIG_RECIPE ?= virtual/kernel
 
 # Yocto tiny
 YOCTO_TINY_MACHINE                 ?= beaglebone-black-optimal-tiny
@@ -75,7 +76,7 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
 
 .PHONY: help yocto-list docker-build docker-shell docker-run doctor boot-capture
 .PHONY: patch-check patch-apply patch-reword patch-finalize patch-abort
-.PHONY: yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake
+.PHONY: yocto-init yocto-layers yocto-parse yocto-qt-profile yocto-dry-run yocto-build yocto-bitbake yocto-menuconfig
 .PHONY: sd-flash sd-flash-tiny format format-check lint check
 .PHONY: netboot-host-setup netboot-sync-app netboot-sync-kernel netboot-seed-rootfs
 .PHONY: netboot-nm-unmanage netboot-nm-manage
@@ -115,7 +116,9 @@ help:
 		'  make yocto-dry-run                Dry-run the current YOCTO_IMAGE dependency graph.' \
 		'  make yocto-build                  Build YOCTO_IMAGE inside the builder container.' \
 		'  make yocto-bitbake BITBAKE_RECIPE=<recipe> [BITBAKE_TASK=<task>]' \
-		'                                    Run bitbake on a recipe (cleansstate, cleanall, clean, compile, install, package…).' \
+		'                                    Run bitbake on a recipe (cleansstate, cleanall, clean, compile, install, package...).' \
+		'  make yocto-menuconfig             Open menuconfig for YOCTO_MENUCONFIG_RECIPE (default virtual/kernel).' \
+		'                                    Override for u-boot: YOCTO_MENUCONFIG_RECIPE=virtual/bootloader.' \
 		'  make sd-flash SDCARD='\''/dev/sdX'\''   Flash IMAGE to an SD card on the host.' \
 		'' \
 		'Tiny path:' \
@@ -255,6 +258,9 @@ endif
 yocto-bitbake:
 	$(if $(BITBAKE_RECIPE),,$(error BITBAKE_RECIPE is required. Usage: make yocto-bitbake BITBAKE_RECIPE=<recipe> [BITBAKE_TASK=<task>]))
 	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && bitbake "$(BITBAKE_RECIPE)" $(if $(BITBAKE_TASK),-c $(BITBAKE_TASK))'\'''
+
+yocto-menuconfig:
+	@bash -lc 'source scripts/docker/lib.sh && preflight_run_target && require_yocto_poky_tree && require_yocto_build_conf && docker compose run --rm builder bash -lc '\''cd "$$YOCTO_POKY_DIR" && source oe-init-build-env "$$YOCTO_BUILD_DIR" >/dev/null && /workspace/scripts/yocto/menuconfig.sh $(YOCTO_MENUCONFIG_RECIPE)'\'''
 
 sd-flash:
 	@bash scripts/sd-flash/sd-flash.sh
