@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * optimal_env_sensors.c - SHT3x/BH1750 sensor trigger and read helpers.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include "optimal_env_core.h"
 
 /* SHT3x protocol constants (Sensirion SHT3x datasheet, Table 8 / Section 4.3) */
@@ -88,9 +95,9 @@ static int sht3x_read_result(struct i2c_client *client, int *temp, int *humid)
 
 	raw_temp  = (buf[0] << 8) | buf[1];
 	raw_humid = (buf[SHT3X_HUMID_OFFSET] << 8) | buf[SHT3X_HUMID_OFFSET + 1];
-	/* T [mdegC] = -45000 + 175000 * raw / 65535 ≈ (21875 * raw >> 13) - 45000 */
+	/* T [mdegC] = -45000 + 175000 * raw / 65535 ~ (21875 * raw >> 13) - 45000 */
 	*temp  = ((21875 * (int)raw_temp) >> 13) - 45000;
-	/* RH [m%] = 100000 * raw / 65535 ≈ (12500 * raw) >> 13 */
+	/* RH [m%] = 100000 * raw / 65535 ~ (12500 * raw) >> 13 */
 	*humid = (12500 * (u32)raw_humid) >> 13;
 	return 0;
 }
@@ -147,10 +154,6 @@ static int bh1750_read_result(struct i2c_client *client, int *lux)
 	return 0;
 }
 
-/*
- * Fire both sensors. Returns fault bitmask: bit 0 = SHT3x, bit 1 = BH1750.
- * Caller must wait >= 180ms before calling optimal_env_sensors_read().
- */
 int optimal_env_sensors_trigger(struct optimal_env_priv *priv)
 {
 	int fault = 0;
@@ -164,12 +167,6 @@ int optimal_env_sensors_trigger(struct optimal_env_priv *priv)
 	return fault;
 }
 
-/*
- * Read results from sensors that were successfully triggered.
- * trigger_fault: bitmask from optimal_env_sensors_trigger() indicating which
- * sensors failed to trigger and should be skipped.
- * Returns fault bitmask (union of trigger and read failures).
- */
 int optimal_env_sensors_read(struct optimal_env_priv *priv, int trigger_fault,
 			     int *temp, int *humid, int *lux)
 {

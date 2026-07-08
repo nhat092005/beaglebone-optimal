@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * optimal_env_core.h - Shared declarations for optimal_env_manager.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #ifndef OPTIMAL_ENV_CORE_H
 #define OPTIMAL_ENV_CORE_H
 
@@ -31,6 +38,14 @@
 /* BH1750 H-Resolution measurement time (datasheet max: 180ms) */
 #define BH1750_MEAS_TIME_MS 180
 
+/**
+ * struct env_record - Environmental history record
+ *
+ * @timestamp_ms: Timestamp in milliseconds.
+ * @temperature: Temperature in milli-degrees Celsius.
+ * @humidity: Humidity in milli-percent.
+ * @lux: Light level in lux.
+ */
 struct env_record {
 	u64 timestamp_ms;
 	s32 temperature;
@@ -38,6 +53,34 @@ struct env_record {
 	s32 lux;
 } __packed;
 
+/**
+ * struct optimal_env_priv - Driver state
+ *
+ * @dev: Parent device
+ * @state_lock: Protects alarm, night-mode, sensor, and threshold state
+ * @buffer_mutex: Protects history records
+ * @ring_buffer: Environmental history
+ * @ring_buffer_head: Next record index
+ * @ring_buffer_count: Number of valid records
+ * @alarm_state: Temperature and humidity alarm bitmask
+ * @night_mode: Whether measured light is below the configured threshold
+ * @sensor_status: Sensor fault bitmask; bit 0 SHT3x, bit 1 BH1750
+ * @temp_alarm_limit: Temperature threshold in degrees Celsius
+ * @humid_alarm_limit: Humidity threshold in percent
+ * @lux_alarm_limit: Light threshold in lux
+ * @alarm_leds: Temperature and humidity alarm LEDs
+ * @sht3x_client: SHT3x I2C client
+ * @bh1750_client: BH1750 I2C client
+ * @hwmon_dev: Registered hwmon device
+ * @bd: Virtual backlight device
+ * @monitor_task: Sensor monitoring thread
+ * @measure_wait: Measurement trigger wait queue
+ * @trigger_measure: Immediate measurement request
+ * @dev_num: Character device number
+ * @optimal_cdev: Character device
+ * @optimal_class: Character device class
+ * @optimal_device: Character device node
+ */
 struct optimal_env_priv {
 	struct device *dev;
 
@@ -81,20 +124,83 @@ struct optimal_env_priv {
 	struct device *optimal_device;
 };
 
-/* Core helper functions */
+/**
+ * push_record - Append an environmental history record
+ *
+ * @priv: Driver state
+ * @time_ms: Timestamp in milliseconds.
+ * @temp: Temperature in milli-degrees Celsius.
+ * @humid: Humidity in milli-percent.
+ * @lux: Light level in lux.
+ */
 void push_record(struct optimal_env_priv *priv, u64 time_ms, s32 temp,
 		 s32 humid, s32 lux);
 
-/* Core sub-system init & remove declarations */
+/**
+ * optimal_env_sysfs_init - Register sysfs and hwmon interfaces
+ *
+ * @priv: Driver state
+ * Return: 0 on success or a negative error code
+ */
 int optimal_env_sysfs_init(struct optimal_env_priv *priv);
+
+/**
+ * optimal_env_sysfs_remove - Remove sysfs and hwmon interfaces
+ *
+ * @priv: Driver state
+ */
 void optimal_env_sysfs_remove(struct optimal_env_priv *priv);
 
+/**
+ * optimal_env_chardev_init - Initialize the character device.
+ *
+ * @priv: Driver state
+ * Return: 0 on success or a negative error code
+ */
 int optimal_env_chardev_init(struct optimal_env_priv *priv);
+
+/**
+ * optimal_env_chardev_remove - Remove the character device.
+ *
+ * @priv: Driver state
+ */
 void optimal_env_chardev_remove(struct optimal_env_priv *priv);
 
+/**
+ * optimal_env_sensors_init - Acquire SHT3x and BH1750 devices
+ *
+ * @priv: Driver state
+ * Return: 0 on success or a negative error code
+ */
 int optimal_env_sensors_init(struct optimal_env_priv *priv);
+
+/**
+ * optimal_env_sensors_cleanup - Release sensor device references
+ *
+ * @priv: Driver state
+ */
 void optimal_env_sensors_cleanup(struct optimal_env_priv *priv);
+
+/**
+ * optimal_env_sensors_trigger - Start both sensor measurements
+ *
+ * @priv: Driver state
+ * Return: Sensor fault bitmask; bit 0 SHT3x, bit 1 BH1750
+ *
+ * Wait at least BH1750_MEAS_TIME_MS before reading the results.
+ */
 int optimal_env_sensors_trigger(struct optimal_env_priv *priv);
+
+/**
+ * optimal_env_sensors_read - Read triggered sensor measurements
+ *
+ * @priv: Driver state
+ * @trigger_fault: Fault bitmask returned by optimal_env_sensors_trigger()
+ * @temp: Temperature in milli-degrees Celsius
+ * @humid: Relative humidity in milli-percent
+ * @lux: Light level in lux
+ * Return: Combined trigger and read fault bitmask
+ */
 int optimal_env_sensors_read(struct optimal_env_priv *priv, int trigger_fault,
 			     int *temp, int *humid, int *lux);
 

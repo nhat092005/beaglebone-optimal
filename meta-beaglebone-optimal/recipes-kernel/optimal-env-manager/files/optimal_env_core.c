@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * optimal_env_core.c - Platform driver probe/remove and shared runtime state.
+ *
+ * Copyright (c) 2026 MinhNhat <minhnhat092005@gmail.com>
+ */
+
 #include "optimal_env_core.h"
 
 void push_record(struct optimal_env_priv *priv, u64 time_ms, s32 temp,
@@ -14,15 +21,29 @@ void push_record(struct optimal_env_priv *priv, u64 time_ms, s32 temp,
 	mutex_unlock(&priv->buffer_mutex);
 }
 
+/**
+ * optimal_bl_update_status - Apply virtual backlight state
+ * @bd_dev: Backlight device
+ *
+ * Return: Always 0
+ */
 static int optimal_bl_update_status(struct backlight_device *bd_dev)
 {
 	return 0;
 }
 
+/* Virtual backlight operations. */
 static const struct backlight_ops optimal_bl_ops = {
 	.update_status = optimal_bl_update_status,
 };
 
+/**
+ * optimal_env_get_alarm_leds - Acquire alarm LEDs from Device Tree
+ * @dev: Parent device
+ * @priv: Driver state
+ *
+ * Return: 0 on success or a negative error code
+ */
 static int optimal_env_get_alarm_leds(struct device *dev,
 				      struct optimal_env_priv *priv)
 {
@@ -40,6 +61,12 @@ static int optimal_env_get_alarm_leds(struct device *dev,
 	return 0;
 }
 
+/**
+ * optimal_env_thread - Monitor sensors and update driver state
+ * @data: Driver state
+ *
+ * Return: Always 0
+ */
 static int optimal_env_thread(void *data)
 {
 	struct optimal_env_priv *priv = (struct optimal_env_priv *)data;
@@ -157,6 +184,12 @@ static int optimal_env_thread(void *data)
 	return 0;
 }
 
+/**
+ * optimal_env_probe - Initialize the environment manager
+ * @pdev: Platform device
+ *
+ * Return: 0 on success or a negative error code
+ */
 static int optimal_env_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -234,6 +267,12 @@ err_sensors_cleanup:
 	return ret;
 }
 
+/**
+ * optimal_env_remove - Stop and release the environment manager
+ * @pdev: Platform device
+ *
+ * Return: Always 0
+ */
 static int optimal_env_remove(struct platform_device *pdev)
 {
 	struct optimal_env_priv *priv = platform_get_drvdata(pdev);
@@ -271,4 +310,4 @@ module_platform_driver(optimal_env_driver);
 
 MODULE_AUTHOR("minhnhat092005");
 MODULE_DESCRIPTION("Optimal Environment and Power Manager Kernel Module");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("Dual MIT/GPL");
