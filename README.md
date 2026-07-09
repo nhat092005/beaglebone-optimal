@@ -8,18 +8,136 @@ This repository provides a reproducible, Docker-isolated workspace for building 
 
 ---
 
+## Demo
+
+### Docker
+
+<table>
+<tr>
+<td align="center" width="50%" valign="top">
+
+<b>Docker Build</b>
+
+> Building the Docker image for the isolated development environment.
+
+<img src="assets/00-build-docker.gif" alt="Docker Build" width="100%">
+
+</td>
+
+<td align="center" width="50%" valign="top">
+
+<b>Docker Shell</b>
+
+> Entering the interactive Bash shell inside the running builder container.
+
+<img src="assets/01-docker-shell.gif" alt="Docker Shell" width="100%">
+
+</td>
+</tr>
+</table>
+
+---
+
+### Yocto
+
+<table>
+<tr>
+<td align="center" width="50%" valign="top">
+
+<b>Yocto Init</b>
+
+> Initializing the persistent Yocto build environment.
+
+<img src="assets/00-yocto-init.gif" alt="Yocto Init" width="100%">
+
+</td>
+
+<td align="center" width="50%" valign="top">
+
+<b>Yocto Build</b>
+
+> Building the target image using the BitBake build system.
+
+<img src="assets/01-yocto-build.gif" alt="Yocto Build" width="100%">
+
+</td>
+</tr>
+</table>
+
+---
+
+### Target Demo
+
+<table>
+<tr>
+<td align="center" width="50%" valign="top">
+
+<b>Tiny Build</b>
+
+> Demonstrating the optimized Tiny Linux boot process with a **2.47 s** startup time.
+
+<img src="assets/02-bbb-tiny-log.gif" alt="Tiny Boot Log" width="100%">
+
+</td>
+
+<td align="center" width="50%" valign="top">
+
+<b>Qt Production Build</b>
+
+> Demonstrating the production Qt dashboard boot process, reaching the first rendered frame in **3.98 s**.
+
+<img src="assets/02-bbb-production-log.gif" alt="Qt Production Boot Log" width="100%">
+
+</td>
+</tr>
+</table>
+
+---
+
+### Qt Dashboard
+
+<table>
+<tr>
+<td align="center" width="50%" valign="top">
+
+<b>Light Theme</b>
+
+<img src="assets/03-qt-light.png" alt="Qt Dashboard Light Theme" width="100%">
+
+</td>
+
+<td align="center" width="50%" valign="top">
+
+<b>Dark Theme</b>
+
+<img src="assets/03-qt-dark.png" alt="Qt Dashboard Dark Theme" width="100%">
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+<i>The responsive Qt6 kiosk dashboard application running over HDMI.</i>
+</p>
+
+<p align="center">
+  <img src="assets/qt.gif" alt="Qt Dashboard Demo" width="100%">
+</p>
+
+---
+
 ## Key Features
 
 Quick overview; see each subsection below for details.
 
-| Area | Highlight |
-|---|---|
-| [Build host](#docker-isolated-build-host) | Docker-isolated, clean git tree, automated `format`/`check` lint gates |
-| [Boot path](#optimized-fast-boot-hdmi-path) | ~1.3s kernel to shell, HDMI HPD debounce, instrumented boot-timing harness |
-| [Distro catalog](#multi-target-boot--distro-catalog) | Baseline / Tiny / Qt product images from one repo |
-| [Env sensor driver](#custom-environment-platform-driver-optimal-env-manager) | SHT3x + BH1750 kernel module with sysfs + chardev + IOCTL API |
-| [Qt kiosk dashboard](#responsive-qt6-kiosk-dashboard) | Fullscreen QML UI on raw framebuffer, ambient theme, live charts |
-| [Dev netboot](#qt-dashboard-dev-netboot-tftpnfs) | TFTP kernel/dtb + NFS rootfs over USB gadget - iterate without reflashing the SD card |
+| Area                                                                         | Highlight                                                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [Build host](#docker-isolated-build-host)                                    | Docker-isolated, clean git tree, automated `format`/`check` lint gates                |
+| [Boot path](#optimized-fast-boot-hdmi-path)                                  | ~1.3s kernel to shell, HDMI HPD debounce, instrumented boot-timing harness            |
+| [Distro catalog](#multi-target-boot--distro-catalog)                         | Baseline / Tiny / Qt product images from one repo                                     |
+| [Env sensor driver](#custom-environment-platform-driver-optimal-env-manager) | SHT3x + BH1750 kernel module with sysfs + chardev + IOCTL API                         |
+| [Qt kiosk dashboard](#responsive-qt6-kiosk-dashboard)                        | Fullscreen QML UI on raw framebuffer, ambient theme, live charts                      |
+| [Dev netboot](#qt-dashboard-dev-ne02-bbb-production-logtboot-tftpnfs)        | TFTP kernel/dtb + NFS rootfs over USB gadget - iterate without reflashing the SD card |
 
 ### Docker-Isolated Build Host
 
@@ -201,63 +319,6 @@ Detailed design rules and guides are located in the `docs/` directory:
 - [Run Book (EN)](docs/_RUNBOOK_EN.md) / [Run Book (VN)](docs/_RUNBOOK_VN.md) - Operational instructions.
 - [Boot Contract](docs/boot-contract.md) - Normative rules for kernel and bootloader boot paths.
 - [Coding Style Contract](docs/coding-style.md) - Formatting and linting standards.
-
----
-
-## Demo
-
-### Docker
-
-#### Docker Build
-
-> Building the Docker image for the isolated development build environment.
-
-![Docker Build](assets/00-build-docker.gif)
-
-#### Docker Shell
-
-> Entering the interactive bash shell within the running builder container.
-
-![Docker Shell](assets/01-docker-shell.gif)
-
----
-
-### Yocto
-
-#### Yocto Init
-
-> Initializing the storage-backed Yocto build directory environment.
-
-![Yocto Init](assets/00-yocto-init.gif)
-
-#### Yocto Build
-
-> Running the bitbake build process inside the container to compile the target image.
-
-![Yocto Build](assets/01-yocto-build.gif)
-
----
-
-### Target Demo
-
-#### Boot Log
-
-> Real-time boot log showing the fast-boot optimization on the BeagleBone Black.
-
-![BeagleBone Black Boot Log](assets/02-bbb-log.gif)
-
-#### Qt Dashboard
-
-> Qt UI
-
-<p align="center">
-  <img src="assets/03-qt-link.png" alt="PCB Front" width="48%">
-  <img src="assets/03-qt-dark.png" alt="PCB Back" width="48%">
-</p>
-
-> The responsive Qt6 kiosk dashboard application running over HDMI.
-
-![Qt Dashboard](assets/qt.gif)
 
 ---
 

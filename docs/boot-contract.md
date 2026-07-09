@@ -28,6 +28,12 @@ The repo currently exposes two boot paths:
   - `core-image-optimal-qt-dashboard`
   - product-owned `.wic` flashing through `make sd-flash`
   - reuses the tiny kernel feature catalog without redefining the tiny path
+  - A/B rootfs + bootcount failsafe + OTA (swupdate)
+
+- `Qt dashboard no-A/B path`
+  - same hardware, same image recipe, same kernel/DTS as the product path
+  - single rootfs partition, no bootcount, no OTA/swupdate
+  - `beaglebone-black-optimal-qt-dashboard-noab` machine
 
 The baseline path remains valid while the tiny path is being proven.
 The Qt dashboard product path is a separate product surface. It must not
@@ -66,6 +72,64 @@ the tiny path explicitly removes, including:
 
 Ownership for the Qt dashboard product path belongs in the product layer, not
 in the Phase 1 tiny contract surface.
+
+## Qt Dashboard No-A/B Path
+
+`beaglebone-black-optimal-qt-dashboard-noab` is the same physical target and
+the same image recipe (`core-image-optimal-qt-dashboard.bb`) as the product
+path, differing only in `DISTRO_FEATURES`: it does not declare
+`optimal-ab-update`.
+
+Consequences, all driven by that one token (see "Feature Toggle Contract"):
+
+- `beaglebone-qt-dashboard-noab.wks`: one `/boot` (vfat, 32MB) + one `/`
+  rootfs (ext4, 256MB) + `/data` (ext4, 64MB). No `rootfs_b`.
+- No `bootcount.cfg`/`bootcount.env` merged into the U-Boot config, no
+  `active_slot`/`altbootcmd` - `beaglebone-qt-dashboard-noab-extlinux.conf`
+  boots a single entry from `root=/dev/mmcblk0p2`.
+- No `swupdate`, `swupdate-local-tools`, `emmc-flash-tools`,
+  `u-boot-fw-utils`, or `u-boot-env` in `IMAGE_INSTALL`. Re-provisioning is
+  full-image only, through `sd-flash` from the host; there is no on-device
+  update path and no rollback.
+- Kernel sensor catalog (gpio-leds, i2c2-bus, rtc-ds3231, sht3x, bh1750) and
+  HDMI/DRM support are unchanged from the product path - both machines
+  inherit them the same way through `MACHINEOVERRIDES`.
+
+Creating a different feature combination for this hardware means creating a
+new machine.conf, not adding a `local.conf` override - see "Feature Toggle
+Contract".
+
+## Feature Toggle Contract
+
+Every optional feature across the tiny/qt-dashboard machine family (A/B
+update, dev netboot, USB gadget, and the kernel sensor catalog - gpio-leds,
+i2c2-bus, rtc-ds3231, sht3x, bh1750) is toggled through one mechanism:
+`DISTRO_FEATURES` tokens prefixed `optimal-` (e.g. `optimal-ab-update`,
+`optimal-gpio-leds`), read via `bb.utils.contains('DISTRO_FEATURES', token,
+...)` in the recipe/bbclass that needs it.
+
+Rules:
+
+- Each machine.conf declares its own token set with
+  `DISTRO_FEATURES:append = " optimal-..."` and mirrors that exact list into
+  `OPTIMAL_REQUIRED_FEATURES`. This is the single declaration point per
+  machine - no other file may add or remove `optimal-` tokens.
+- `core-image-optimal-qt-dashboard.bb` validates the two match at parse time
+  and calls `bb.fatal()` if `OPTIMAL_REQUIRED_FEATURES` is not a subset of
+  the resolved `DISTRO_FEATURES` (e.g. because of a `DISTRO_FEATURES:remove`
+  added elsewhere). BitBake parses `local.conf` before `machine.conf`
+  (`bitbake.conf` include order), so a machine-declared `:append` already
+  wins over anything set earlier in `local.conf` for the same variable: this
+  validator exists specifically to catch the one operator that direction
+  doesn't protect against, `DISTRO_FEATURES:remove`, which strips a token
+  from the fully-resolved value regardless of which file added it. A
+  mismatch fails the build loudly instead of silently shipping a machine
+  missing a required feature.
+- `optimal-rtc-ds3231`, `optimal-sht3x`, and `optimal-bh1750` each require
+  `optimal-i2c2-bus`; `linux-yocto-tiny-feature-dts.bbclass` enforces this
+  with the same `bb.fatal()` pattern.
+- Tokens are never set from `local.conf`, `distro.conf`, or any file other
+  than the owning machine.conf. `local.conf` only selects `MACHINE`.
 
 ## Boot Media Contract
 
@@ -221,6 +285,16 @@ watchdog servicing.
   - `make yocto-build YOCTO_IMAGE=core-image-optimal-tiny-initramfs`
 - flash:
   - `make sd-flash-tiny SDCARD=/dev/sdX`
+
+### Qt dashboard no-A/B
+
+- examples:
+  - `yocto/conf/local.conf.qt-dashboard-noab.example`
+  - `yocto/conf/bblayers.conf.qt-dashboard.example` (reused as-is)
+- build:
+  - `make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard` (with `MACHINE=beaglebone-black-optimal-qt-dashboard-noab` in `local.conf`)
+- flash:
+  - `make sd-flash YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-noab YOCTO_IMAGE=core-image-optimal-qt-dashboard SDCARD=/dev/sdX`
 
 ## Acceptance for Tiny Phase 1
 

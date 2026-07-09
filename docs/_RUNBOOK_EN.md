@@ -175,6 +175,36 @@ Notes:
 - Qt dashboard image: `core-image-optimal-qt-dashboard`
 - Qt dashboard machine: `beaglebone-black-optimal-qt-dashboard`
 
+## Qt Dashboard No-A/B Flow
+
+Alternate product path, same image but a single rootfs partition (no OTA/swupdate at runtime). Machine `beaglebone-black-optimal-qt-dashboard-noab`, inherits `beaglebone-black-optimal-tiny.conf` and uses its own WKS, `beaglebone-qt-dashboard-noab.wks`.
+
+Reuses `bblayers.conf.qt-dashboard.example` as-is, so it still requires `meta-openembedded`, `meta-qt6`, and `meta-swupdate` beside `poky` under `"$YOCTO_SOURCES_DIR"` before building (the layer is pulled in even though this machine doesn't use OTA).
+
+Apply the no-A/B examples:
+
+```bash
+make yocto-init
+cp yocto/conf/bblayers.conf.qt-dashboard.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.qt-dashboard-noab.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
+```
+
+Build and flash:
+
+```bash
+make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make sd-flash \
+  YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-noab \
+  YOCTO_IMAGE=core-image-optimal-qt-dashboard \
+  SDCARD=/dev/sdX
+```
+
+Notes:
+
+- the machine is selected via `MACHINE` in `local.conf.qt-dashboard-noab.example`; there is no separate `YOCTO_MACHINE` variable for `yocto-build` (only `sd-flash` needs `YOCTO_MACHINE` to pick the right `.wic`)
+- shares the same image as the A/B path: `core-image-optimal-qt-dashboard`
+- this path is a new working-tree change, not yet committed — check `git status`/`git log` before treating it as stable contract
+
 ## Qt Dashboard Dev Netboot Flow (DEV ONLY)
 
 Dev-only, not a production contract. Machine `beaglebone-black-optimal-qt-dashboard-dev`.
