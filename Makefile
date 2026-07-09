@@ -41,6 +41,10 @@ YOCTO_QT_DASHBOARD_IMAGE               ?= core-image-optimal-qt-dashboard
 YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE   ?= $(CURDIR)/yocto/conf/bblayers.conf.qt-dashboard.example
 YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE  ?= $(CURDIR)/yocto/conf/local.conf.qt-dashboard.example
 
+# Yocto Qt dashboard, no A/B
+YOCTO_QT_DASHBOARD_NOAB_MACHINE        ?= beaglebone-black-optimal-qt-dashboard-noab
+YOCTO_QT_DASHBOARD_NOAB_LOCALCONF_TEMPLATE ?= $(CURDIR)/yocto/conf/local.conf.qt-dashboard-noab.example
+
 # Derived paths
 YOCTO_ROOT          	?= $(PROJECT_STORAGE_ROOT)/workspaces/$(WORKSPACE_NAME)/yocto
 YOCTO_SOURCES_DIR   	?= $(YOCTO_ROOT)/sources
@@ -71,6 +75,7 @@ export DOCKER_IMAGE DOCKER_TAG WORKSPACE_NAME DOCKER_USER \
        YOCTO_TINY_BBLAYERS_TEMPLATE YOCTO_TINY_LOCALCONF_TEMPLATE \
        YOCTO_TINY_DEPLOY_DIR YOCTO_TINY_BOOT_EXTLINUX_TEMPLATE YOCTO_TINY_BOOT_UENV_TEMPLATE \
        YOCTO_QT_DASHBOARD_MACHINE YOCTO_QT_DASHBOARD_IMAGE YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE YOCTO_QT_DASHBOARD_LOCALCONF_TEMPLATE \
+       YOCTO_QT_DASHBOARD_NOAB_MACHINE YOCTO_QT_DASHBOARD_NOAB_LOCALCONF_TEMPLATE \
        YOCTO_IMAGE IMAGE \
        SDCARD CMD BOOT_SERIAL_DEVICE BOOT_SERIAL_BAUD BOOT_CAPTURE_LOG
 
@@ -128,6 +133,10 @@ help:
 		'' \
 		'Qt dashboard path:' \
 		'  make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)'  Dry-run the Qt dashboard image dependency graph.' \
+		'' \
+		'Qt dashboard no-A/B path (same image, no OTA/swupdate):' \
+		'  make yocto-build YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)'  Build after setting MACHINE='$(YOCTO_QT_DASHBOARD_NOAB_MACHINE)' in local.conf.' \
+		'  make sd-flash YOCTO_MACHINE='$(YOCTO_QT_DASHBOARD_NOAB_MACHINE)' YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)' SDCARD='\''/dev/sdX'\''' \
 		'' \
 		'Qt dashboard dev netboot path (DEV ONLY):' \
 		'  make netboot-host-setup NETBOOT_IFACE=<iface>  One-time/per-reboot host TFTP+NFS setup.' \
@@ -197,6 +206,14 @@ yocto-list:
 		'  dry-run: make yocto-dry-run YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
 		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
 		'  flash: make sd-flash YOCTO_MACHINE='$(YOCTO_QT_DASHBOARD_MACHINE)' YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)' SDCARD=/dev/sdX' \
+		'' \
+		'Qt dashboard no-A/B path:' \
+		'  machine: '$(YOCTO_QT_DASHBOARD_NOAB_MACHINE) \
+		'  image: '$(YOCTO_QT_DASHBOARD_IMAGE)' (same recipe as the A/B path)' \
+		'  local.conf example: '$(YOCTO_QT_DASHBOARD_NOAB_LOCALCONF_TEMPLATE) \
+		'  bblayers example: '$(YOCTO_QT_DASHBOARD_BBLAYERS_TEMPLATE)' (reused as-is)' \
+		'  build: make yocto-build YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE) \
+		'  flash: make sd-flash YOCTO_MACHINE='$(YOCTO_QT_DASHBOARD_NOAB_MACHINE)' YOCTO_IMAGE='$(YOCTO_QT_DASHBOARD_IMAGE)' SDCARD=/dev/sdX' \
 		'' \
 		'Contract docs:' \
 		'  docs/boot-contract.md' \

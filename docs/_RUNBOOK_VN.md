@@ -176,6 +176,36 @@ Ghi chú:
 - Qt dashboard image: `core-image-optimal-qt-dashboard`
 - Qt dashboard machine: `beaglebone-black-optimal-qt-dashboard`
 
+## Flow Qt Dashboard No-A/B
+
+Product path thay thế, dùng cùng image nhưng single rootfs partition (không OTA/swupdate lúc runtime). Machine `beaglebone-black-optimal-qt-dashboard-noab`, kế thừa `beaglebone-black-optimal-tiny.conf` và dùng WKS riêng `beaglebone-qt-dashboard-noab.wks`.
+
+Dùng lại đúng `bblayers.conf.qt-dashboard.example`, nên vẫn cần `meta-openembedded`, `meta-qt6`, và `meta-swupdate` nằm ngang cấp với `poky` trong `"$YOCTO_SOURCES_DIR"` trước khi build (layer được kéo vào dù machine này không dùng OTA).
+
+Áp file mẫu no-A/B:
+
+```bash
+make yocto-init
+cp yocto/conf/bblayers.conf.qt-dashboard.example "$YOCTO_BUILD_DIR/conf/bblayers.conf"
+cat yocto/conf/local.conf.qt-dashboard-noab.example >> "$YOCTO_BUILD_DIR/conf/local.conf"
+```
+
+Build và flash:
+
+```bash
+make yocto-build YOCTO_IMAGE=core-image-optimal-qt-dashboard
+make sd-flash \
+  YOCTO_MACHINE=beaglebone-black-optimal-qt-dashboard-noab \
+  YOCTO_IMAGE=core-image-optimal-qt-dashboard \
+  SDCARD=/dev/sdX
+```
+
+Ghi chú:
+
+- machine chọn qua `MACHINE` trong `local.conf.qt-dashboard-noab.example`, không có biến `YOCTO_MACHINE` riêng cho `yocto-build` (chỉ `sd-flash` mới cần truyền `YOCTO_MACHINE` để chọn đúng `.wic`)
+- image dùng chung với path A/B: `core-image-optimal-qt-dashboard`
+- path này đang là thay đổi mới trong working tree, chưa commit — kiểm tra `git status`/`git log` trước khi coi đây là contract ổn định
+
 ## Flow Qt Dashboard Dev Netboot (DEV ONLY)
 
 Dev-only, không phải contract production. Machine `beaglebone-black-optimal-qt-dashboard-dev`.

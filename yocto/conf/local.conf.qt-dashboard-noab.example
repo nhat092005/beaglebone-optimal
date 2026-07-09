@@ -1,0 +1,15 @@
+# Qt dashboard no-A/B path - local developer overrides only.
+# Reuse bblayers.conf.qt-dashboard.example as-is.
+#
+# Append these lines into conf/local.conf after running:
+#   source oe-init-build-env "$YOCTO_BUILD_DIR"
+
+BSPDIR ??= "/workspace"
+
+MACHINE    = "beaglebone-black-optimal-qt-dashboard-noab"
+DISTRO     = "optimal-qt-dashboard"
+
+DL_DIR    ??= "/storage/shared/downloads"
+SSTATE_DIR ??= "/storage/shared/sstate"
+
+EXTRA_IMAGE_FEATURES = "debug-tweaks"
