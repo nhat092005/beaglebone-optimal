@@ -13,20 +13,20 @@ python __anonymous() {
     if not base_dts:
         bb.fatal("LINUX_YOCTO_TINY_FEATURE_BASE_DTS must be set")
 
-    filespath_entries = []
-    src_uri_entries = []
-    enabled_dts_files = []
-    seen_dts_files = set()
+    distro_features = (d.getVar("DISTRO_FEATURES") or "").split()
+
+    catalog = {}
     for feature_key in feature_keys:
         prefix = "LINUX_YOCTO_TINY_FEATURE_%s" % feature_key
-        enabled = d.getVar(prefix + "_ENABLED")
+        token = d.getVar(prefix + "_TOKEN")
         feature_dir = d.getVar(prefix + "_DIR")
         dts_file = d.getVar(prefix + "_DTS")
         cfg_file = d.getVar(prefix + "_CFG")
         scc_file = d.getVar(prefix + "_SCC")
+        requires = (d.getVar(prefix + "_REQUIRES") or "").split()
 
-        if enabled not in ("0", "1"):
-            bb.fatal("%s_ENABLED must be \"0\" or \"1\"" % prefix)
+        if not token:
+            bb.fatal("%s_TOKEN must be set" % prefix)
         if not feature_dir:
             bb.fatal("%s_DIR must be set" % prefix)
         if not dts_file:
@@ -54,19 +54,51 @@ python __anonymous() {
             if not os.path.exists(scc_path):
                 bb.fatal("Missing declared SCC file: %s" % scc_path)
 
-        if enabled == "1":
-            if dts_file in seen_dts_files:
-                bb.fatal("Duplicate DTS file %s declared by feature %s" % (dts_file, feature_key))
-            seen_dts_files.add(dts_file)
+        catalog[feature_key] = {
+            "token": token,
+            "dts_dir": dts_dir,
+            "cfg_dir": cfg_dir,
+            "dts_file": dts_file,
+            "cfg_file": cfg_file,
+            "scc_file": scc_file,
+            "requires": requires,
+            "enabled": token in distro_features,
+        }
 
-            filespath_entries.extend([dts_dir, cfg_dir])
-            src_uri_entries.append(" file://%s" % dts_file)
-            enabled_dts_files.append(dts_file)
-            if cfg_file:
-                src_uri_entries.append(" file://%s" % cfg_file)
-            if scc_file:
-                src_uri_entries.append(" file://%s" % scc_file)
-                d.appendVar("KERNEL_FEATURES", " %s" % scc_file)
+    for feature_key, meta in catalog.items():
+        if not meta["enabled"]:
+            continue
+        for required_key in meta["requires"]:
+            if required_key not in catalog:
+                bb.fatal("%s_REQUIRES references unknown feature key %s" % (feature_key, required_key))
+            if not catalog[required_key]["enabled"]:
+                bb.fatal(
+                    "DISTRO_FEATURES has %s but not %s (%s requires %s)"
+                    % (meta["token"], catalog[required_key]["token"], feature_key, required_key)
+                )
+
+    filespath_entries = []
+    src_uri_entries = []
+    enabled_dts_files = []
+    seen_dts_files = set()
+    for feature_key in feature_keys:
+        meta = catalog[feature_key]
+        if not meta["enabled"]:
+            continue
+
+        dts_file = meta["dts_file"]
+        if dts_file in seen_dts_files:
+            bb.fatal("Duplicate DTS file %s declared by feature %s" % (dts_file, feature_key))
+        seen_dts_files.add(dts_file)
+
+        filespath_entries.extend([meta["dts_dir"], meta["cfg_dir"]])
+        src_uri_entries.append(" file://%s" % dts_file)
+        enabled_dts_files.append(dts_file)
+        if meta["cfg_file"]:
+            src_uri_entries.append(" file://%s" % meta["cfg_file"])
+        if meta["scc_file"]:
+            src_uri_entries.append(" file://%s" % meta["scc_file"])
+            d.appendVar("KERNEL_FEATURES", " %s" % meta["scc_file"])
 
     if filespath_entries:
         d.prependVar("FILESEXTRAPATHS", ":".join(filespath_entries) + ":")
