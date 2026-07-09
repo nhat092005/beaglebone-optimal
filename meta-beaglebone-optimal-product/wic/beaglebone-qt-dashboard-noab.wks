@@ -1,0 +1,5 @@
+# Single rootfs (no A/B), same 256MB slot size for comparable image-size/boot numbers.
+part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4 --fixed-size 32 --sourceparams="loader=u-boot" --use-uuid
+part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs --align 4 --fixed-size 256 --use-uuid
+part /data --ondisk mmcblk0 --fstype=ext4 --label data --align 4 --fixed-size 64 --use-uuid
+bootloader --configfile="beaglebone-qt-dashboard-noab-extlinux.conf"
